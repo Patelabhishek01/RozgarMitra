@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.presentation.components.LoadingOverlay
 import com.rozgarmitra.app.presentation.components.PrimaryLargeButton
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -57,6 +58,12 @@ fun LabourDetailsScreen(
     var expectedWage by remember { mutableStateOf("600") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    // Suggestion states
+    var isSuggestingOther by remember { mutableStateOf(false) }
+    var suggestedCategoryName by remember { mutableStateOf("") }
+    var suggestedCategoryDesc by remember { mutableStateOf("") }
+    var suggestionLoading by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -115,22 +122,29 @@ fun LabourDetailsScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        tradesList.forEach { skill ->
+                        val tradesWithOther = tradesList + "Other (अन्य)"
+                        
+                        tradesWithOther.forEach { skill ->
                             val isSelected = selectedSkills.contains(skill)
                             FilterChip(
                                 selected = isSelected,
                                 onClick = {
-                                    selectedSkills = if (isSelected) {
-                                        selectedSkills - skill
+                                    if (skill == "Other (अन्य)") {
+                                        isSuggestingOther = true
                                     } else {
-                                        selectedSkills + skill
+                                        selectedSkills = if (isSelected) {
+                                            selectedSkills - skill
+                                        } else {
+                                            selectedSkills + skill
+                                        }
                                     }
                                 },
                                 label = { Text(skill, fontSize = 13.sp, modifier = Modifier.padding(vertical = 4.dp)) },
                                 shape = RoundedCornerShape(20.dp),
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    containerColor = if (skill == "Other (अन्य)") Color(0xFFFFF3E0) else Color.Transparent
                                 )
                             )
                         }
@@ -235,16 +249,18 @@ fun LabourDetailsScreen(
                         val flow = RozgarRepository.completeLabourProfile(
                             skills = selectedSkills.map { it.substringBefore(" (") },
                             experience = selectedExperience.substringBefore(" ("),
-                            expectedWage = expectedWage.toIntOrNull() ?: 0
+                            wage = expectedWage.toIntOrNull() ?: 0
                         )
                         scope.launch {
                             flow.collectLatest { result ->
-                                isLoading = false
                                 result.fold(
                                     onSuccess = {
+                                        delay(500)
+                                        isLoading = false
                                         onProfileCompleted()
                                     },
                                     onFailure = { error ->
+                                        isLoading = false
                                         errorMessage = error.localizedMessage ?: "Failed to save profile."
                                     }
                                 )
@@ -257,5 +273,57 @@ fun LabourDetailsScreen(
 
             LoadingOverlay(isLoading = isLoading, text = "Saving Profile...")
         }
+    }
+
+    if (isSuggestingOther) {
+        AlertDialog(
+            onDismissRequest = { isSuggestingOther = false },
+            title = { Text("Suggest New Skill", fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    Text("Can't find your skill? Tell us what you do.", fontSize = 13.sp, color = Color.Gray)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = suggestedCategoryName,
+                        onValueChange = { suggestedCategoryName = it },
+                        label = { Text("Skill Name (e.g. Driver)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = suggestedCategoryDesc,
+                        onValueChange = { suggestedCategoryDesc = it },
+                        label = { Text("What work do you do in this?") },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3,
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        suggestionLoading = true
+                        scope.launch {
+                            RozgarRepository.suggestNewCategory(suggestedCategoryName, suggestedCategoryDesc).collect { res ->
+                                suggestionLoading = false
+                                res.onSuccess {
+                                    isSuggestingOther = false
+                                    errorMessage = "Skill suggested! We will add it to the list soon."
+                                }
+                            }
+                        }
+                    },
+                    enabled = suggestedCategoryName.isNotBlank() && suggestedCategoryDesc.isNotBlank() && !suggestionLoading
+                ) {
+                    if (suggestionLoading) CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
+                    else Text("Submit")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { isSuggestingOther = false }) { Text("Cancel") }
+            }
+        )
     }
 }

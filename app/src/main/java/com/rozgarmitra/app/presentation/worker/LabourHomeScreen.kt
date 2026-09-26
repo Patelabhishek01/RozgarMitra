@@ -27,6 +27,8 @@ import com.rozgarmitra.app.data.*
 import com.rozgarmitra.app.presentation.components.JobFeedCard
 import com.rozgarmitra.app.presentation.components.OfflineBanner
 import com.rozgarmitra.app.presentation.components.PrimaryLargeButton
+import com.rozgarmitra.app.presentation.components.ProfileMenuItem
+import com.rozgarmitra.app.presentation.components.ProfileSection
 import com.rozgarmitra.app.presentation.components.VerifiedBadge
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -36,6 +38,9 @@ import kotlinx.coroutines.launch
 fun LabourHomeScreen(
     onJobClick: (String) -> Unit,
     onChatThreadClick: (String) -> Unit,
+    onSettingsClick: () -> Unit,
+    onProfessionsClick: () -> Unit,
+    onApplicationsClick: () -> Unit,
     onLogoutClick: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(0) }
@@ -53,11 +58,19 @@ fun LabourHomeScreen(
                 OfflineBanner(isOffline = isOffline)
                 CenterAlignedTopAppBar(
                     title = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("RozgarMitra", fontWeight = FontWeight.Black, fontSize = 22.sp, color = MaterialTheme.colorScheme.primary)
-                            if (currentUser?.isVerified == true) {
-                                Spacer(modifier = Modifier.width(4.dp))
-                                VerifiedBadge(size = 18)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("RozgarMitra", fontWeight = FontWeight.Black, fontSize = 20.sp, color = MaterialTheme.colorScheme.primary)
+                            Surface(
+                                color = Color(0xFFE8F5E9),
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text(
+                                    "WORKER / LABOUR", 
+                                    fontSize = 10.sp, 
+                                    fontWeight = FontWeight.Bold, 
+                                    color = Color(0xFF2E7D32),
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
                             }
                         }
                     },
@@ -108,7 +121,12 @@ fun LabourHomeScreen(
                 0 -> LabourHomeFeedTab(onJobClick = onJobClick)
                 1 -> LabourSearchTab(onJobClick = onJobClick)
                 2 -> LabourChatsTab(onChatThreadClick = onChatThreadClick)
-                3 -> LabourProfileTab(onLogoutClick = onLogoutClick)
+                3 -> LabourProfileTab(
+                    onSettingsClick = onSettingsClick,
+                    onProfessionsClick = onProfessionsClick,
+                    onApplicationsClick = onApplicationsClick,
+                    onLogoutClick = onLogoutClick
+                )
             }
         }
     }
@@ -150,35 +168,54 @@ fun LabourHomeScreen(
 
 // --- SUB TABS FOR HOME (FEED & APPLICATIONS) ---
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LabourHomeFeedTab(onJobClick: (String) -> Unit) {
     var subTabState by remember { mutableStateOf(0) } // 0 = Feed, 1 = Applications
     
     val jobs by RozgarRepository.jobs.collectAsStateWithLifecycle()
     val applications by RozgarRepository.applications.collectAsStateWithLifecycle()
+    val currentUser by RozgarRepository.currentUser.collectAsStateWithLifecycle()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        TabRow(selectedTabIndex = subTabState) {
+        TabRow(
+            selectedTabIndex = subTabState,
+            containerColor = Color.White,
+            contentColor = MaterialTheme.colorScheme.primary
+        ) {
             Tab(
                 selected = subTabState == 0,
                 onClick = { subTabState = 0 },
-                text = { Text("Nearby Jobs", fontWeight = FontWeight.Bold, fontSize = 15.sp) },
-                modifier = Modifier.height(48.dp)
+                text = { Text("Nearby Jobs", fontWeight = FontWeight.Bold) }
             )
             Tab(
                 selected = subTabState == 1,
                 onClick = { subTabState = 1 },
-                text = { Text("My Applications", fontWeight = FontWeight.Bold, fontSize = 15.sp) },
-                modifier = Modifier.height(48.dp)
+                text = { 
+                    BadgedBox(badge = {
+                        val pending = applications.count { it.status == ApplicationStatus.APPLIED }
+                        if (pending > 0) {
+                            Badge { Text(pending.toString()) }
+                        }
+                    }) {
+                        Text("My Applications", fontWeight = FontWeight.Bold)
+                    }
+                }
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-
         if (subTabState == 0) {
+            // FEED TAB
             if (jobs.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No jobs available nearby.", color = Color.Gray)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CustomIcon(Icons.Filled.WorkOutline, contentDescription = null, size = 48, tint = Color.LightGray)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("No active jobs found nearby.", color = Color.Gray)
+                        TextButton(onClick = { RozgarRepository.observeJobs() }) {
+                            Text("Refresh Feed")
+                        }
+                    }
                 }
             } else {
                 LazyColumn(
@@ -186,19 +223,24 @@ fun LabourHomeFeedTab(onJobClick: (String) -> Unit) {
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    items(jobs) { job ->
+                    items(jobs, key = { it.id.ifBlank { it.title + it.createdAt } }) { job ->
                         JobFeedCard(
                             job = job, 
                             onClick = { onJobClick(job.id) },
-                            onApplyClick = { /* Already logged in */ }
+                            onApplyClick = { /* Handled in card */ }
                         )
                     }
                 }
             }
         } else {
+            // APPLICATIONS TAB
             if (applications.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("You haven't applied to any jobs yet.", color = Color.Gray)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CustomIcon(Icons.Filled.ListAlt, contentDescription = null, size = 48, tint = Color.LightGray)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("You haven't applied to any jobs yet.", color = Color.Gray)
+                    }
                 }
             } else {
                 LazyColumn(
@@ -206,13 +248,19 @@ fun LabourHomeFeedTab(onJobClick: (String) -> Unit) {
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    items(applications) { app ->
+                    // Show newest applications first
+                    items(applications.asReversed(), key = { it.id }) { app ->
                         ApplicationStatusCard(app = app, onJobClick = onJobClick)
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun CustomIcon(imageVector: ImageVector, contentDescription: String?, size: Int, tint: Color) {
+    Icon(imageVector, contentDescription, modifier = Modifier.size(size.dp), tint = tint)
 }
 
 
@@ -224,6 +272,7 @@ fun ApplicationStatusCard(app: JobApplication, onJobClick: (String) -> Unit) {
         ApplicationStatus.ACCEPTED -> "Hired / Approved (काम मिला)" to Color(0xFF388E3C) // Green
         ApplicationStatus.COMPLETED -> "Completed (पूर्ण हुआ)" to Color(0xFF1976D2) // Blue
         ApplicationStatus.REJECTED -> "Rejected (अस्वीकृत)" to Color(0xFFD32F2F) // Red
+        ApplicationStatus.CANCELLED -> "Cancelled (रद्द किया)" to Color(0xFF757575) // Gray
     }
 
     Card(
@@ -428,7 +477,12 @@ fun LabourChatsTab(onChatThreadClick: (String) -> Unit) {
 // --- PROFILE & SETTINGS TAB ---
 
 @Composable
-fun LabourProfileTab(onLogoutClick: () -> Unit) {
+fun LabourProfileTab(
+    onSettingsClick: () -> Unit,
+    onProfessionsClick: () -> Unit,
+    onApplicationsClick: () -> Unit,
+    onLogoutClick: () -> Unit
+) {
     val currentUser by RozgarRepository.currentUser.collectAsStateWithLifecycle()
     val isOffline by RozgarRepository.isOffline.collectAsStateWithLifecycle()
     var isUploadingDoc by remember { mutableStateOf(false) }
@@ -438,166 +492,132 @@ fun LabourProfileTab(onLogoutClick: () -> Unit) {
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(24.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        contentPadding = PaddingValues(bottom = 40.dp)
     ) {
         item {
-            // Profile Card Info
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(72.dp)
-                        .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
-                    contentAlignment = Alignment.Center
+            // Profile Header Card
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 2.dp,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(Icons.Filled.Person, contentDescription = null, modifier = Modifier.size(36.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer)
-                }
-                
-                Spacer(modifier = Modifier.width(16.dp))
-
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(currentUser?.name ?: "Worker", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                        if (currentUser?.isVerified == true) {
-                            Spacer(modifier = Modifier.width(6.dp))
-                            VerifiedBadge(size = 18)
-                        }
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Filled.Person, contentDescription = null, modifier = Modifier.size(40.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer)
                     }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(currentUser?.name ?: "Worker", fontWeight = FontWeight.Bold, fontSize = 22.sp)
                     Text(currentUser?.phone ?: "", color = Color.Gray, fontSize = 14.sp)
-                    Text("Role: Daily Wage Worker (Labour)", color = MaterialTheme.colorScheme.primary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    
+                    Surface(
+                        color = Color(0xFFE8F5E9),
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.padding(top = 8.dp)
+                    ) {
+                        Text(
+                            "WORKER / LABOUR", 
+                            color = Color(0xFF2E7D32), 
+                            fontSize = 11.sp, 
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                        )
+                    }
                 }
             }
         }
 
         item {
-            Divider()
+            ProfileSection(title = "Work & Applications") {
+                ProfileMenuItem(
+                    icon = Icons.Filled.Work,
+                    title = "My Professions",
+                    subtitle = "Manage your skills and categories",
+                    onClick = onProfessionsClick
+                )
+                ProfileMenuItem(
+                    icon = Icons.Filled.ListAlt,
+                    title = "My Applications",
+                    subtitle = "Check status of jobs you applied for",
+                    onClick = onApplicationsClick
+                )
+            }
         }
 
         item {
-            // Availability Status Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-            ) {
+            ProfileSection(title = "Availability & Trust") {
                 Row(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
-                        Text("My Availability Today", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                        Text(
-                            text = if (currentUser?.labourProfile?.isAvailable == true) "Available for job invitations" else "Busy / Working",
-                            color = if (currentUser?.labourProfile?.isAvailable == true) Color(0xFF2E7D32) else Color(0xFFC62828),
-                            fontSize = 13.sp
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.EventAvailable, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(24.dp))
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text("Available for Work", fontWeight = FontWeight.Medium, fontSize = 16.sp)
+                            Text("Show your profile to employers", fontSize = 12.sp, color = Color.Gray)
+                        }
                     }
                     Switch(
                         checked = currentUser?.labourProfile?.isAvailable == true,
                         onCheckedChange = { RozgarRepository.toggleAvailability(it) }
                     )
                 }
+                
+                ProfileMenuItem(
+                    icon = Icons.Filled.VerifiedUser,
+                    title = if (currentUser?.isVerified == true) "Aadhaar Verified" else "Verify Aadhaar",
+                    subtitle = if (currentUser?.isVerified == true) "Badge granted" else "Get a verification badge",
+                    titleColor = if (currentUser?.isVerified == true) Color(0xFF2E7D32) else Color.Unspecified,
+                    onClick = { /* TODO: Verification flow */ }
+                )
             }
         }
 
         item {
-            // Aadhaar Verification Box
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Trust Verification", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                    Text("Upload government ID to get a Verified Badge. Verified badge doubles response chance.", fontSize = 12.sp, color = Color.Gray)
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    if (currentUser?.isVerified == true) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.Done, contentDescription = null, tint = Color(0xFF2E7D32))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("ID Verified & Badge Granted!", color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold)
-                        }
-                    } else {
-                        Button(
-                            onClick = {
-                                isUploadingDoc = true
-                                uploadStatus = "Uploading Aadhaar..."
-                                val flow = RozgarRepository.uploadIdDocument("Aadhaar")
-                                scope.launch {
-                                    flow.collectLatest { res ->
-                                        isUploadingDoc = false
-                                        res.fold(
-                                            onSuccess = {
-                                                uploadStatus = "Upload successful! Verified Badge Granted!"
-                                                RozgarRepository.addNotification("Verification Approved", "Your account has been verified successfully.")
-                                            },
-                                            onFailure = { error ->
-                                                uploadStatus = "Error: " + error.localizedMessage
-                                            }
-                                        )
-                                    }
-                                }
-                            },
-                            shape = RoundedCornerShape(8.dp),
-                            enabled = !isUploadingDoc
-                        ) {
-                            if (isUploadingDoc) {
-                                CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White)
-                            } else {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Filled.UploadFile, contentDescription = null)
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Verify Aadhaar (ID Proof)")
-                                }
-                            }
-                        }
-                        uploadStatus?.let {
-                            Text(it, fontSize = 11.sp, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 4.dp))
-                        }
-                    }
-                }
+            ProfileSection(title = "Settings & Support") {
+                ProfileMenuItem(
+                    icon = Icons.Filled.Settings,
+                    title = "Settings",
+                    subtitle = "Language, Appearance, Notifications",
+                    onClick = onSettingsClick
+                )
+                ProfileMenuItem(
+                    icon = Icons.Filled.Help,
+                    title = "Help & Support",
+                    onClick = { /* TODO */ }
+                )
+                ProfileMenuItem(
+                    icon = Icons.Filled.BugReport,
+                    title = "Debug: Offline Mode",
+                    subtitle = "Test app without internet",
+                    onClick = { RozgarRepository.toggleOffline(!isOffline) }
+                )
             }
         }
 
         item {
-            // Offline Mode Simulator Toggle (For testing NFR scenarios)
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDE7)),
-                border = BorderStroke(1.dp, Color(0xFFFBC02D))
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.Lock, contentDescription = null, tint = Color(0xFFF57F17), modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Simulate Offline Mode", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        }
-                        Text("Test how the application behaves when connection is lost.", fontSize = 11.sp, color = Color.DarkGray)
-                    }
-                    Switch(
-                        checked = isOffline,
-                        onCheckedChange = { RozgarRepository.toggleOffline(it) }
-                    )
-                }
-            }
-        }
-
-        item {
-            PrimaryLargeButton(
-                text = "Logout Account",
+            Spacer(modifier = Modifier.height(24.dp))
+            ProfileMenuItem(
+                icon = Icons.Filled.Logout,
+                title = "Logout Account",
+                titleColor = Color.Red,
                 onClick = {
                     RozgarRepository.logout()
                     onLogoutClick()
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                }
             )
+            Spacer(modifier = Modifier.height(40.dp))
         }
     }
 }

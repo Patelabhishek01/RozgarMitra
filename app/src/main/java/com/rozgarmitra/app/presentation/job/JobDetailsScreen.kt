@@ -48,7 +48,9 @@ fun JobDetailsScreen(
     }
 
     val isOwner = job.ownerId == currentUser?.id
-    val hasApplied = applications.any { it.jobId == jobId && it.labourId == currentUser?.id }
+    val userApp = applications.firstOrNull { it.jobId == jobId && it.labourId == currentUser?.id }
+    val hasApplied = userApp != null
+    val isFilled = job.status == JobStatus.FILLED || job.acceptedWorkersCount >= job.numberOfWorkersRequired || job.status == JobStatus.CLOSED
 
     var isActionLoading by remember { mutableStateOf(false) }
     var actionError by remember { mutableStateOf<String?>(null) }
@@ -86,51 +88,71 @@ fun JobDetailsScreen(
                         OutlinedIconButton(
                             onClick = {
                                 if (currentUser == null) {
-                                    RozgarRepository.setPendingAction { onNavigateToChat("thread_" + job.ownerId) }
                                     onNavigateToLogin()
-                                } else onNavigateToChat("thread_" + job.ownerId)
+                                } else {
+                                    scope.launch {
+                                        RozgarRepository.getOrCreateConversation(
+                                            jobId = job.id,
+                                            applicationId = userApp?.id ?: "",
+                                            targetUserId = job.ownerId
+                                        ).collect { res ->
+                                            res.fold(
+                                                onSuccess = { threadId -> onNavigateToChat(threadId) },
+                                                onFailure = { err -> actionError = err.localizedMessage }
+                                            )
+                                        }
+                                    }
+                                }
                             },
                             modifier = Modifier.size(56.dp),
                             shape = RoundedCornerShape(12.dp),
                             border = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray)
                         ) {
-                            Icon(Icons.Filled.Chat, contentDescription = "Chat", tint = MaterialTheme.colorScheme.primary)
+                            Icon(Icons.Filled.Chat, contentDescription = "Chat Owner", tint = MaterialTheme.colorScheme.primary)
                         }
                     }
 
+                    val buttonText = when {
+                        isOwner -> "Manage Applicants"
+                        userApp?.status == ApplicationStatus.ACCEPTED -> "Accepted"
+                        userApp?.status == ApplicationStatus.REJECTED -> "Application Rejected"
+                        userApp != null -> "Response Sent"
+                        isFilled -> "Job Filled"
+                        else -> "Respond to Job"
+                    }
+
+                    val buttonColor = when {
+                        userApp?.status == ApplicationStatus.ACCEPTED -> Color(0xFF2E7D32)
+                        userApp?.status == ApplicationStatus.REJECTED -> Color(0xFFC62828)
+                        userApp != null -> Color(0xFF1565C0)
+                        isFilled -> Color.Gray
+                        else -> MaterialTheme.colorScheme.primary
+                    }
+
                     PrimaryLargeButton(
-                        text = when {
-                            isOwner -> "Manage Job"
-                            hasApplied -> "Applied Successfully"
-                            else -> "Apply for Job"
-                        },
+                        text = buttonText,
                         onClick = {
-                            if (currentUser == null) {
-                                RozgarRepository.setPendingAction {
-                                    // This will trigger the apply logic once return
-                                    // Actually, better to just return to details and let user click again?
-                                    // User requirement: "Return to the same job/action"
-                                }
+                            if (isOwner) {
+                                onBackClick()
+                            } else if (currentUser == null) {
                                 onNavigateToLogin()
-                            } else if (!isOwner && !hasApplied) {
+                            } else if (!hasApplied && !isFilled) {
                                 isActionLoading = true
                                 actionError = null
                                 scope.launch {
                                     RozgarRepository.applyForJob(job.id).collectLatest { res ->
                                         isActionLoading = false
                                         res.fold(
-                                            onSuccess = { /* Success */ },
+                                            onSuccess = { },
                                             onFailure = { err -> actionError = err.localizedMessage }
                                         )
                                     }
                                 }
                             }
                         },
-                        enabled = !hasApplied,
+                        enabled = isOwner || (!hasApplied && !isFilled),
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (hasApplied) Color(0xFF2E7D32) else MaterialTheme.colorScheme.primary
-                        )
+                        colors = ButtonDefaults.buttonColors(containerColor = buttonColor)
                     )
                 }
             }
@@ -143,6 +165,15 @@ fun JobDetailsScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(20.dp)
             ) {
+                AnimatedVisibility(visible = actionError != null) {
+                    Text(
+                        text = actionError ?: "",
+                        color = Color.Red,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                }
+
                 // Category Tag
                 Surface(
                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
@@ -179,18 +210,26 @@ fun JobDetailsScreen(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
+                    } else if (isFilled) {
+                        Surface(color = Color(0xFFECEFF1), shape = RoundedCornerShape(4.dp)) {
+                            Text(
+                                "FILLED",
+                                color = Color(0xFF455A64),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
                     }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Key Info Row
-                Row(modifier = Modifier.fillMaxWidth()) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     InfoItem(icon = Icons.Filled.LocationOn, label = "Distance", value = "${String.format("%.1f", job.distanceKm)} km")
-                    Spacer(modifier = Modifier.width(24.dp))
-                    InfoItem(icon = Icons.Filled.Schedule, label = "Duration", value = "${job.durationDays} Days")
-                    Spacer(modifier = Modifier.width(24.dp))
-                    InfoItem(icon = Icons.Filled.Timer, label = "Daily Hours", value = "${job.hoursPerDay} Hrs")
+                    InfoItem(icon = Icons.Filled.Event, label = "Date & Time", value = "${job.date.ifBlank { "Today" }} • ${job.startTime.ifBlank { "8 AM" }}")
+                    InfoItem(icon = Icons.Filled.Group, label = "Workers", value = "${job.acceptedWorkersCount}/${job.numberOfWorkersRequired} Hired")
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -206,12 +245,13 @@ fun JobDetailsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Offered Daily Wage", fontSize = 13.sp, color = Color(0xFF33691E))
-                            Text("₹${job.wage}", fontSize = 32.sp, fontWeight = FontWeight.Black, color = Color(0xFF2E7D32))
+                            Text("Offered Wage", fontSize = 13.sp, color = Color(0xFF33691E))
+                            Text("₹${job.wage} / ${job.wageType}", fontSize = 28.sp, fontWeight = FontWeight.Black, color = Color(0xFF2E7D32))
                         }
                         Icon(Icons.Filled.Payments, contentDescription = null, tint = Color(0xFF2E7D32), modifier = Modifier.size(40.dp))
                     }
                 }
+
 
                 Spacer(modifier = Modifier.height(24.dp))
 

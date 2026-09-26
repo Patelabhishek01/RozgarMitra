@@ -82,7 +82,10 @@ fun JobResultsScreen(
                     JobFeedCard(
                         job = job,
                         onClick = { onJobClick(job.id) },
-                        onApplyClick = onNavigateToLogin
+                        onApplyClick = {
+                            RozgarRepository.setPendingAction { /* Action will be handled on return */ }
+                            onNavigateToLogin()
+                        }
                     )
                 }
             }

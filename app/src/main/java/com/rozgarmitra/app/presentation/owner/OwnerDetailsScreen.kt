@@ -19,6 +19,7 @@ import com.rozgarmitra.app.presentation.components.LoadingOverlay
 import com.rozgarmitra.app.presentation.components.PrimaryLargeButton
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -147,16 +148,18 @@ fun OwnerDetailsScreen(
                         
                         val flow = RozgarRepository.completeOwnerProfile(
                             address = address,
-                            companyName = companyName
+                            company = companyName
                         )
                         scope.launch {
                             flow.collectLatest { result ->
-                                isLoading = false
                                 result.fold(
                                     onSuccess = {
+                                        delay(500)
+                                        isLoading = false
                                         onProfileCompleted()
                                     },
                                     onFailure = { error ->
+                                        isLoading = false
                                         errorMessage = error.localizedMessage ?: "Failed to save profile."
                                     }
                                 )

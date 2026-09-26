@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
+import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Engineering
@@ -15,23 +17,32 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rozgarmitra.app.data.Role
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.presentation.components.LoadingOverlay
 import com.rozgarmitra.app.presentation.components.PrimaryLargeButton
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
-    phone: String,
+    identifier: String, // Can be phone or email
     onLabourRegistered: () -> Unit,
     onOwnerRegistered: () -> Unit
 ) {
     var fullName by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") } 
+    val isEmail = identifier.contains("@") || identifier == "email_user"
+    
+    // Determine if we need to show password field (only for new Email accounts, not Google)
+    val currentUser = RozgarRepository.currentUser.collectAsState().value
+    val needsPassword = isEmail && FirebaseAuth.getInstance().currentUser == null
+    
     var selectedRole by remember { mutableStateOf<Role?>(null) }
     var selectedLanguage by remember { mutableStateOf("English") }
     var expandedLangDropdown by remember { mutableStateOf(false) }
@@ -103,18 +114,18 @@ fun RegisterScreen(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    // Mobile (Read Only)
+                    // Identifier Field
                     Text(
-                        text = "Mobile Number (Verified)",
+                        text = if (isEmail) "Email Address" else "Mobile Number (Verified)",
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
                         color = Color.Gray
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
-                        value = "+91 $phone",
+                        value = if (isEmail && identifier == "email_user") "" else if (isEmail) identifier else "+91 $identifier",
                         onValueChange = {},
-                        enabled = false,
+                        enabled = isEmail && identifier == "email_user", // Only allow edit if it's a new email user
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(58.dp),
@@ -124,6 +135,25 @@ fun RegisterScreen(
                             disabledBorderColor = MaterialTheme.colorScheme.outlineVariant
                         )
                     )
+
+                    if (needsPassword) {
+                        Spacer(modifier = Modifier.height(20.dp))
+                        Text(
+                            text = "Create Password",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = password,
+                            onValueChange = { password = it },
+                            modifier = Modifier.fillMaxWidth().height(58.dp),
+                            placeholder = { Text("Minimum 6 characters") },
+                            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(24.dp))
 
@@ -286,22 +316,33 @@ fun RegisterScreen(
                         isLoading = true
                         errorMessage = null
                         
-                        val flow = RozgarRepository.register(fullName, phone, role, selectedLanguage)
+                        val flow = if (needsPassword) {
+                            RozgarRepository.registerWithEmail(identifier, password, fullName, role, selectedLanguage)
+                        } else {
+                            // Already authenticated via Google or Phone
+                            RozgarRepository.register(fullName, identifier, role, selectedLanguage)
+                        }
+                        
                         scope.launch {
-                            flow.collectLatest { result ->
-                                isLoading = false
-                                result.fold(
-                                    onSuccess = {
-                                        if (role == Role.LABOUR) {
-                                            onLabourRegistered()
-                                        } else {
-                                            onOwnerRegistered()
+                            try {
+                                flow.collect { result ->
+                                    result.fold(
+                                        onSuccess = {
+                                            // Ensure loading is cleared before navigating
+                                            delay(500)
+                                            isLoading = false
+                                            if (role == Role.LABOUR) onLabourRegistered()
+                                            else onOwnerRegistered()
+                                        },
+                                        onFailure = { error ->
+                                            isLoading = false
+                                            errorMessage = error.localizedMessage ?: "Registration failed."
                                         }
-                                    },
-                                    onFailure = { error ->
-                                        errorMessage = error.localizedMessage ?: "Registration failed."
-                                    }
-                                )
+                                    )
+                                }
+                            } catch (e: Exception) {
+                                isLoading = false
+                                errorMessage = "Unexpected error: ${e.localizedMessage}"
                             }
                         }
                     },

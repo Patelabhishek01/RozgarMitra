@@ -163,16 +163,15 @@ fun RatingsScreen(
                     onClick = {
                         isLoading = true
                         errorMessage = null
-                        val flow = RozgarRepository.submitRating(
-                            jobId = jobId,
-                            targetUserId = "worker_1", // Hired worker placeholder
-                            stars = (skillRating + punctualityRating + behaviourRating) / 3f,
-                            comment = commentText
-                        )
                         scope.launch {
-                            flow.collectLatest { res ->
+                            RozgarRepository.submitRating(
+                                jobId = jobId,
+                                targetUserId = "worker_1", 
+                                stars = (skillRating + punctualityRating + behaviourRating) / 3f,
+                                comment = commentText
+                            ).collect { result ->
                                 isLoading = false
-                                res.fold(
+                                result.fold(
                                     onSuccess = {
                                         RozgarRepository.addNotification("Rating Submitted", "Thank you for reviewing the worker.")
                                         onSubmitSuccess()

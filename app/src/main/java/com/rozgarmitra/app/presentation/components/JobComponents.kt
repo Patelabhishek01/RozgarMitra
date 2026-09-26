@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rozgarmitra.app.data.Job
 import com.rozgarmitra.app.data.RozgarRepository
 import kotlinx.coroutines.flow.collectLatest
@@ -33,6 +34,13 @@ fun JobFeedCard(
     var applyError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
+    val currentUser = RozgarRepository.currentUser.value
+    val applications by RozgarRepository.applications.collectAsStateWithLifecycle()
+    val userApp = applications.firstOrNull { app -> app.jobId == job.id && app.labourId == currentUser?.id }
+
+
+    val isFilled = job.status == com.rozgarmitra.app.data.JobStatus.FILLED || job.acceptedWorkersCount >= job.numberOfWorkersRequired
+
     val icon = when (job.category) {
         "Mason" -> Icons.Filled.Build
         "Electrician" -> Icons.Filled.FlashOn
@@ -48,8 +56,8 @@ fun JobFeedCard(
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp),
-        border = BorderStroke(1.dp, Color(0xFFF0F0F0)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        border = BorderStroke(1.dp, Color(0xFFEFEFEF)),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -73,13 +81,13 @@ fun JobFeedCard(
                             )
                         }
                     }
-                    
+
                     Spacer(modifier = Modifier.width(12.dp))
-                    
+
                     Column {
                         Text(
                             text = job.title,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.ExtraBold,
                             fontSize = 16.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -106,30 +114,64 @@ fun JobFeedCard(
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }
+                } else if (isFilled) {
+                    Surface(
+                        color = Color(0xFFECEFF1),
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            text = "FILLED",
+                            color = Color(0xFF455A64),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Metadata rows: Location, Date/Time, Workers needed, Distance
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.LocationOn, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(15.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "${job.location} • ${String.format("%.1f", job.distanceKm)} km away",
+                        fontSize = 13.sp,
+                        color = Color.DarkGray
+                    )
+                }
+
+                if (job.date.isNotBlank() || job.startTime.isNotBlank()) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.Event, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(15.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "${job.date.ifBlank { "Today" }} • ${job.startTime.ifBlank { "8:00 AM" }}",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                    }
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.Group, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(15.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "${job.numberOfWorkersRequired} workers needed (${job.acceptedWorkersCount} hired)",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(14.dp))
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    Icons.Filled.LocationOn,
-                    contentDescription = null,
-                    tint = Color.LightGray,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "${job.location} • ${String.format("%.1f", job.distanceKm)} km away",
-                    fontSize = 13.sp,
-                    color = Color.Gray
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
             Divider(color = Color(0xFFF5F5F5))
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -143,17 +185,33 @@ fun JobFeedCard(
                         color = Color(0xFF2E7D32)
                     )
                     Text(
-                        text = "Per Day",
+                        text = "/ ${job.wageType}",
                         fontSize = 11.sp,
                         color = Color.Gray,
                         fontWeight = FontWeight.Medium
                     )
                 }
 
+                val buttonText = when {
+                    userApp?.status == com.rozgarmitra.app.data.ApplicationStatus.ACCEPTED -> "Accepted 🎉"
+                    userApp?.status == com.rozgarmitra.app.data.ApplicationStatus.REJECTED -> "Not Selected"
+                    userApp != null -> "Response Sent ✓"
+                    isFilled -> "Job Filled"
+                    else -> "Respond to Job"
+                }
+
+                val buttonColor = when {
+                    userApp?.status == com.rozgarmitra.app.data.ApplicationStatus.ACCEPTED -> Color(0xFF2E7D32)
+                    userApp != null -> Color(0xFF1565C0)
+                    isFilled -> Color.Gray
+                    else -> MaterialTheme.colorScheme.primary
+                }
+
                 Button(
                     onClick = {
-                        val user = RozgarRepository.currentUser.value
-                        if (user == null) {
+                        if (userApp != null || isFilled) {
+                            onClick()
+                        } else if (currentUser == null) {
                             onApplyClick()
                         } else {
                             isApplying = true
@@ -162,9 +220,7 @@ fun JobFeedCard(
                                 RozgarRepository.applyForJob(job.id).collectLatest { result ->
                                     isApplying = false
                                     result.fold(
-                                        onSuccess = {
-                                            RozgarRepository.addNotification("Applied!", "Your application for ${job.title} was sent.")
-                                        },
+                                        onSuccess = {},
                                         onFailure = { error ->
                                             applyError = error.localizedMessage
                                         }
@@ -173,28 +229,29 @@ fun JobFeedCard(
                             }
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                    colors = ButtonDefaults.buttonColors(containerColor = buttonColor),
                     shape = RoundedCornerShape(10.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    modifier = Modifier.height(40.dp),
-                    enabled = !isApplying
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+                    modifier = Modifier.height(42.dp),
+                    enabled = !isApplying && (userApp != null || !isFilled)
                 ) {
                     if (isApplying) {
                         CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
                     } else {
-                        Text("Apply Now", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Text(buttonText, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     }
                 }
             }
-            
+
             if (applyError != null) {
                 Text(
                     text = applyError ?: "",
                     color = Color.Red,
                     fontSize = 11.sp,
-                    modifier = Modifier.padding(top = 4.dp)
+                    modifier = Modifier.padding(top = 6.dp)
                 )
             }
         }
     }
 }
+

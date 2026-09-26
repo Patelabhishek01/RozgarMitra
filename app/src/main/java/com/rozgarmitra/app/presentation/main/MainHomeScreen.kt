@@ -33,10 +33,21 @@ fun MainHomeScreen(
     onNavigateToSeeAll: (String, String) -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToProfessions: () -> Unit,
-    onNavigateToApplications: () -> Unit
+    onNavigateToApplications: () -> Unit,
+    onNavigateToWorkerHome: () -> Unit,
+    onNavigateToOwnerHome: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(0) }
     val currentUser by RozgarRepository.currentUser.collectAsStateWithLifecycle()
+    
+    // Auto-redirect if logged in
+    LaunchedEffect(currentUser) {
+        currentUser?.let {
+            if (it.role == Role.LABOUR) onNavigateToWorkerHome()
+            else if (it.role == Role.OWNER) onNavigateToOwnerHome()
+        }
+    }
+
     val isOffline by RozgarRepository.isOffline.collectAsStateWithLifecycle()
     val notifications by RozgarRepository.notifications.collectAsStateWithLifecycle()
     
@@ -89,7 +100,10 @@ fun MainHomeScreen(
             when (selectedTab) {
                 0 -> HomeFeedTab(
                     onJobClick = onNavigateToJobDetails,
-                    onApplyClick = onNavigateToLogin,
+                    onApplyClick = {
+                        RozgarRepository.setPendingAction { /* Logic to resume apply */ }
+                        onNavigateToLogin()
+                    },
                     onNavigateToLogin = onNavigateToLogin,
                     onSeeAllUrgent = { onNavigateToSeeAll("Urgent Jobs", "urgent") },
                     onSeeAllNearby = { onNavigateToSeeAll("Nearby Jobs", "nearby") },
@@ -98,7 +112,10 @@ fun MainHomeScreen(
                 )
                 1 -> SearchTab(
                     onJobClick = onNavigateToJobDetails,
-                    onApplyClick = onNavigateToLogin
+                    onApplyClick = {
+                        RozgarRepository.setPendingAction { /* Logic to resume apply */ }
+                        onNavigateToLogin()
+                    }
                 )
                 2 -> {
                     // This is reached only if logged in
@@ -119,10 +136,7 @@ fun MainHomeScreen(
     }
 
     if (showNotifDialog) {
-        com.rozgarmitra.app.presentation.components.NotificationDialog(
-            notifications = notifications,
-            onDismiss = { showNotifDialog = false }
-        )
+        // Notification dialog removed as it is now in Settings or TopBar
     }
 }
 

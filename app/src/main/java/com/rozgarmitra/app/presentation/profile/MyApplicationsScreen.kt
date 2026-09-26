@@ -77,6 +77,7 @@ fun ApplicationCard(title: String, status: ApplicationStatus, onClick: () -> Uni
         ApplicationStatus.ACCEPTED -> Color(0xFF2E7D32)
         ApplicationStatus.REJECTED -> Color(0xFFD32F2F)
         ApplicationStatus.COMPLETED -> Color(0xFF455A64)
+        ApplicationStatus.CANCELLED -> Color(0xFF757575)
     }
 
     Card(

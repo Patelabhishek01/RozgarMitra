@@ -170,11 +170,10 @@ fun ApplicantsScreen(
                                             OutlinedButton(
                                                 onClick = {
                                                     isActionLoading = true
-                                                    val flow = RozgarRepository.rejectApplicant(app.id)
                                                     scope.launch {
-                                                        flow.collectLatest { res ->
+                                                        RozgarRepository.rejectApplicant(app.id).collect { result ->
                                                             isActionLoading = false
-                                                            res.fold(
+                                                            result.fold(
                                                                 onSuccess = {},
                                                                 onFailure = { err -> actionError = err.localizedMessage }
                                                             )
@@ -196,11 +195,10 @@ fun ApplicantsScreen(
                                             Button(
                                                 onClick = {
                                                     isActionLoading = true
-                                                    val flow = RozgarRepository.acceptApplicant(app.id)
                                                     scope.launch {
-                                                        flow.collectLatest { res ->
+                                                        RozgarRepository.acceptApplicant(app.id).collect { result ->
                                                             isActionLoading = false
-                                                            res.fold(
+                                                            result.fold(
                                                                 onSuccess = {},
                                                                 onFailure = { err -> actionError = err.localizedMessage }
                                                             )

@@ -64,7 +64,17 @@ fun AppNavGraph() {
                 onNavigateToSeeAll = { title, filter -> navController.navigate(Screen.JobResults.createRoute(title, filter)) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 onNavigateToProfessions = { navController.navigate(Screen.MyProfessions.route) },
-                onNavigateToApplications = { navController.navigate(Screen.MyApplications.route) }
+                onNavigateToApplications = { navController.navigate(Screen.MyApplications.route) },
+                onNavigateToWorkerHome = {
+                    navController.navigate(Screen.WorkerHome.route) {
+                        popUpTo(Screen.MainHome.route) { inclusive = true }
+                    }
+                },
+                onNavigateToOwnerHome = {
+                    navController.navigate(Screen.OwnerHome.route) {
+                        popUpTo(Screen.MainHome.route) { inclusive = true }
+                    }
+                }
             )
         }
 
@@ -110,6 +120,32 @@ fun AppNavGraph() {
                 onSendOtpSuccess = { phone ->
                     navController.navigate(Screen.Otp.createRoute(phone))
                 },
+                onLoginSuccess = { profileCompleted ->
+                    val user = RozgarRepository.currentUser.value
+                    if (profileCompleted) {
+                        val route = if (user?.role == Role.LABOUR) Screen.WorkerHome.route else Screen.OwnerHome.route
+                        navController.navigate(route) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
+                        }
+                    } else {
+                        // User exists but profile not finished. 
+                        // If they have a role, send to Details. If not, send to Register.
+                        if (user?.role != null) {
+                            val route = if (user.role == Role.LABOUR) Screen.LabourDetails.route else Screen.OwnerDetails.route
+                            navController.navigate(route) {
+                                popUpTo(Screen.Login.route) { inclusive = true }
+                            }
+                        } else {
+                            navController.navigate(Screen.Register.createRoute(user?.phone?.ifBlank { "user" } ?: "user")) {
+                                popUpTo(Screen.Login.route) { inclusive = true }
+                            }
+                        }
+                    }
+                },
+                onNavigateToRegister = { id, pass ->
+                    // Pass identifier and password if available
+                    navController.navigate(Screen.Register.createRoute(id))
+                },
                 onLanguageSelectClick = {
                     navController.navigate(Screen.LanguageSelect.route)
                 }
@@ -146,9 +182,9 @@ fun AppNavGraph() {
             route = Screen.Register.route,
             arguments = listOf(navArgument("phone") { type = NavType.StringType })
         ) { backStackEntry ->
-            val phone = backStackEntry.arguments?.getString("phone") ?: ""
+            val identifier = backStackEntry.arguments?.getString("phone") ?: ""
             RegisterScreen(
-                phone = phone,
+                identifier = identifier,
                 onLabourRegistered = {
                     navController.navigate(Screen.LabourDetails.route)
                 },
@@ -186,6 +222,9 @@ fun AppNavGraph() {
                 onChatThreadClick = { threadId ->
                     navController.navigate(Screen.Chat.createRoute(threadId))
                 },
+                onSettingsClick = { navController.navigate(Screen.Settings.route) },
+                onProfessionsClick = { navController.navigate(Screen.MyProfessions.route) },
+                onApplicationsClick = { navController.navigate(Screen.MyApplications.route) },
                 onLogoutClick = {
                     RozgarRepository.logout()
                     navController.navigate(Screen.MainHome.route) {
@@ -206,6 +245,7 @@ fun AppNavGraph() {
                 onChatThreadClick = { threadId ->
                     navController.navigate(Screen.Chat.createRoute(threadId))
                 },
+                onSettingsClick = { navController.navigate(Screen.Settings.route) },
                 onLogoutClick = {
                     RozgarRepository.logout()
                     navController.navigate(Screen.MainHome.route) {

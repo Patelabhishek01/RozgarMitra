@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.rozgarmitra.app.data.Role
 import com.rozgarmitra.app.data.RozgarRepository
 
 val professions = listOf("All Jobs", "Mason", "Painter", "Electrician", "Plumber", "Carpenter", "Construction", "Driver", "Cleaner", "Helper")
@@ -45,8 +46,6 @@ fun HomeFeedTab(
     }
 
     val urgentJobs = filteredJobs.filter { it.isUrgent }
-    val regularJobs = filteredJobs.sortedBy { it.distanceKm }
-    val popularJobs = filteredJobs.sortedByDescending { it.ownerRating }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -56,6 +55,7 @@ fun HomeFeedTab(
         item {
             HomeHeader(
                 userName = currentUser?.name,
+                role = currentUser?.role,
                 onLoginClick = onNavigateToLogin,
                 onNotificationClick = onNotificationClick
             )
@@ -85,7 +85,7 @@ fun HomeFeedTab(
             item {
                 SectionHeader(
                     title = if (selectedProfessions.size == 1 && !selectedProfessions.contains("All Jobs")) 
-                        "Urgent ${selectedProfessions.first()} Jobs" else "Urgent Jobs Near You",
+                        "Urgent ${selectedProfessions.first()} Jobs" else "Urgent Jobs",
                     onSeeAllClick = onSeeAllUrgent
                 )
             }
@@ -95,7 +95,7 @@ fun HomeFeedTab(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier.padding(bottom = 16.dp)
                 ) {
-                    items(urgentJobs.take(5)) { job ->
+                    items(urgentJobs, key = { "urgent_" + it.id.ifBlank { it.title } }) { job ->
                         Box(modifier = Modifier.width(300.dp)) {
                             JobFeedCard(job = job, onClick = { onJobClick(job.id) }, onApplyClick = onApplyClick)
                         }
@@ -104,31 +104,16 @@ fun HomeFeedTab(
             }
         }
 
-        // 5. Jobs Near You
-        if (regularJobs.isNotEmpty()) {
+        // 5. All Active Jobs (Public feed)
+        if (filteredJobs.isNotEmpty()) {
             item {
                 SectionHeader(
                     title = if (selectedProfessions.size == 1 && !selectedProfessions.contains("All Jobs")) 
-                        "${selectedProfessions.first()} Jobs Near You" else "Jobs Near You",
+                        "${selectedProfessions.first()} Jobs" else "Active Jobs Posted by Owners",
                     onSeeAllClick = onSeeAllNearby
                 )
             }
-            items(regularJobs.take(3)) { job ->
-                Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                    JobFeedCard(job = job, onClick = { onJobClick(job.id) }, onApplyClick = onApplyClick)
-                }
-            }
-        }
-
-        // 6. Popular Jobs
-        if (popularJobs.isNotEmpty()) {
-            item {
-                SectionHeader(
-                    title = "Popular Jobs",
-                    onSeeAllClick = onSeeAllPopular
-                )
-            }
-            items(popularJobs.take(3)) { job ->
+            items(filteredJobs, key = { it.id.ifBlank { it.title + it.createdAt } }) { job ->
                 Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                     JobFeedCard(job = job, onClick = { onJobClick(job.id) }, onApplyClick = onApplyClick)
                 }
@@ -146,7 +131,10 @@ fun HomeFeedTab(
                         Icon(Icons.Filled.SearchOff, contentDescription = null, modifier = Modifier.size(48.dp), tint = Color.Gray)
                         Spacer(modifier = Modifier.height(16.dp))
                         Text("No matching jobs found", fontWeight = FontWeight.Bold, color = Color.Gray)
-                        TextButton(onClick = { selectedProfessions = setOf("All Jobs") }) {
+                        TextButton(onClick = { 
+                            selectedProfessions = setOf("All Jobs")
+                            RozgarRepository.observeJobs()
+                        }) {
                             Text("Browse All Jobs")
                         }
                     }
@@ -166,6 +154,7 @@ fun HomeFeedTab(
 @Composable
 fun HomeHeader(
     userName: String?,
+    role: Role?,
     onLoginClick: () -> Unit,
     onNotificationClick: () -> Unit
 ) {
@@ -182,7 +171,23 @@ fun HomeHeader(
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Black
             )
-            Text("Find your work for today", fontSize = 14.sp, color = Color.Gray)
+            if (role != null) {
+                Surface(
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(4.dp),
+                    modifier = Modifier.padding(top = 4.dp)
+                ) {
+                    Text(
+                        text = if (role == Role.OWNER) "EMPLOYER / OWNER" else "WORKER / LABOUR",
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            } else {
+                Text("Find your work for today", fontSize = 14.sp, color = Color.Gray)
+            }
         }
 
         Row(verticalAlignment = Alignment.CenterVertically) {

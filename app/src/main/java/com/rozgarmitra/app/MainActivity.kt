@@ -17,6 +17,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         
         RozgarRepository.initialize(this)
+        
+        // Uncomment the line below and run the app ONCE to fill your database with sample jobs
+        // RozgarRepository.seedDatabase()
 
         setContent {
             val themeMode by RozgarRepository.themeMode.collectAsStateWithLifecycle()

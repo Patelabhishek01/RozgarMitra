@@ -2,14 +2,21 @@ package com.rozgarmitra.app.data
 
 import android.app.Activity
 import android.content.Context
+import android.util.Log
 import com.google.firebase.FirebaseException
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +24,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
 import java.util.concurrent.TimeUnit
@@ -26,9 +32,15 @@ object RozgarRepository {
 
     private val scope = CoroutineScope(Dispatchers.Default)
     private var preferenceManager: PreferenceManager? = null
-    
+
     private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
     private val db: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
+
+    private var jobsListener: ListenerRegistration? = null
+    private var userListener: ListenerRegistration? = null
+    private var applicationsListener: ListenerRegistration? = null
+    private var notificationsListener: ListenerRegistration? = null
+    private var conversationsListener: ListenerRegistration? = null
 
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser
@@ -70,50 +82,252 @@ object RozgarRepository {
     }
 
     init {
-        // Preload mock data
-        loadMockData()
+        // Mock data omitted for live Firestore usage
     }
 
     fun initialize(context: Context) {
         preferenceManager = PreferenceManager(context)
         val lang = preferenceManager?.getLanguage()
         _isLanguageSelected.value = lang != null
-        
+
         val theme = preferenceManager?.getTheme() ?: ThemeMode.SYSTEM
         _themeMode.value = theme
-        
-        // Check for Firebase Auth session
-        val firebaseUser = auth.currentUser
-        if (firebaseUser != null) {
-            fetchUserProfile(firebaseUser.uid)
-        }
-        
-        // Fetch jobs from Firestore
+
+        // Always observe jobs for public and logged in users
         observeJobs()
+
+        // Auth state listener ensures real-time updates when user switches accounts or logs out
+        auth.addAuthStateListener { firebaseAuth ->
+            val firebaseUser = firebaseAuth.currentUser
+            if (firebaseUser != null) {
+                fetchUserProfile(firebaseUser.uid)
+            } else {
+                userListener?.remove()
+                userListener = null
+                applicationsListener?.remove()
+                applicationsListener = null
+                notificationsListener?.remove()
+                notificationsListener = null
+                conversationsListener?.remove()
+                conversationsListener = null
+                _currentUser.value = null
+                observeJobs()
+            }
+        }
     }
 
     private fun fetchUserProfile(uid: String) {
-        db.collection("users").document(uid).get()
-            .addOnSuccessListener { document ->
-                val user = document.toObject(User::class.java)
-                _currentUser.value = user
+        userListener?.remove()
+        userListener = db.collection("users").document(uid)
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    Log.e("Firebase", "User profile listen failed", e)
+                    return@addSnapshotListener
+                }
+                if (snapshot != null && snapshot.exists()) {
+                    val user = snapshot.toObject(User::class.java)
+                    _currentUser.value = user
+                    user?.id?.let { userId ->
+                        observeUserApplications(userId)
+                        observeUserNotifications(userId)
+                        observeUserConversations(userId)
+                    }
+                }
+            }
+        observeJobs()
+    }
+
+    fun observeJobs() {
+        jobsListener?.remove()
+        Log.d("Firebase", "Starting Jobs observer...")
+        jobsListener = db.collection("jobs")
+            .addSnapshotListener { snapshots, e ->
+                if (e != null) {
+                    Log.e("Firebase", "Jobs observer failed", e)
+                    return@addSnapshotListener
+                }
+                if (snapshots != null) {
+                    val jobList = snapshots.documents.mapNotNull { doc -> doc.toJobSafe() }
+                        .sortedByDescending { it.createdAt }
+                    Log.d("Firebase", "Jobs Snapshot received. Total count: ${jobList.size}")
+                    _jobs.value = jobList
+                }
             }
     }
 
-    private fun observeJobs() {
-        db.collection("jobs").whereEqualTo("status", "ACTIVE")
-            .addSnapshotListener { snapshots, e ->
-                if (e != null) return@addSnapshotListener
-                val jobList = snapshots?.toObjects(Job::class.java) ?: emptyList()
-                _jobs.value = jobList
+    private fun DocumentSnapshot.toJobSafe(): Job? {
+        if (!exists()) return null
+        return try {
+            val parsed = toObject(Job::class.java)
+            if (parsed != null) {
+                val finalId = if (parsed.id.isNotBlank()) parsed.id else id
+                parsed.copy(id = finalId)
+            } else null
+        } catch (e: Exception) {
+            try {
+                val title = getString("title") ?: ""
+                val category = getString("category") ?: ""
+                val description = getString("description") ?: ""
+                val location = getString("location") ?: ""
+                val latitude = getDouble("latitude") ?: 0.0
+                val longitude = getDouble("longitude") ?: 0.0
+                val distanceKm = getDouble("distanceKm") ?: 0.0
+                val date = getString("date") ?: ""
+                val startTime = getString("startTime") ?: ""
+                val duration = getString("duration") ?: ""
+                val durationDays = getLong("durationDays")?.toInt() ?: 1
+                val hoursPerDay = getLong("hoursPerDay")?.toInt() ?: 8
+                val numberOfWorkersRequired = getLong("numberOfWorkersRequired")?.toInt() ?: 1
+                val acceptedWorkersCount = getLong("acceptedWorkersCount")?.toInt() ?: 0
+                val wage = getLong("wage")?.toInt() ?: (getDouble("wage")?.toInt() ?: 0)
+                val wageType = getString("wageType") ?: "per day"
+                val perks = (get("perks") as? List<*>)?.mapNotNull { it?.toString() } ?: emptyList()
+                val difficulty = getString("difficulty") ?: "Medium"
+                val skillsRequired = (get("skillsRequired") as? List<*>)?.mapNotNull { it?.toString() } ?: emptyList()
+                val isUrgent = getBoolean("isUrgent") ?: false
+                val ownerId = getString("ownerId") ?: ""
+                val ownerName = getString("ownerName") ?: ""
+                val ownerVerified = getBoolean("ownerVerified") ?: false
+                val ownerRating = getDouble("ownerRating")?.toFloat() ?: 5.0f
+                
+                val statusStr = getString("status") ?: "ACTIVE"
+                val status = try {
+                    JobStatus.valueOf(statusStr.uppercase())
+                } catch (err: Exception) {
+                    JobStatus.ACTIVE
+                }
+                
+                val createdAt = getLong("createdAt") ?: System.currentTimeMillis()
+                val updatedAt = getLong("updatedAt") ?: System.currentTimeMillis()
+
+                Job(
+                    id = id,
+                    title = title,
+                    category = category,
+                    description = description,
+                    location = location,
+                    latitude = latitude,
+                    longitude = longitude,
+                    distanceKm = distanceKm,
+                    date = date,
+                    startTime = startTime,
+                    duration = duration,
+                    durationDays = durationDays,
+                    hoursPerDay = hoursPerDay,
+                    numberOfWorkersRequired = numberOfWorkersRequired,
+                    acceptedWorkersCount = acceptedWorkersCount,
+                    wage = wage,
+                    wageType = wageType,
+                    perks = perks,
+                    difficulty = difficulty,
+                    skillsRequired = skillsRequired,
+                    isUrgent = isUrgent,
+                    ownerId = ownerId,
+                    ownerName = ownerName,
+                    ownerVerified = ownerVerified,
+                    ownerRating = ownerRating,
+                    status = status,
+                    createdAt = createdAt,
+                    updatedAt = updatedAt
+                )
+            } catch (fatal: Exception) {
+                Log.e("Firebase", "Fatal job parsing error for $id", fatal)
+                null
             }
+        }
+    }
+
+    private fun observeUserApplications(uid: String) {
+        val user = _currentUser.value ?: return
+        applicationsListener?.remove()
+        applicationsListener = db.collection("applications")
+            .addSnapshotListener { snapshots, e ->
+                if (e != null) {
+                    Log.e("Firebase", "Applications listener failed", e)
+                    return@addSnapshotListener
+                }
+                if (snapshots != null) {
+                    val allApps = snapshots.toObjects(JobApplication::class.java)
+                    val filtered = if (user.role == Role.LABOUR) {
+                        allApps.filter { it.labourId == uid }
+                    } else {
+                        allApps.filter { it.ownerId == uid || _jobs.value.any { job -> job.ownerId == uid && job.id == it.jobId } }
+                    }
+                    Log.d("Firebase", "Applications Synced: ${filtered.size}")
+                    _applications.value = filtered
+                }
+            }
+    }
+
+    private fun observeUserNotifications(uid: String) {
+        notificationsListener?.remove()
+        notificationsListener = db.collection("notifications")
+            .addSnapshotListener { snapshots, e ->
+                if (e != null) {
+                    Log.e("Firebase", "Notifications listener failed", e)
+                    return@addSnapshotListener
+                }
+                if (snapshots != null) {
+                    val allNotifs = snapshots.toObjects(Notification::class.java)
+                    val userNotifs = allNotifs
+                        .filter { it.recipientUserId == uid }
+                        .sortedByDescending { it.timestamp }
+                    _notifications.value = userNotifs
+                }
+            }
+    }
+
+    private fun observeUserConversations(uid: String) {
+        conversationsListener?.remove()
+        conversationsListener = db.collection("conversations")
+            .addSnapshotListener { snapshots, e ->
+                if (e != null) {
+                    Log.e("Firebase", "Conversations listener failed", e)
+                    return@addSnapshotListener
+                }
+                if (snapshots != null) {
+                    val allThreads = snapshots.toObjects(ChatThread::class.java)
+                    val userThreads = allThreads.filter { uid in it.participants || it.ownerId == uid || it.workerId == uid }
+                    _threads.value = userThreads
+                    
+                    // Observe messages for each active thread
+                    userThreads.forEach { thread ->
+                        observeMessages(thread.id)
+                    }
+                }
+            }
+    }
+
+    fun observeMessages(threadId: String) {
+        db.collection("messages")
+            .whereEqualTo("threadId", threadId)
+            .addSnapshotListener { snapshots, e ->
+                if (e != null) {
+                    Log.e("Firebase", "Messages listener failed", e)
+                    return@addSnapshotListener
+                }
+                if (snapshots != null) {
+                    val messageList = snapshots.toObjects(ChatMessage::class.java).sortedBy { it.timestamp }
+                    val currentMap = _messages.value.toMutableMap()
+                    currentMap[threadId] = messageList
+                    _messages.value = currentMap
+                }
+            }
+    }
+
+    fun seedDatabase() {
+        val mockJobs = listOf(
+            Job("job_1", "Need 3 Masons for Bricklaying", "Mason", "Need bricklayer helpers", "HSR Layout, Bengaluru", 12.91, 77.64, 1.8, "25 Sept", "8:00 AM", "1 Day", 1, 8, 3, 0, 750, "per day", listOf("Food"), "Medium", listOf("Brickwork"), true, "owner_1", "Harish Sharma", true, 4.7f, JobStatus.ACTIVE),
+            Job("job_2", "House Painting Helper", "Painter", "Wall scraper needed", "Koramangala, Bengaluru", 12.93, 77.62, 3.2, "26 Sept", "9:00 AM", "2 Days", 2, 9, 2, 0, 600, "per day", listOf("Food"), "Easy", listOf("Wall Scraping"), false, "owner_2", "Anil Mehta", false, 4.2f, JobStatus.ACTIVE)
+        )
+        mockJobs.forEach { db.collection("jobs").document(it.id).set(it) }
     }
 
     fun setLanguage(language: String) {
         preferenceManager?.setLanguage(language)
         _isLanguageSelected.value = true
         _currentUser.value?.let { user ->
-            _currentUser.value = user.copy(language = language)
+            db.collection("users").document(user.id).update("language", language)
         }
     }
 
@@ -121,7 +335,7 @@ object RozgarRepository {
         _themeMode.value = mode
         preferenceManager?.setTheme(mode)
         _currentUser.value?.let { user ->
-            _currentUser.value = user.copy(theme = mode)
+            db.collection("users").document(user.id).update("theme", mode)
         }
     }
 
@@ -129,337 +343,504 @@ object RozgarRepository {
         _isOffline.value = offline
     }
 
-    fun toggleJobSaved(jobId: String) {
-        val user = _currentUser.value ?: return
-        val currentSaved = user.savedJobIds
-        val newSaved = if (currentSaved.contains(jobId)) {
-            currentSaved - jobId
-        } else {
-            currentSaved + jobId
-        }
-        _currentUser.value = user.copy(savedJobIds = newSaved)
-        // Persist to Firestore
-        scope.launch {
-            db.collection("users").document(user.id).update("savedJobIds", newSaved)
-        }
+    // --- Auth ---
+
+    fun loginWithEmail(email: String, password: String): Flow<Result<User?>> = flow {
+        try {
+            val authResult = auth.signInWithEmailAndPassword(email, password).await()
+            val firebaseUser = authResult.user
+            if (firebaseUser != null) {
+                val doc = db.collection("users").document(firebaseUser.uid).get().await()
+                val user = if (doc.exists()) doc.toObject(User::class.java) else null
+                _currentUser.value = user
+                user?.id?.let { uid ->
+                    observeUserApplications(uid)
+                    observeUserNotifications(uid)
+                    observeUserConversations(uid)
+                }
+                emit(Result.success(user))
+            } else { emit(Result.failure(Exception("Login failed: User null"))) }
+        } catch (e: Exception) { emit(Result.failure(e)) }
     }
 
-    private var verificationId: String? = null
+    fun loginWithGoogle(idToken: String): Flow<Result<User?>> = flow {
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        try {
+            val authResult = auth.signInWithCredential(credential).await()
+            val firebaseUser = authResult.user
+            if (firebaseUser != null) {
+                val doc = db.collection("users").document(firebaseUser.uid).get().await()
+                val user = if (doc.exists()) doc.toObject(User::class.java) else null
+                _currentUser.value = user
+                user?.id?.let { uid ->
+                    observeUserApplications(uid)
+                    observeUserNotifications(uid)
+                    observeUserConversations(uid)
+                }
+                emit(Result.success(user))
+            } else { emit(Result.failure(Exception("Google Sign-In failed"))) }
+        } catch (e: Exception) { emit(Result.failure(e)) }
+    }
 
-    // --- Authentication ---
+    fun registerWithEmail(email: String, password: String, name: String, role: Role, language: String): Flow<Result<User>> = flow {
+        try {
+            val authResult = auth.createUserWithEmailAndPassword(email, password).await()
+            val firebaseUser = authResult.user
+            if (firebaseUser != null) {
+                val user = User(firebaseUser.uid, name, email, role, language, ThemeMode.SYSTEM, false, false)
+                db.collection("users").document(user.id).set(user).await()
+                _currentUser.value = user
+                observeUserApplications(user.id)
+                observeUserNotifications(user.id)
+                observeUserConversations(user.id)
+                emit(Result.success(user))
+            } else { emit(Result.failure(Exception("Registration failed"))) }
+        } catch (e: Exception) { emit(Result.failure(e)) }
+    }
 
     fun login(activity: Activity, phone: String): Flow<Result<Boolean>> = callbackFlow {
         val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
-            override fun onVerificationCompleted(credential: PhoneAuthCredential) {
-                // Not using auto-verification for simplicity
-            }
-
-            override fun onVerificationFailed(e: FirebaseException) {
-                trySend(Result.failure(e))
-            }
-
-            override fun onCodeSent(verificationId: String, token: PhoneAuthProvider.ForceResendingToken) {
-                this@RozgarRepository.verificationId = verificationId
+            override fun onVerificationCompleted(p0: PhoneAuthCredential) {}
+            override fun onVerificationFailed(e: FirebaseException) { trySend(Result.failure(e)) }
+            override fun onCodeSent(id: String, token: PhoneAuthProvider.ForceResendingToken) {
+                verificationId = id
                 trySend(Result.success(true))
             }
         }
-
         val options = PhoneAuthOptions.newBuilder(auth)
             .setPhoneNumber("+91$phone")
             .setTimeout(60L, TimeUnit.SECONDS)
             .setActivity(activity)
             .setCallbacks(callbacks)
             .build()
-            
         PhoneAuthProvider.verifyPhoneNumber(options)
-        
         awaitClose { }
     }
 
-    fun verifyOtp(phone: String, otp: String): Flow<Result<User?>> = flow {
-        val id = verificationId ?: return@flow emit(Result.failure(Exception("Verification ID not found")))
-        val credential = PhoneAuthProvider.getCredential(id, otp)
-        
-        try {
-            val authResult = auth.signInWithCredential(credential).await()
-            val firebaseUser = authResult.user
-            if (firebaseUser != null) {
-                // Fetch profile from Firestore
-                val doc = db.collection("users").document(firebaseUser.uid).get().await()
-                val user = if (doc.exists()) doc.toObject(User::class.java) else null
-                _currentUser.value = user
-                emit(Result.success(user))
-            } else {
-                emit(Result.failure(Exception("Authentication failed")))
-            }
-        } catch (e: Exception) {
-            emit(Result.failure(e))
-        }
-    }
+    private var verificationId: String? = null
 
-    fun setVerificationId(id: String) {
-        this.verificationId = id
+    fun verifyOtp(phone: String, otp: String): Flow<Result<User?>> = flow {
+        val id = verificationId ?: return@flow emit(Result.failure(Exception("Verification Session Expired")))
+        val credential = PhoneAuthProvider.getCredential(id, otp)
+        try {
+            val res = auth.signInWithCredential(credential).await()
+            val uid = res.user?.uid ?: return@flow emit(Result.failure(Exception("Authentication Failed")))
+            val doc = db.collection("users").document(uid).get().await()
+            val user = if (doc.exists()) doc.toObject(User::class.java) else null
+            _currentUser.value = user
+            user?.id?.let { userId ->
+                observeUserApplications(userId)
+                observeUserNotifications(userId)
+                observeUserConversations(userId)
+            }
+            emit(Result.success(user))
+        } catch (e: Exception) { emit(Result.failure(e)) }
     }
 
     fun register(name: String, phone: String, role: Role, language: String): Flow<Result<User>> = flow {
-        val firebaseUser = auth.currentUser ?: return@flow emit(Result.failure(Exception("Not authenticated")))
-        
-        val user = User(
-            id = firebaseUser.uid,
-            name = name,
-            phone = phone,
-            role = role,
-            language = language,
-            isVerified = false,
-            profileCompleted = false
-        )
-        
+        val uid = auth.currentUser?.uid ?: return@flow emit(Result.failure(Exception("Not Authenticated")))
+        val user = User(uid, name, phone, role, language, ThemeMode.SYSTEM, false, false)
         try {
-            db.collection("users").document(user.id).set(user).await()
+            db.collection("users").document(uid).set(user).await()
             _currentUser.value = user
+            observeUserApplications(uid)
+            observeUserNotifications(uid)
+            observeUserConversations(uid)
             emit(Result.success(user))
-        } catch (e: Exception) {
-            emit(Result.failure(e))
-        }
+        } catch (e: Exception) { emit(Result.failure(e)) }
     }
 
     fun logout() {
         auth.signOut()
+        userListener?.remove()
+        userListener = null
+        applicationsListener?.remove()
+        applicationsListener = null
+        notificationsListener?.remove()
+        notificationsListener = null
+        conversationsListener?.remove()
+        conversationsListener = null
+
         _currentUser.value = null
+        _applications.value = emptyList()
+        _threads.value = emptyList()
+        _messages.value = emptyMap()
+        _notifications.value = emptyList()
         preferenceManager?.setLoggedInPhone(null)
+
+        // Refresh jobs observer for guest/logged-out view
+        observeJobs()
     }
 
-    // --- Profile Management ---
+    // --- Profiles ---
 
-    fun completeLabourProfile(skills: List<String>, experience: String, expectedWage: Int): Flow<Result<Boolean>> = flow {
-        if (_isOffline.value) {
-            emit(Result.failure(Exception("Offline: Cannot save profile.")))
-            return@flow
-        }
-        delay(1000)
-        val current = _currentUser.value ?: return@flow
-        val updated = current.copy(
-            profileCompleted = true,
-            labourProfile = LabourProfile(
-                skills = skills,
-                experience = experience,
-                expectedWage = expectedWage,
-                isAvailable = true,
-                rating = 4.0f,
-                completedJobsCount = 0
-            )
-        )
-        _currentUser.value = updated
-        emit(Result.success(true))
+    fun completeLabourProfile(skills: List<String>, experience: String, wage: Int): Flow<Result<Boolean>> = flow {
+        val current = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
+        val updated = current.copy(profileCompleted = true, labourProfile = LabourProfile(skills, experience, wage))
+        try {
+            db.collection("users").document(current.id).set(updated).await()
+            _currentUser.value = updated
+            emit(Result.success(true))
+        } catch (e: Exception) { emit(Result.failure(e)) }
     }
 
-    fun completeOwnerProfile(address: String, companyName: String): Flow<Result<Boolean>> = flow {
-        if (_isOffline.value) {
-            emit(Result.failure(Exception("Offline: Cannot save profile.")))
-            return@flow
-        }
-        delay(1000)
-        val current = _currentUser.value ?: return@flow
-        val updated = current.copy(
-            profileCompleted = true,
-            ownerProfile = OwnerProfile(
-                address = address,
-                companyName = companyName,
-                rating = 4.0f,
-                completedJobsCount = 0
-            )
+    fun completeOwnerProfile(address: String, company: String): Flow<Result<Boolean>> = flow {
+        val current = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
+        val updated = current.copy(profileCompleted = true, ownerProfile = OwnerProfile(address, company))
+        try {
+            db.collection("users").document(current.id).set(updated).await()
+            _currentUser.value = updated
+            emit(Result.success(true))
+        } catch (e: Exception) { emit(Result.failure(e)) }
+    }
+
+    fun suggestNewCategory(name: String, description: String): Flow<Result<Boolean>> = flow {
+        val user = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
+        val suggestion = mapOf(
+            "name" to name,
+            "description" to description,
+            "suggestedBy" to user.id,
+            "timestamp" to System.currentTimeMillis(),
+            "status" to "PENDING"
         )
-        _currentUser.value = updated
-        emit(Result.success(true))
+        try {
+            db.collection("category_suggestions").add(suggestion).await()
+            emit(Result.success(true))
+        } catch (e: Exception) { emit(Result.failure(e)) }
     }
 
     fun toggleAvailability(available: Boolean) {
-        val current = _currentUser.value ?: return
-        if (current.role == Role.LABOUR) {
-            val profile = current.labourProfile ?: LabourProfile()
-            _currentUser.value = current.copy(
-                labourProfile = profile.copy(isAvailable = available)
-            )
+        val user = _currentUser.value ?: return
+        if (user.role == Role.LABOUR) {
+            val profile = user.labourProfile ?: LabourProfile()
+            val updatedProfile = profile.copy(isAvailable = available)
+            val updateMap = mapOf("labourProfile" to updatedProfile)
+
+            db.collection("users").document(user.id)
+                .set(updateMap, SetOptions.merge())
+                .addOnSuccessListener { Log.d("Firebase", "Availability saved: $available") }
         }
     }
 
-    fun uploadIdDocument(docType: String): Flow<Result<Boolean>> = flow {
-        if (_isOffline.value) {
-            emit(Result.failure(Exception("Offline: Document upload failed.")))
-            return@flow
+    fun uploadIdDocument(type: String): Flow<Result<Boolean>> = flow {
+        delay(1000)
+        _currentUser.value?.let { user ->
+            db.collection("users").document(user.id).update("isVerified", true)
         }
-        delay(2000)
-        val current = _currentUser.value ?: return@flow
-        _currentUser.value = current.copy(isVerified = true) 
         emit(Result.success(true))
     }
 
-    // --- Jobs Flow ---
+    // --- Jobs ---
 
     fun postJob(
         title: String,
         category: String,
+        description: String = "",
         location: String,
+        latitude: Double = 0.0,
+        longitude: Double = 0.0,
+        date: String = "",
+        startTime: String = "",
+        duration: String = "",
+        numberOfWorkersRequired: Int = 1,
         wage: Int,
-        durationDays: Int,
-        hoursPerDay: Int,
-        perks: List<String>,
-        difficulty: String,
-        skillsRequired: List<String>,
-        isUrgent: Boolean
+        wageType: String = "per day",
+        days: Int = 1,
+        hours: Int = 8,
+        perks: List<String> = emptyList(),
+        difficulty: String = "Medium",
+        skills: List<String> = emptyList(),
+        urgent: Boolean = false
     ): Flow<Result<Boolean>> = flow {
-        if (_isOffline.value) {
-            emit(Result.failure(Exception("No internet connection. Saved to local drafts.")))
-            return@flow
-        }
-        delay(1500)
-        val current = _currentUser.value ?: return@flow
-        val newJob = Job(
-            id = "job_${UUID.randomUUID().toString().take(6)}",
+        val user = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
+        val jobId = "job_${System.currentTimeMillis()}"
+        val job = Job(
+            id = jobId,
             title = title,
             category = category,
+            description = description,
             location = location,
-            distanceKm = (1..15).random() + Math.random(),
+            latitude = latitude,
+            longitude = longitude,
+            distanceKm = (1..5).random() + Math.random(),
+            date = date,
+            startTime = startTime,
+            duration = duration,
+            durationDays = days,
+            hoursPerDay = hours,
+            numberOfWorkersRequired = numberOfWorkersRequired,
+            acceptedWorkersCount = 0,
             wage = wage,
-            durationDays = durationDays,
-            hoursPerDay = hoursPerDay,
+            wageType = wageType,
             perks = perks,
             difficulty = difficulty,
-            skillsRequired = skillsRequired,
-            isUrgent = isUrgent,
-            ownerId = current.id,
-            ownerName = current.name,
-            ownerVerified = current.isVerified,
-            ownerRating = current.ownerProfile?.rating ?: 5.0f,
-            status = JobStatus.ACTIVE
+            skillsRequired = skills,
+            isUrgent = urgent,
+            ownerId = user.id,
+            ownerName = user.name,
+            ownerVerified = user.isVerified,
+            ownerRating = 5.0f,
+            status = JobStatus.ACTIVE,
+            createdAt = System.currentTimeMillis(),
+            updatedAt = System.currentTimeMillis()
         )
-        
-        _jobs.value = listOf(newJob) + _jobs.value
-        addNotification("Job Posted Successfully", "Your job post '$title' is now active.")
-        emit(Result.success(true))
+        try {
+            db.collection("jobs").document(job.id).set(job).await()
+            sendNotificationToUser(
+                recipientUserId = user.id,
+                type = NotificationType.JOB_STATUS_CHANGED.name,
+                title = "Job Posted Successfully",
+                message = "Your post '$title' is now live for workers.",
+                relatedJobId = jobId
+            )
+            emit(Result.success(true))
+        } catch (e: Exception) {
+            Log.e("Firebase", "Post job failed", e)
+            emit(Result.failure(e))
+        }
     }
 
     fun applyForJob(jobId: String): Flow<Result<Boolean>> = flow {
-        if (_isOffline.value) {
-            emit(Result.failure(Exception("Offline: Could not submit application. Check internet.")))
-            return@flow
-        }
-        delay(1000)
-        val user = _currentUser.value ?: return@flow
-        val job = _jobs.value.firstOrNull { it.id == jobId } ?: return@flow
-        
-        val alreadyApplied = _applications.value.any { it.jobId == jobId && it.labourId == user.id }
-        if (alreadyApplied) {
-            emit(Result.failure(Exception("You have already applied for this job.")))
-            return@flow
+        val user = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
+
+        // Fetch fresh job details from Firestore
+        val jobDoc = db.collection("jobs").document(jobId).get().await()
+        if (!jobDoc.exists()) {
+            return@flow emit(Result.failure(Exception("Job no longer exists")))
         }
 
-        val profile = user.labourProfile ?: LabourProfile()
-        val newApp = JobApplication(
-            id = "app_${UUID.randomUUID().toString().take(6)}",
+        val job = jobDoc.toObject(Job::class.java) ?: return@flow emit(Result.failure(Exception("Failed to read job")))
+
+        if (job.status == JobStatus.FILLED || job.status == JobStatus.CLOSED || job.acceptedWorkersCount >= job.numberOfWorkersRequired) {
+            return@flow emit(Result.failure(Exception("Job is already filled or closed.")))
+        }
+
+        // Check for duplicate application in Firestore
+        val existingAppsQuery = db.collection("applications")
+            .whereEqualTo("jobId", jobId)
+            .whereEqualTo("labourId", user.id)
+            .get()
+            .await()
+
+        if (!existingAppsQuery.isEmpty) {
+            return@flow emit(Result.failure(Exception("You have already responded to this job.")))
+        }
+
+        val appId = "app_${UUID.randomUUID()}"
+        val app = JobApplication(
+            id = appId,
             jobId = jobId,
             jobTitle = job.title,
+            ownerId = job.ownerId,
             labourId = user.id,
             labourName = user.name,
-            labourSkills = profile.skills,
-            labourRating = profile.rating,
-            labourExperience = profile.experience,
+            labourSkills = user.labourProfile?.skills ?: emptyList(),
+            labourRating = user.labourProfile?.rating ?: 4.5f,
+            labourExperience = user.labourProfile?.experience ?: "Available",
             labourPhone = user.phone,
-            status = ApplicationStatus.APPLIED
+            status = ApplicationStatus.APPLIED,
+            appliedAt = System.currentTimeMillis()
         )
-        
-        _applications.value = _applications.value + newApp
-        addNotification(
-            title = "New Applicant for ${job.title}",
-            message = "${user.name} applied for your job post."
-        )
-        emit(Result.success(true))
+
+        try {
+            db.collection("applications").document(app.id).set(app).await()
+
+            // Notify Owner
+            sendNotificationToUser(
+                recipientUserId = job.ownerId,
+                type = NotificationType.JOB_APPLICATION.name,
+                title = "${user.name} responded to your job",
+                message = "${job.title} – ₹${job.wage}/${job.wageType}",
+                relatedJobId = jobId,
+                relatedApplicationId = app.id
+            )
+
+            emit(Result.success(true))
+        } catch (e: Exception) {
+            Log.e("Firebase", "Apply job failed", e)
+            emit(Result.failure(e))
+        }
     }
 
     fun acceptApplicant(applicationId: String): Flow<Result<Boolean>> = flow {
-        if (_isOffline.value) {
-            emit(Result.failure(Exception("Offline: Cannot update status.")))
-            return@flow
+        val owner = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
+
+        val appDoc = db.collection("applications").document(applicationId).get().await()
+        if (!appDoc.exists()) {
+            return@flow emit(Result.failure(Exception("Application not found")))
         }
-        delay(800)
-        
-        val apps = _applications.value.map { app ->
-            if (app.id == applicationId) {
-                createChatThread(app.labourId, app.labourName, Role.LABOUR, true)
-                app.copy(status = ApplicationStatus.ACCEPTED)
-            } else app
+
+        val app = appDoc.toObject(JobApplication::class.java) ?: return@flow emit(Result.failure(Exception("Failed to read application")))
+        val jobDoc = db.collection("jobs").document(app.jobId).get().await()
+        if (!jobDoc.exists()) {
+            return@flow emit(Result.failure(Exception("Associated job not found")))
         }
-        _applications.value = apps
-        emit(Result.success(true))
+
+        val job = jobDoc.toObject(Job::class.java) ?: return@flow emit(Result.failure(Exception("Failed to read job")))
+
+        if (job.acceptedWorkersCount >= job.numberOfWorkersRequired) {
+            return@flow emit(Result.failure(Exception("Job capacity reached (${job.numberOfWorkersRequired} workers already hired)")))
+        }
+
+        val newAcceptedCount = job.acceptedWorkersCount + 1
+        val newJobStatus = if (newAcceptedCount >= job.numberOfWorkersRequired) JobStatus.FILLED else job.status
+
+        try {
+            // Update application status
+            db.collection("applications").document(applicationId).update("status", ApplicationStatus.ACCEPTED).await()
+
+            // Update job accepted count and status if filled
+            db.collection("jobs").document(job.id).update(
+                mapOf(
+                    "acceptedWorkersCount" to newAcceptedCount,
+                    "status" to newJobStatus,
+                    "updatedAt" to System.currentTimeMillis()
+                )
+            ).await()
+
+            // Send notification to worker
+            sendNotificationToUser(
+                recipientUserId = app.labourId,
+                type = NotificationType.APPLICATION_ACCEPTED.name,
+                title = "Application Accepted! 🎉",
+                message = "Your application for '${job.title}' was accepted by ${owner.name}.",
+                relatedJobId = job.id,
+                relatedApplicationId = app.id
+            )
+
+            emit(Result.success(true))
+        } catch (e: Exception) {
+            Log.e("Firebase", "Accept applicant failed", e)
+            emit(Result.failure(e))
+        }
     }
 
     fun rejectApplicant(applicationId: String): Flow<Result<Boolean>> = flow {
-        if (_isOffline.value) {
-            emit(Result.failure(Exception("Offline: Cannot update status.")))
-            return@flow
+        val appDoc = db.collection("applications").document(applicationId).get().await()
+        if (!appDoc.exists()) {
+            return@flow emit(Result.failure(Exception("Application not found")))
         }
-        delay(800)
-        val apps = _applications.value.map { app ->
-            if (app.id == applicationId) app.copy(status = ApplicationStatus.REJECTED) else app
+
+        val app = appDoc.toObject(JobApplication::class.java) ?: return@flow emit(Result.failure(Exception("Failed to read application")))
+
+        try {
+            db.collection("applications").document(applicationId).update("status", ApplicationStatus.REJECTED).await()
+
+            sendNotificationToUser(
+                recipientUserId = app.labourId,
+                type = NotificationType.APPLICATION_REJECTED.name,
+                title = "Application Update",
+                message = "Your application for '${app.jobTitle}' was not selected.",
+                relatedJobId = app.jobId,
+                relatedApplicationId = app.id
+            )
+
+            emit(Result.success(true))
+        } catch (e: Exception) {
+            Log.e("Firebase", "Reject applicant failed", e)
+            emit(Result.failure(e))
         }
-        _applications.value = apps
-        emit(Result.success(true))
     }
 
-    fun completeJob(jobId: String): Flow<Result<Boolean>> = flow {
-        if (_isOffline.value) {
-            emit(Result.failure(Exception("Offline: Cannot complete job.")))
-            return@flow
-        }
-        delay(1000)
-        
-        _jobs.value = _jobs.value.map { job ->
-            if (job.id == jobId) job.copy(status = JobStatus.COMPLETED) else job
-        }
-        
-        _applications.value = _applications.value.map { app ->
-            if (app.jobId == jobId && app.status == ApplicationStatus.ACCEPTED) {
-                app.copy(status = ApplicationStatus.COMPLETED)
-            } else app
-        }
-
-        emit(Result.success(true))
+    fun completeJob(id: String): Flow<Result<Boolean>> = flow {
+        try {
+            db.collection("jobs").document(id).update(
+                mapOf(
+                    "status" to JobStatus.COMPLETED,
+                    "updatedAt" to System.currentTimeMillis()
+                )
+            ).await()
+            emit(Result.success(true))
+        } catch (e: Exception) { emit(Result.failure(e)) }
     }
 
     fun submitRating(jobId: String, targetUserId: String, stars: Float, comment: String): Flow<Result<Boolean>> = flow {
-        if (_isOffline.value) {
-            emit(Result.failure(Exception("Offline: Cannot submit rating.")))
-            return@flow
-        }
-        delay(1000)
-        emit(Result.success(true))
+        val rating = mapOf("jobId" to jobId, "targetId" to targetUserId, "stars" to stars, "comment" to comment)
+        try {
+            db.collection("ratings").add(rating).await()
+            emit(Result.success(true))
+        } catch (e: Exception) { emit(Result.failure(e)) }
     }
 
-    // --- Chat Flow ---
+    // --- Notifications Helper ---
 
-    private fun createChatThread(otherId: String, name: String, role: Role, verified: Boolean) {
-        val exists = _threads.value.any { it.otherUserId == otherId }
-        if (!exists) {
-            val newThread = ChatThread(
-                id = "thread_$otherId",
-                otherUserId = otherId,
-                otherUserName = name,
-                otherUserRole = role,
-                otherUserVerified = verified,
-                lastMessageText = "Contract started. You can coordinate here.",
-                lastMessageTime = System.currentTimeMillis()
-            )
-            _threads.value = listOf(newThread) + _threads.value
-            _messages.value = _messages.value + ("thread_$otherId" to listOf(
-                ChatMessage(
-                    id = UUID.randomUUID().toString(),
-                    threadId = "thread_$otherId",
-                    senderId = "system",
-                    senderName = "System",
-                    text = "Contract started. Coordinates and details can be shared here.",
-                    type = ChatMessageType.TEXT
-                )
-            ))
+    private fun sendNotificationToUser(
+        recipientUserId: String,
+        type: String,
+        title: String,
+        message: String,
+        relatedJobId: String = "",
+        relatedApplicationId: String = ""
+    ) {
+        val notifId = "notif_${UUID.randomUUID()}"
+        val notif = Notification(
+            id = notifId,
+            recipientUserId = recipientUserId,
+            type = type,
+            title = title,
+            message = message,
+            relatedJobId = relatedJobId,
+            relatedApplicationId = relatedApplicationId,
+            timestamp = System.currentTimeMillis(),
+            isRead = false
+        )
+        db.collection("notifications").document(notifId).set(notif)
+            .addOnFailureListener { Log.e("Firebase", "Send notification failed", it) }
+    }
+
+    fun addNotification(title: String, msg: String) {
+        val user = _currentUser.value ?: return
+        sendNotificationToUser(user.id, NotificationType.JOB_STATUS_CHANGED.name, title, msg)
+    }
+
+    fun markNotificationRead(id: String) {
+        db.collection("notifications").document(id).update("isRead", true)
+            .addOnFailureListener { Log.e("Firebase", "Mark notification read failed", it) }
+    }
+
+    // --- Chat & Conversations ---
+
+    fun getOrCreateConversation(jobId: String, applicationId: String, targetUserId: String): Flow<Result<String>> = flow {
+        val current = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
+
+        val participantIds = listOf(current.id, targetUserId).sorted()
+        val convId = "conv_${jobId}_${participantIds.joinToString("_")}"
+
+        val convDoc = db.collection("conversations").document(convId).get().await()
+        if (convDoc.exists()) {
+            emit(Result.success(convId))
+            return@flow
+        }
+
+        // Fetch target user metadata
+        val targetUserDoc = db.collection("users").document(targetUserId).get().await()
+        val targetUser = if (targetUserDoc.exists()) targetUserDoc.toObject(User::class.java) else null
+
+        val ownerId = if (current.role == Role.OWNER) current.id else targetUserId
+        val workerId = if (current.role == Role.LABOUR) current.id else targetUserId
+
+        val newThread = ChatThread(
+            id = convId,
+            jobId = jobId,
+            applicationId = applicationId,
+            participants = participantIds,
+            ownerId = ownerId,
+            workerId = workerId,
+            otherUserId = targetUserId,
+            otherUserName = targetUser?.name ?: "User",
+            otherUserRole = targetUser?.role ?: Role.LABOUR,
+            otherUserVerified = targetUser?.isVerified ?: false,
+            lastMessageText = "Conversation started",
+            lastMessageTime = System.currentTimeMillis(),
+            unreadCount = 0
+        )
+
+        try {
+            db.collection("conversations").document(convId).set(newThread).await()
+            emit(Result.success(convId))
+        } catch (e: Exception) {
+            Log.e("Firebase", "Create conversation failed", e)
+            emit(Result.failure(e))
         }
     }
 
@@ -470,199 +851,54 @@ object RozgarRepository {
         mediaDuration: String? = null,
         mediaUrl: String? = null
     ): Flow<Result<Boolean>> = flow {
-        if (_isOffline.value) {
-            emit(Result.failure(Exception("Offline: Message pending transmission.")))
-            return@flow
-        }
-        
-        val sender = _currentUser.value ?: return@flow
-        val newMsg = ChatMessage(
-            id = UUID.randomUUID().toString(),
+        val sender = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
+
+        val threadDoc = db.collection("conversations").document(threadId).get().await()
+        val thread = if (threadDoc.exists()) threadDoc.toObject(ChatThread::class.java) else null
+
+        val receiverId = thread?.participants?.firstOrNull { it != sender.id } ?: ""
+
+        val msgId = "msg_${UUID.randomUUID()}"
+        val msg = ChatMessage(
+            id = msgId,
             threadId = threadId,
             senderId = sender.id,
             senderName = sender.name,
+            receiverId = receiverId,
             text = text,
             timestamp = System.currentTimeMillis(),
             type = type,
             mediaDuration = mediaDuration,
-            mediaUrl = mediaUrl
+            mediaUrl = mediaUrl,
+            isRead = false
         )
 
-        val currentMsgs = _messages.value[threadId] ?: emptyList()
-        _messages.value = _messages.value + (threadId to (currentMsgs + newMsg))
+        try {
+            db.collection("messages").document(msgId).set(msg).await()
 
-        val previewText = when (type) {
-            ChatMessageType.TEXT -> text
-            ChatMessageType.LOCATION -> "📍 Shared Location"
-            ChatMessageType.VOICE -> "🎙️ Voice Message ($mediaDuration)"
-            ChatMessageType.IMAGE -> "🖼️ Shared Image"
-        }
-        
-        _threads.value = _threads.value.map { thread ->
-            if (thread.id == threadId) {
-                thread.copy(
-                    lastMessageText = previewText,
-                    lastMessageTime = System.currentTimeMillis()
+            // Update thread last message
+            db.collection("conversations").document(threadId).update(
+                mapOf(
+                    "lastMessageText" to text,
+                    "lastMessageTime" to System.currentTimeMillis()
                 )
-            } else thread
-        }
+            ).await()
 
-        emit(Result.success(true))
-
-        scope.launch {
-            delay(2000)
-            if (!_isOffline.value) {
-                val thread = _threads.value.firstOrNull { it.id == threadId } ?: return@launch
-                val replyMsg = ChatMessage(
-                    id = UUID.randomUUID().toString(),
-                    threadId = threadId,
-                    senderId = thread.otherUserId,
-                    senderName = thread.otherUserName,
-                    text = getMockReply(text),
-                    timestamp = System.currentTimeMillis(),
-                    type = ChatMessageType.TEXT
+            if (receiverId.isNotBlank()) {
+                sendNotificationToUser(
+                    recipientUserId = receiverId,
+                    type = NotificationType.NEW_MESSAGE.name,
+                    title = "New Message from ${sender.name}",
+                    message = text,
+                    relatedJobId = thread?.jobId ?: ""
                 )
-                val updatedMsgs = _messages.value[threadId] ?: emptyList()
-                _messages.value = _messages.value + (threadId to (updatedMsgs + replyMsg))
-                
-                _threads.value = _threads.value.map { t ->
-                    if (t.id == threadId) {
-                        t.copy(
-                            lastMessageText = replyMsg.text,
-                            lastMessageTime = System.currentTimeMillis(),
-                            unreadCount = t.unreadCount + 1
-                        )
-                    } else t
-                }
             }
+
+            emit(Result.success(true))
+        } catch (e: Exception) {
+            Log.e("Firebase", "Send message failed", e)
+            emit(Result.failure(e))
         }
-    }
-
-    private fun getMockReply(userText: String): String {
-        val txt = userText.lowercase()
-        return when {
-            txt.contains("location") || txt.contains("where") -> "I am at Sector 4, near the Metro Station."
-            txt.contains("money") -> "Wages will be paid daily."
-            else -> "Acha, I will confirm the timings."
-        }
-    }
-
-    fun addNotification(title: String, message: String) {
-        val newNotif = Notification(
-            id = UUID.randomUUID().toString(),
-            title = title,
-            message = message,
-            timestamp = System.currentTimeMillis()
-        )
-        _notifications.value = listOf(newNotif) + _notifications.value
-    }
-
-    fun markNotificationRead(id: String) {
-        _notifications.value = _notifications.value.map {
-            if (it.id == id) it.copy(isRead = true) else it
-        }
-    }
-
-    // --- Mock Data ---
-
-    private fun loadMockData() {
-        val mockJobs = listOf(
-            Job(
-                id = "job_1",
-                title = "Need 3 Masons for Bricklaying",
-                category = "Mason",
-                location = "HSR Layout, Bengaluru",
-                distanceKm = 1.8,
-                wage = 750,
-                durationDays = 3,
-                hoursPerDay = 8,
-                perks = listOf("Food Provided", "Transport Provided"),
-                difficulty = "Medium",
-                skillsRequired = listOf("Brickwork", "Cement Mixing"),
-                isUrgent = true,
-                ownerId = "owner_1",
-                ownerName = "Harish Sharma (Contractor)",
-                ownerVerified = true,
-                ownerRating = 4.7f,
-                status = JobStatus.ACTIVE
-            ),
-            Job(
-                id = "job_2",
-                title = "Urgent House Painting Labour",
-                category = "Painter",
-                location = "Koramangala, Bengaluru",
-                distanceKm = 3.2,
-                wage = 600,
-                durationDays = 5,
-                hoursPerDay = 9,
-                perks = listOf("Food Provided"),
-                difficulty = "Easy",
-                skillsRequired = listOf("Wall Scraping"),
-                isUrgent = false,
-                ownerId = "owner_2",
-                ownerName = "Anil Mehta",
-                ownerVerified = false,
-                ownerRating = 4.2f,
-                status = JobStatus.ACTIVE
-            ),
-            Job(
-                id = "job_5",
-                title = "Experienced Carpenter for Furniture",
-                category = "Carpenter",
-                location = "HSR Layout, Bengaluru",
-                distanceKm = 0.5,
-                wage = 850,
-                durationDays = 7,
-                hoursPerDay = 8,
-                perks = listOf("Tools Provided"),
-                difficulty = "Hard",
-                skillsRequired = listOf("Wood cutting"),
-                isUrgent = true,
-                ownerId = "owner_5",
-                ownerName = "Rajesh Woods",
-                ownerVerified = true,
-                ownerRating = 4.8f,
-                status = JobStatus.ACTIVE
-            ),
-            Job(
-                id = "job_3",
-                title = "Electrician for Commercial Wiring",
-                category = "Electrician",
-                location = "Indiranagar, Bengaluru",
-                distanceKm = 6.4,
-                wage = 900,
-                durationDays = 2,
-                hoursPerDay = 8,
-                perks = listOf("Transport Provided"),
-                difficulty = "Hard",
-                skillsRequired = listOf("Conduit wiring"),
-                isUrgent = true,
-                ownerId = "owner_3",
-                ownerName = "Vikas Buildcon",
-                ownerVerified = true,
-                ownerRating = 4.9f,
-                status = JobStatus.ACTIVE
-            ),
-            Job(
-                id = "job_4",
-                title = "Plumber for Clogged Pipeline",
-                category = "Plumber",
-                location = "Bellandur, Bengaluru",
-                distanceKm = 4.8,
-                wage = 800,
-                durationDays = 1,
-                hoursPerDay = 4,
-                perks = emptyList(),
-                difficulty = "Medium",
-                skillsRequired = listOf("Leakage fixes"),
-                isUrgent = false,
-                ownerId = "owner_4",
-                ownerName = "Pratap Reddy",
-                ownerVerified = true,
-                ownerRating = 4.5f,
-                status = JobStatus.ACTIVE
-            )
-        )
-        _jobs.value = mockJobs
     }
 }
+

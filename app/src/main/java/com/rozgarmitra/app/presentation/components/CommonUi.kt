@@ -11,6 +11,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.material3.*
@@ -190,43 +192,44 @@ fun RatingBar(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NotificationDialog(
-    notifications: List<com.rozgarmitra.app.data.Notification>,
-    onDismiss: () -> Unit
+fun ProfileSection(title: String, content: @Composable ColumnScope.() -> Unit) {
+    Column(modifier = Modifier.padding(top = 16.dp)) {
+        Text(
+            text = title,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Gray,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
+        Surface(color = MaterialTheme.colorScheme.surface) {
+            Column(content = content)
+        }
+    }
+}
+
+@Composable
+fun ProfileMenuItem(
+    icon: ImageVector, 
+    title: String, 
+    subtitle: String? = null,
+    titleColor: Color = Color.Unspecified,
+    onClick: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Notifications", fontWeight = FontWeight.Black) },
-        text = {
-            if (notifications.isEmpty()) {
-                Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
-                    Text("No new notifications.", color = Color.Gray)
-                }
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier.heightIn(max = 400.dp)
-                ) {
-                    items(notifications) { notif ->
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF9F9F9)),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFEEEEEE))
-                        ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text(notif.title, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(notif.message, fontSize = 12.sp, color = Color.Gray)
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Close", fontWeight = FontWeight.Bold)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, contentDescription = null, tint = if (titleColor == Color.Red) titleColor else Color.Gray, modifier = Modifier.size(24.dp))
+        Spacer(modifier = Modifier.width(16.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = titleColor)
+            if (subtitle != null) {
+                Text(subtitle, fontSize = 12.sp, color = Color.Gray)
             }
         }
-    )
+        Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = Color.LightGray)
+    }
 }

@@ -48,19 +48,26 @@ fun ChatScreen(
     val allMessages by RozgarRepository.messages.collectAsStateWithLifecycle()
     val isOffline by RozgarRepository.isOffline.collectAsStateWithLifecycle()
     val currentUser by RozgarRepository.currentUser.collectAsStateWithLifecycle()
+    val jobs by RozgarRepository.jobs.collectAsStateWithLifecycle()
 
     val thread = threads.firstOrNull { it.id == threadId }
     val messages = allMessages[threadId] ?: emptyList()
+    val relatedJob = jobs.firstOrNull { it.id == thread?.jobId }
 
     var inputMsgText by remember { mutableStateOf("") }
     var isSending by remember { mutableStateOf(false) }
     var chatError by remember { mutableStateOf<String?>(null) }
-    
+
     // Voice note simulation state
     var isRecordingSim by remember { mutableStateOf(false) }
-    
+
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
+
+    // Observe messages for threadId
+    LaunchedEffect(threadId) {
+        RozgarRepository.observeMessages(threadId)
+    }
 
     // Scroll to bottom when messages list size changes
     LaunchedEffect(messages.size) {
@@ -76,6 +83,29 @@ fun ChatScreen(
         }
     }
 
+    // Security check: Authorization verification
+    val isAuthorized = currentUser != null && (thread == null || thread.participants.isEmpty() || currentUser!!.id in thread.participants || thread.ownerId == currentUser!!.id || thread.workerId == currentUser!!.id)
+
+    if (!isAuthorized) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Unauthorized Access", fontWeight = FontWeight.Bold) },
+                    navigationIcon = {
+                        IconButton(onClick = onBackClick) {
+                            Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    }
+                )
+            }
+        ) { paddingValues ->
+            Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
+                Text("You do not have permission to view this conversation.", color = Color.Red)
+            }
+        }
+        return
+    }
+
     Scaffold(
         topBar = {
             Column {
@@ -83,12 +113,16 @@ fun ChatScreen(
                 TopAppBar(
                     title = {
                         Column {
-                            Text(thread?.otherUserName ?: "Chat", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                            Text(
-                                text = if (isOffline) "offline" else "online",
-                                fontSize = 11.sp,
-                                color = if (isOffline) Color.Red else Color(0xFF2E7D32)
-                            )
+                            Text(thread?.otherUserName?.ifBlank { "Chat" } ?: "Chat", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            if (relatedJob != null) {
+                                Text("${relatedJob.title} • ₹${relatedJob.wage}/${relatedJob.wageType}", fontSize = 11.sp, color = Color.Gray)
+                            } else {
+                                Text(
+                                    text = if (isOffline) "offline" else "online",
+                                    fontSize = 11.sp,
+                                    color = if (isOffline) Color.Red else Color(0xFF2E7D32)
+                                )
+                            }
                         }
                     },
                     navigationIcon = {
@@ -105,6 +139,7 @@ fun ChatScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+
             // Chat history list
             Box(
                 modifier = Modifier
@@ -149,63 +184,66 @@ fun ChatScreen(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalAlignment = if (isMe) Alignment.End else Alignment.Start
                                     ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(
-                                                    RoundedCornerShape(
-                                                        topStart = 16.dp,
-                                                        topEnd = 16.dp,
-                                                        bottomStart = if (isMe) 16.dp else 4.dp,
-                                                        bottomEnd = if (isMe) 4.dp else 16.dp
-                                                    )
-                                                )
-                                                .background(
-                                                    if (isMe) MaterialTheme.colorScheme.primaryContainer else Color.White
-                                                )
-                                                .padding(horizontal = 16.dp, vertical = 10.dp)
+                                        Surface(
+                                            color = if (isMe) MaterialTheme.colorScheme.primary else Color.White,
+                                            shape = RoundedCornerShape(
+                                                topStart = 16.dp,
+                                                topEnd = 16.dp,
+                                                bottomStart = if (isMe) 16.dp else 2.dp,
+                                                bottomEnd = if (isMe) 2.dp else 16.dp
+                                            ),
+                                            shadowElevation = 1.dp,
+                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
                                         ) {
-                                            Column {
+                                            Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
                                                 when (msg.type) {
                                                     ChatMessageType.TEXT -> {
                                                         Text(
                                                             text = msg.text,
                                                             fontSize = 15.sp,
-                                                            color = if (isMe) MaterialTheme.colorScheme.onPrimaryContainer else Color.Black
+                                                            color = if (isMe) Color.White else Color.Black
                                                         )
                                                     }
                                                     ChatMessageType.LOCATION -> {
                                                         Row(verticalAlignment = Alignment.CenterVertically) {
-                                                            Icon(Icons.Filled.LocationOn, contentDescription = null, tint = Color.Red)
+                                                            Icon(Icons.Filled.LocationOn, contentDescription = null, tint = if (isMe) Color.White else Color.Red)
                                                             Spacer(modifier = Modifier.width(6.dp))
                                                             Column {
-                                                                Text("Shared Location", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                                                                Text(msg.text, fontSize = 12.sp, color = Color.DarkGray)
+                                                                Text("Shared Location", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = if (isMe) Color.White else Color.Black)
+                                                                Text(msg.text, fontSize = 12.sp, color = if (isMe) Color.White.copy(alpha = 0.8f) else Color.DarkGray)
                                                             }
                                                         }
                                                     }
                                                     ChatMessageType.VOICE -> {
                                                         Row(verticalAlignment = Alignment.CenterVertically) {
-                                                            Icon(Icons.Filled.PlayArrow, contentDescription = "Play voice")
+                                                            Icon(Icons.Filled.PlayArrow, contentDescription = "Play voice", tint = if (isMe) Color.White else MaterialTheme.colorScheme.primary)
                                                             Spacer(modifier = Modifier.width(6.dp))
-                                                            Text("Voice Note (${msg.mediaDuration})", fontSize = 14.sp)
+                                                            Text("Voice Note (${msg.mediaDuration})", fontSize = 14.sp, color = if (isMe) Color.White else Color.Black)
                                                         }
                                                     }
                                                     ChatMessageType.IMAGE -> {
                                                         Row(verticalAlignment = Alignment.CenterVertically) {
-                                                            Icon(Icons.Filled.Image, contentDescription = null)
+                                                            Icon(Icons.Filled.Image, contentDescription = null, tint = if (isMe) Color.White else Color.Gray)
                                                             Spacer(modifier = Modifier.width(6.dp))
-                                                            Text("Photo Attached", fontSize = 14.sp)
+                                                            Text("Photo Attached", fontSize = 14.sp, color = if (isMe) Color.White else Color.Black)
                                                         }
                                                     }
                                                 }
                                                 
-                                                Spacer(modifier = Modifier.height(4.dp))
-                                                Text(
-                                                    text = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(msg.timestamp)),
-                                                    fontSize = 9.sp,
-                                                    color = Color.Gray,
-                                                    modifier = Modifier.align(Alignment.End)
-                                                )
+                                                Row(
+                                                    modifier = Modifier.align(Alignment.End).padding(top = 2.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Text(
+                                                        text = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(msg.timestamp)),
+                                                        fontSize = 9.sp,
+                                                        color = if (isMe) Color.White.copy(alpha = 0.7f) else Color.Gray
+                                                    )
+                                                    if (isMe) {
+                                                        Spacer(modifier = Modifier.width(4.dp))
+                                                        Icon(Icons.Filled.DoneAll, contentDescription = null, modifier = Modifier.size(12.dp), tint = Color.White.copy(alpha = 0.7f))
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -255,8 +293,8 @@ fun ChatScreen(
                                             text = "Simulated Voice Note",
                                             type = ChatMessageType.VOICE,
                                             mediaDuration = "0:06"
-                                        ).collectLatest { res ->
-                                            res.onFailure { err -> chatError = err.localizedMessage }
+                                        ).collect { result ->
+                                            result.onFailure { err -> chatError = err.localizedMessage }
                                         }
                                     }
                                 }
@@ -309,8 +347,8 @@ fun ChatScreen(
                                 threadId = threadId,
                                 text = "12.9716° N, 77.5946° E (Sharma Site)",
                                 type = ChatMessageType.LOCATION
-                            ).collectLatest { res ->
-                                res.onFailure { err -> chatError = err.localizedMessage }
+                            ).collect { result ->
+                                result.onFailure { err -> chatError = err.localizedMessage }
                             }
                         }
                     },
@@ -357,9 +395,8 @@ fun ChatScreen(
                                     threadId = threadId,
                                     text = textToSend,
                                     type = ChatMessageType.TEXT
-                                ).collectLatest { res ->
-                                    res.onFailure { err ->
-                                        // Restore text on failure
+                                ).collect { result ->
+                                    result.onFailure { err ->
                                         inputMsgText = textToSend
                                         chatError = err.localizedMessage
                                     }
