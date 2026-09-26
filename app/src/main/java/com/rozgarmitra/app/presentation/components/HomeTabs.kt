@@ -1,11 +1,13 @@
 package com.rozgarmitra.app.presentation.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -20,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rozgarmitra.app.data.Role
 import com.rozgarmitra.app.data.RozgarRepository
+import com.rozgarmitra.app.ui.theme.*
 
 val professions = listOf("All Jobs", "Mason", "Painter", "Electrician", "Plumber", "Carpenter", "Construction", "Driver", "Cleaner", "Helper")
 
@@ -35,14 +38,19 @@ fun HomeFeedTab(
 ) {
     val jobs by RozgarRepository.jobs.collectAsStateWithLifecycle()
     val currentUser by RozgarRepository.currentUser.collectAsStateWithLifecycle()
+    val userLocationData by RozgarRepository.userLocationData.collectAsStateWithLifecycle()
+    val searchRadiusKm by RozgarRepository.searchRadiusKm.collectAsStateWithLifecycle()
     
     var selectedProfessions by remember { mutableStateOf(setOf("All Jobs")) }
     var showFilterSheet by remember { mutableStateOf(false) }
+    var showLocationDialog by remember { mutableStateOf(false) }
 
-    val filteredJobs = if (selectedProfessions.contains("All Jobs")) {
-        jobs
-    } else {
-        jobs.filter { it.category in selectedProfessions }
+    val displayLocation = userLocationData?.addressName?.ifBlank { "Location Available" } ?: "Select Location"
+
+    val filteredJobs = jobs.filter { job ->
+        val matchesCategory = selectedProfessions.contains("All Jobs") || job.category in selectedProfessions
+        val matchesRadius = searchRadiusKm == 0.0 || job.distanceKm == 0.0 || job.distanceKm <= searchRadiusKm
+        matchesCategory && matchesRadius
     }
 
     val urgentJobs = filteredJobs.filter { it.isUrgent }
@@ -64,8 +72,9 @@ fun HomeFeedTab(
         // 2. Location Indicator (Marketplace feel)
         item {
             LocationIndicator(
-                location = "HSR Layout, Bengaluru",
-                onClick = { /* TODO: Select Location */ }
+                location = displayLocation,
+                radiusKm = searchRadiusKm,
+                onClick = { showLocationDialog = true }
             )
         }
 
@@ -85,7 +94,7 @@ fun HomeFeedTab(
             item {
                 SectionHeader(
                     title = if (selectedProfessions.size == 1 && !selectedProfessions.contains("All Jobs")) 
-                        "Urgent ${selectedProfessions.first()} Jobs" else "Urgent Jobs",
+                        "Urgent ${selectedProfessions.first()} Jobs" else "⚡ Urgent Jobs",
                     onSeeAllClick = onSeeAllUrgent
                 )
             }
@@ -109,12 +118,12 @@ fun HomeFeedTab(
             item {
                 SectionHeader(
                     title = if (selectedProfessions.size == 1 && !selectedProfessions.contains("All Jobs")) 
-                        "${selectedProfessions.first()} Jobs" else "Active Jobs Posted by Owners",
+                        "${selectedProfessions.first()} Jobs" else "Active Jobs Near You",
                     onSeeAllClick = onSeeAllNearby
                 )
             }
             items(filteredJobs, key = { it.id.ifBlank { it.title + it.createdAt } }) { job ->
-                Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
                     JobFeedCard(job = job, onClick = { onJobClick(job.id) }, onApplyClick = onApplyClick)
                 }
             }
@@ -124,18 +133,31 @@ fun HomeFeedTab(
         if (filteredJobs.isEmpty()) {
             item {
                 Box(
-                    modifier = Modifier.fillMaxWidth().height(300.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp)
+                        .height(260.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Filled.SearchOff, contentDescription = null, modifier = Modifier.size(48.dp), tint = Color.Gray)
+                        Surface(
+                            shape = CircleShape,
+                            color = DarkSurfaceVariant,
+                            modifier = Modifier.size(64.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Filled.SearchOff, contentDescription = null, modifier = Modifier.size(32.dp), tint = TextSecondary)
+                            }
+                        }
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("No matching jobs found", fontWeight = FontWeight.Bold, color = Color.Gray)
+                        Text("No matching jobs found", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+                        Text("Try adjusting your profession filter or location", fontSize = 13.sp, color = TextMuted)
+                        Spacer(modifier = Modifier.height(12.dp))
                         TextButton(onClick = { 
                             selectedProfessions = setOf("All Jobs")
                             RozgarRepository.observeJobs()
                         }) {
-                            Text("Browse All Jobs")
+                            Text("Browse All Jobs", color = PrimaryIndigo, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -147,6 +169,12 @@ fun HomeFeedTab(
         FilterBottomSheet(
             onDismiss = { showFilterSheet = false },
             onApply = { showFilterSheet = false }
+        )
+    }
+
+    if (showLocationDialog) {
+        LocationSelectionDialog(
+            onDismiss = { showLocationDialog = false }
         )
     }
 }
@@ -161,7 +189,7 @@ fun HomeHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 10.dp),
+            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -169,38 +197,49 @@ fun HomeHeader(
             Text(
                 text = if (userName != null) "Namaste, ${userName.split(" ").first()}! 👋" else "Namaste! 👋",
                 fontSize = 22.sp,
-                fontWeight = FontWeight.Black
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary
             )
+            Spacer(modifier = Modifier.height(4.dp))
             if (role != null) {
                 Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(4.dp),
-                    modifier = Modifier.padding(top = 4.dp)
+                    color = PrimaryIndigo.copy(alpha = 0.15f),
+                    border = BorderStroke(1.dp, PrimaryIndigo.copy(alpha = 0.3f)),
+                    shape = CircleShape
                 ) {
                     Text(
                         text = if (role == Role.OWNER) "EMPLOYER / OWNER" else "WORKER / LABOUR",
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = PrimaryIndigo
                     )
                 }
             } else {
-                Text("Find your work for today", fontSize = 14.sp, color = Color.Gray)
+                Text("Find daily work near you", fontSize = 13.sp, color = TextSecondary)
             }
         }
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onNotificationClick) {
-                Icon(Icons.Filled.NotificationsNone, contentDescription = "Notifications")
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Surface(
+                shape = CircleShape,
+                color = DarkSurface,
+                border = BorderStroke(1.dp, BorderStrokeColor),
+                modifier = Modifier.size(42.dp)
+            ) {
+                IconButton(onClick = onNotificationClick) {
+                    Icon(Icons.Filled.NotificationsNone, contentDescription = "Notifications", tint = TextPrimary, modifier = Modifier.size(20.dp))
+                }
             }
             if (userName == null) {
                 Button(
                     onClick = onLoginClick,
-                    shape = RoundedCornerShape(12.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp)
+                    shape = CircleShape,
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryIndigo),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                    modifier = Modifier.height(38.dp)
                 ) {
-                    Text("Login", fontWeight = FontWeight.Bold)
+                    Text("Login", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color.White)
                 }
             }
         }
@@ -208,17 +247,24 @@ fun HomeHeader(
 }
 
 @Composable
-fun LocationIndicator(location: String, onClick: () -> Unit) {
+fun LocationIndicator(location: String, radiusKm: Double = 0.0, onClick: () -> Unit) {
+    val radiusLabel = if (radiusKm > 0.0) " • Within ${radiusKm.toInt()} km" else ""
     Surface(
         onClick = onClick,
-        color = Color.Transparent,
+        color = DarkSurface,
+        shape = CircleShape,
+        border = BorderStroke(1.dp, BorderStrokeColor),
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Filled.LocationOn, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(16.dp))
             Spacer(modifier = Modifier.width(6.dp))
-            Text(location, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
-            Icon(Icons.Filled.KeyboardArrowDown, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+            Text(location + radiusLabel, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+            Spacer(modifier = Modifier.width(4.dp))
+            Icon(Icons.Filled.KeyboardArrowDown, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(16.dp))
         }
     }
 }
@@ -230,19 +276,27 @@ fun ProfessionFilterRow(
     onSelectionChanged: (Set<String>) -> Unit,
     onFilterClick: () -> Unit
 ) {
-    Column(modifier = Modifier.padding(vertical = 12.dp)) {
+    Column(modifier = Modifier.padding(vertical = 8.dp)) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 "Browse by Profession",
                 fontWeight = FontWeight.Bold,
-                fontSize = 17.sp
+                fontSize = 16.sp,
+                color = TextPrimary
             )
-            IconButton(onClick = onFilterClick, modifier = Modifier.size(24.dp)) {
-                Icon(Icons.Filled.FilterList, contentDescription = "Filter", tint = MaterialTheme.colorScheme.primary)
+            Surface(
+                shape = CircleShape,
+                color = DarkSurface,
+                border = BorderStroke(1.dp, BorderStrokeColor),
+                modifier = Modifier.size(32.dp).clickable(onClick = onFilterClick)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.Filled.FilterList, contentDescription = "Filter", tint = PrimaryIndigo, modifier = Modifier.size(16.dp))
+                }
             }
         }
         LazyRow(
@@ -266,16 +320,17 @@ fun ProfessionFilterRow(
                         }
                         onSelectionChanged(newSelection)
                     },
-                    label = { Text(profession) },
-                    shape = RoundedCornerShape(20.dp),
+                    label = { Text(profession, fontWeight = FontWeight.Medium) },
+                    shape = CircleShape,
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedContainerColor = PrimaryIndigo,
                         selectedLabelColor = Color.White,
-                        containerColor = Color.White
+                        containerColor = DarkSurface,
+                        labelColor = TextSecondary
                     ),
                     border = FilterChipDefaults.filterChipBorder(
-                        borderColor = Color.LightGray,
-                        selectedBorderColor = MaterialTheme.colorScheme.primary,
+                        borderColor = BorderStrokeColor,
+                        selectedBorderColor = PrimaryIndigo,
                         borderWidth = 1.dp
                     )
                 )
@@ -289,13 +344,13 @@ fun SectionHeader(title: String, onSeeAllClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(title, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
-        TextButton(onClick = onSeeAllClick) {
-            Text("See All →", fontWeight = FontWeight.Bold)
+        Text(title, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = TextPrimary)
+        TextButton(onClick = onSeeAllClick, contentPadding = PaddingValues(0.dp)) {
+            Text("See All →", fontWeight = FontWeight.Bold, color = PrimaryIndigo, fontSize = 13.sp)
         }
     }
 }
@@ -319,38 +374,41 @@ fun SearchTab(
     Column(modifier = Modifier.fillMaxSize()) {
         Text(
             "Search Jobs",
-            fontWeight = FontWeight.Black,
+            fontWeight = FontWeight.Bold,
             fontSize = 24.sp,
-            modifier = Modifier.padding(16.dp)
+            color = TextPrimary,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
         )
         
-        Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+        Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                placeholder = { Text("Profession, skills, or location") },
-                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search") },
+                placeholder = { Text("Search by profession, skills, or area...", color = TextMuted) },
+                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search", tint = PrimaryIndigo) },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { searchQuery = "" }) {
-                            Icon(Icons.Filled.Close, contentDescription = "Clear")
+                            Icon(Icons.Filled.Close, contentDescription = "Clear", tint = TextSecondary)
                         }
                     }
                 },
-                shape = RoundedCornerShape(12.dp),
+                shape = CircleShape,
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 colors = TextFieldDefaults.outlinedTextFieldColors(
-                    containerColor = Color.White,
-                    unfocusedBorderColor = Color.LightGray,
-                    focusedBorderColor = MaterialTheme.colorScheme.primary
+                    containerColor = DarkSurface,
+                    unfocusedBorderColor = BorderStrokeColor,
+                    focusedBorderColor = PrimaryIndigo,
+                    focusedTextColor = TextPrimary,
+                    unfocusedTextColor = TextPrimary
                 )
             )
         }
 
         if (searchQuery.isEmpty()) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("Popular Professions", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text("Popular Professions", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
                 Spacer(modifier = Modifier.height(12.dp))
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
@@ -360,14 +418,16 @@ fun SearchTab(
                     popularProfessions.forEach { prof ->
                         SuggestionChip(
                             onClick = { searchQuery = prof },
-                            label = { Text(prof) },
-                            shape = RoundedCornerShape(10.dp)
+                            label = { Text(prof, color = TextPrimary) },
+                            shape = CircleShape,
+                            colors = SuggestionChipDefaults.suggestionChipColors(containerColor = DarkSurface),
+                            border = SuggestionChipDefaults.suggestionChipBorder(borderColor = BorderStrokeColor)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(32.dp))
-                Text("Recent Searches", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Spacer(modifier = Modifier.height(28.dp))
+                Text("Recent Searches", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
                 Spacer(modifier = Modifier.height(8.dp))
                 listOf("Mason in HSR", "Painter jobs").forEach { recent ->
                     Row(
@@ -377,9 +437,9 @@ fun SearchTab(
                             .padding(vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Filled.History, contentDescription = null, tint = Color.LightGray, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Filled.History, contentDescription = null, tint = TextMuted, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text(recent, color = Color.DarkGray)
+                        Text(recent, color = TextSecondary, fontSize = 14.sp)
                     }
                 }
             }
@@ -387,16 +447,16 @@ fun SearchTab(
             if (filteredJobs.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Filled.SearchOff, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.Gray)
+                        Icon(Icons.Filled.SearchOff, contentDescription = null, modifier = Modifier.size(56.dp), tint = TextMuted)
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("No results for \"$searchQuery\"", color = Color.Gray, fontWeight = FontWeight.Bold)
+                        Text("No results for \"$searchQuery\"", color = TextSecondary, fontWeight = FontWeight.Bold)
                     }
                 }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(filteredJobs) { job ->
                         JobFeedCard(
@@ -410,3 +470,4 @@ fun SearchTab(
         }
     }
 }
+

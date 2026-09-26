@@ -1,6 +1,7 @@
 package com.rozgarmitra.app.presentation.job
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -22,6 +23,7 @@ import com.rozgarmitra.app.data.*
 import com.rozgarmitra.app.presentation.components.LoadingOverlay
 import com.rozgarmitra.app.presentation.components.PrimaryLargeButton
 import com.rozgarmitra.app.presentation.components.VerifiedBadge
+import com.rozgarmitra.app.ui.theme.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -41,8 +43,8 @@ fun JobDetailsScreen(
     val job = jobs.firstOrNull { it.id == jobId }
     
     if (job == null) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Job details not found.", color = Color.Gray)
+        Box(modifier = Modifier.fillMaxSize().background(DarkBackground), contentAlignment = Alignment.Center) {
+            Text("Job details not found.", color = TextSecondary)
         }
         return
     }
@@ -57,26 +59,27 @@ fun JobDetailsScreen(
     val scope = rememberCoroutineScope()
 
     Scaffold(
+        containerColor = DarkBackground,
         topBar = {
             TopAppBar(
-                title = { Text("Job Details", fontWeight = FontWeight.Bold) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkSurface),
+                title = { Text("Job Details", fontWeight = FontWeight.Bold, color = TextPrimary) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary)
                     }
                 },
                 actions = {
                     IconButton(onClick = { /* Share */ }) {
-                        Icon(Icons.Filled.Share, contentDescription = "Share")
+                        Icon(Icons.Filled.Share, contentDescription = "Share", tint = TextPrimary)
                     }
                 }
             )
         },
         bottomBar = {
             Surface(
-                tonalElevation = 8.dp,
-                shadowElevation = 8.dp,
-                color = Color.White
+                color = DarkSurface,
+                border = BorderStroke(1.dp, BorderStrokeColor)
             ) {
                 Row(
                     modifier = Modifier
@@ -104,29 +107,29 @@ fun JobDetailsScreen(
                                     }
                                 }
                             },
-                            modifier = Modifier.size(56.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray)
+                            modifier = Modifier.size(52.dp),
+                            shape = CircleShape,
+                            border = BorderStroke(1.dp, BorderStrokeColor)
                         ) {
-                            Icon(Icons.Filled.Chat, contentDescription = "Chat Owner", tint = MaterialTheme.colorScheme.primary)
+                            Icon(Icons.Filled.Chat, contentDescription = "Chat Owner", tint = PrimaryIndigo)
                         }
                     }
 
                     val buttonText = when {
                         isOwner -> "Manage Applicants"
-                        userApp?.status == ApplicationStatus.ACCEPTED -> "Accepted"
+                        userApp?.status == ApplicationStatus.ACCEPTED -> "Accepted 🎉"
                         userApp?.status == ApplicationStatus.REJECTED -> "Application Rejected"
-                        userApp != null -> "Response Sent"
+                        userApp != null -> "Response Sent ✓"
                         isFilled -> "Job Filled"
                         else -> "Respond to Job"
                     }
 
                     val buttonColor = when {
-                        userApp?.status == ApplicationStatus.ACCEPTED -> Color(0xFF2E7D32)
-                        userApp?.status == ApplicationStatus.REJECTED -> Color(0xFFC62828)
-                        userApp != null -> Color(0xFF1565C0)
-                        isFilled -> Color.Gray
-                        else -> MaterialTheme.colorScheme.primary
+                        userApp?.status == ApplicationStatus.ACCEPTED -> SuccessGreen
+                        userApp?.status == ApplicationStatus.REJECTED -> WarningRose
+                        userApp != null -> PrimaryIndigo
+                        isFilled -> DarkSurfaceVariant
+                        else -> PrimaryIndigo
                     }
 
                     PrimaryLargeButton(
@@ -152,13 +155,13 @@ fun JobDetailsScreen(
                         },
                         enabled = isOwner || (!hasApplied && !isFilled),
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = buttonColor)
+                        colors = ButtonDefaults.buttonColors(containerColor = buttonColor, contentColor = Color.White)
                     )
                 }
             }
         }
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues).background(DarkBackground)) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -168,7 +171,7 @@ fun JobDetailsScreen(
                 AnimatedVisibility(visible = actionError != null) {
                     Text(
                         text = actionError ?: "",
-                        color = Color.Red,
+                        color = WarningRose,
                         fontSize = 13.sp,
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
@@ -176,16 +179,17 @@ fun JobDetailsScreen(
 
                 // Category Tag
                 Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(4.dp),
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    color = PrimaryIndigo.copy(alpha = 0.15f),
+                    border = BorderStroke(1.dp, PrimaryIndigo.copy(alpha = 0.3f)),
+                    shape = CircleShape,
+                    modifier = Modifier.padding(bottom = 10.dp)
                 ) {
                     Text(
                         job.category.uppercase(),
-                        color = MaterialTheme.colorScheme.primary,
+                        color = PrimaryIndigo,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                     )
                 }
 
@@ -197,33 +201,34 @@ fun JobDetailsScreen(
                     Text(
                         job.title,
                         fontSize = 24.sp,
-                        fontWeight = FontWeight.ExtraBold,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary,
                         modifier = Modifier.weight(1f)
                     )
                     if (job.isUrgent) {
-                        Surface(color = Color(0xFFFFEBEE), shape = RoundedCornerShape(4.dp)) {
+                        Surface(color = WarningRose.copy(alpha = 0.15f), border = BorderStroke(1.dp, WarningRose.copy(alpha = 0.3f)), shape = CircleShape) {
                             Text(
-                                "URGENT",
-                                color = Color(0xFFD32F2F),
+                                "⚡ URGENT",
+                                color = WarningRose,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                             )
                         }
                     } else if (isFilled) {
-                        Surface(color = Color(0xFFECEFF1), shape = RoundedCornerShape(4.dp)) {
+                        Surface(color = TextMuted.copy(alpha = 0.15f), border = BorderStroke(1.dp, TextMuted.copy(alpha = 0.3f)), shape = CircleShape) {
                             Text(
                                 "FILLED",
-                                color = Color(0xFF455A64),
+                                color = TextSecondary,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                             )
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(18.dp))
 
                 // Key Info Row
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -237,44 +242,60 @@ fun JobDetailsScreen(
                 // Wage Card
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F8E9)),
-                    shape = RoundedCornerShape(12.dp)
+                    colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                    border = BorderStroke(1.dp, BorderStrokeColor),
+                    shape = RoundedCornerShape(20.dp)
                 ) {
                     Row(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier.padding(20.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Offered Wage", fontSize = 13.sp, color = Color(0xFF33691E))
-                            Text("₹${job.wage} / ${job.wageType}", fontSize = 28.sp, fontWeight = FontWeight.Black, color = Color(0xFF2E7D32))
+                            Text("Offered Wage", fontSize = 13.sp, color = TextSecondary)
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text("₹${job.wage} / ${job.wageType}", fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, color = SuccessGreen)
                         }
-                        Icon(Icons.Filled.Payments, contentDescription = null, tint = Color(0xFF2E7D32), modifier = Modifier.size(40.dp))
+                        Surface(
+                            shape = CircleShape,
+                            color = SuccessGreen.copy(alpha = 0.15f),
+                            modifier = Modifier.size(52.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Filled.Payments, contentDescription = null, tint = SuccessGreen, modifier = Modifier.size(28.dp))
+                            }
+                        }
                     }
                 }
 
-
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Text("Job Description", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text("Job Description", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     "Looking for experienced ${job.category} for work at ${job.location}. Work includes standard tasks related to ${job.category.lowercase()} trade. Materials will be provided at site.",
-                    color = Color.Gray,
+                    color = TextSecondary,
                     fontSize = 15.sp,
-                    lineHeight = 22.sp,
-                    modifier = Modifier.padding(top = 8.dp)
+                    lineHeight = 22.sp
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
                 if (job.skillsRequired.isNotEmpty()) {
-                    Text("Required Skills", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("Required Skills", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+                    Spacer(modifier = Modifier.height(8.dp))
                     FlowRow(
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         job.skillsRequired.forEach { skill ->
-                            SuggestionChip(onClick = {}, label = { Text(skill) })
+                            SuggestionChip(
+                                onClick = {},
+                                label = { Text(skill, color = TextPrimary) },
+                                shape = CircleShape,
+                                colors = SuggestionChipDefaults.suggestionChipColors(containerColor = DarkSurface),
+                                border = SuggestionChipDefaults.suggestionChipBorder(borderColor = BorderStrokeColor)
+                            )
                         }
                     }
                 }
@@ -282,34 +303,36 @@ fun JobDetailsScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Employer Profile
-                Text("About the Employer", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text("About the Employer", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
                 Card(
-                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFEEEEEE))
+                    modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+                    colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                    border = BorderStroke(1.dp, BorderStrokeColor),
+                    shape = RoundedCornerShape(20.dp)
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(48.dp)) {
+                        Surface(shape = CircleShape, color = PrimaryIndigo.copy(alpha = 0.15f), modifier = Modifier.size(48.dp)) {
                             Box(contentAlignment = Alignment.Center) {
-                                Text(job.ownerName.take(1), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                Text(job.ownerName.take(1).uppercase(), fontWeight = FontWeight.Bold, fontSize = 18.sp, color = PrimaryIndigo)
                             }
                         }
-                        Spacer(modifier = Modifier.width(12.dp))
+                        Spacer(modifier = Modifier.width(14.dp))
                         Column {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(job.ownerName, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                Text(job.ownerName, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
                                 if (job.ownerVerified) {
                                     Spacer(modifier = Modifier.width(4.dp))
                                     VerifiedBadge(size = 14)
                                 }
                             }
+                            Spacer(modifier = Modifier.height(2.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Filled.Star, contentDescription = null, tint = Color(0xFFFFB300), modifier = Modifier.size(16.dp))
+                                Icon(Icons.Filled.Star, contentDescription = null, tint = Color(0xFFF59E0B), modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("${job.ownerRating} • Highly Rated", fontSize = 13.sp, color = Color.Gray)
+                                Text("${job.ownerRating} • Highly Rated", fontSize = 13.sp, color = TextSecondary)
                             }
                         }
                     }
@@ -318,12 +341,22 @@ fun JobDetailsScreen(
                 Spacer(modifier = Modifier.height(24.dp))
                 
                 // Location Details
-                Text("Work Location", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Row(modifier = Modifier.padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.LocationOn, contentDescription = null, tint = Color.Gray)
+                Text("Work Location", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.LocationOn, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(job.location, color = Color.DarkGray)
+                    Text(job.location, color = TextSecondary, fontSize = 14.sp)
                 }
+                if (job.distanceKm > 0.0) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.Navigation, contentDescription = null, tint = SuccessGreen, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("${String.format(java.util.Locale.US, "%.1f", job.distanceKm)} km away from your location", color = SuccessGreen, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+
 
                 Spacer(modifier = Modifier.height(40.dp))
             }
@@ -337,10 +370,11 @@ fun JobDetailsScreen(
 fun InfoItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String) {
     Column {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(16.dp))
+            Icon(icon, contentDescription = null, tint = PrimaryIndigo, modifier = Modifier.size(16.dp))
             Spacer(modifier = Modifier.width(4.dp))
-            Text(label, fontSize = 12.sp, color = Color.Gray)
+            Text(label, fontSize = 12.sp, color = TextMuted)
         }
-        Text(value, fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.padding(top = 2.dp))
+        Text(value, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary, modifier = Modifier.padding(top = 2.dp))
     }
 }
+

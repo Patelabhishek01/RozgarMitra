@@ -1,6 +1,7 @@
 package com.rozgarmitra.app.presentation.auth
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,6 +25,7 @@ import com.rozgarmitra.app.data.Role
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.presentation.components.LoadingOverlay
 import com.rozgarmitra.app.presentation.components.PrimaryLargeButton
+import com.rozgarmitra.app.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -59,17 +61,31 @@ fun RegisterScreen(
         }
     }
 
+    val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedContainerColor = DarkSurface,
+        unfocusedContainerColor = DarkSurface,
+        focusedBorderColor = PrimaryBlue,
+        unfocusedBorderColor = BorderStrokeColor,
+        focusedLabelColor = AccentCyan,
+        unfocusedLabelColor = TextSecondary,
+        focusedTextColor = TextPrimary,
+        unfocusedTextColor = TextPrimary
+    )
+
     Scaffold(
+        containerColor = DarkBackground,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Create Profile", fontWeight = FontWeight.Bold) }
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = DarkBackground),
+                title = { Text("Create Profile", fontWeight = FontWeight.Bold, color = TextPrimary) }
             )
         }
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(DarkBackground)
                 .padding(paddingValues)
         ) {
             Column(
@@ -84,12 +100,12 @@ fun RegisterScreen(
                         text = "Register with RozgarMitra",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = PrimaryBlue
                     )
                     Text(
                         text = "Enter details to create your secure account",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray,
+                        color = TextSecondary,
                         modifier = Modifier.padding(bottom = 24.dp)
                     )
 
@@ -98,7 +114,7 @@ fun RegisterScreen(
                         text = "Full Name / पूरा नाम",
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
-                        color = MaterialTheme.colorScheme.onBackground
+                        color = TextPrimary
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
@@ -107,8 +123,9 @@ fun RegisterScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(58.dp),
-                        placeholder = { Text("Enter your full name") },
+                        placeholder = { Text("Enter your full name", color = TextSecondary.copy(alpha = 0.5f)) },
                         singleLine = true,
+                        colors = textFieldColors,
                         shape = RoundedCornerShape(12.dp)
                     )
 
@@ -119,20 +136,23 @@ fun RegisterScreen(
                         text = if (isEmail) "Email Address" else "Mobile Number (Verified)",
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
-                        color = Color.Gray
+                        color = TextSecondary
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = if (isEmail && identifier == "email_user") "" else if (isEmail) identifier else "+91 $identifier",
                         onValueChange = {},
-                        enabled = isEmail && identifier == "email_user", // Only allow edit if it's a new email user
+                        enabled = isEmail && identifier == "email_user",
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(58.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            disabledBorderColor = MaterialTheme.colorScheme.outlineVariant
+                            focusedContainerColor = DarkSurface,
+                            unfocusedContainerColor = DarkSurface,
+                            disabledContainerColor = DarkSurface.copy(alpha = 0.5f),
+                            disabledBorderColor = BorderStrokeColor,
+                            disabledTextColor = TextSecondary
                         )
                     )
 
@@ -141,28 +161,30 @@ fun RegisterScreen(
                         Text(
                             text = "Create Password",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp
+                            fontSize = 15.sp,
+                            color = TextPrimary
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         OutlinedTextField(
                             value = password,
                             onValueChange = { password = it },
                             modifier = Modifier.fillMaxWidth().height(58.dp),
-                            placeholder = { Text("Minimum 6 characters") },
+                            placeholder = { Text("Minimum 6 characters", color = TextSecondary.copy(alpha = 0.5f)) },
                             visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                            colors = textFieldColors,
                             shape = RoundedCornerShape(12.dp)
                         )
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Role Card Selection (Huge Targets!)
+                    // Role Card Selection
                     Text(
                         text = "Choose Account Type / खाता प्रकार चुनें",
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
-                        color = MaterialTheme.colorScheme.onBackground
+                        color = TextPrimary
                     )
                     Spacer(modifier = Modifier.height(10.dp))
 
@@ -176,11 +198,11 @@ fun RegisterScreen(
                             onClick = { selectedRole = Role.LABOUR },
                             shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = if (isLabourSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+                                containerColor = if (isLabourSelected) PrimaryBlue.copy(alpha = 0.25f) else DarkSurface
                             ),
                             border = BorderStroke(
                                 width = if (isLabourSelected) 2.dp else 1.dp,
-                                color = if (isLabourSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+                                color = if (isLabourSelected) PrimaryBlue else BorderStrokeColor
                             ),
                             modifier = Modifier
                                 .weight(1f)
@@ -196,7 +218,7 @@ fun RegisterScreen(
                                 Icon(
                                     imageVector = Icons.Filled.Engineering,
                                     contentDescription = null,
-                                    tint = if (isLabourSelected) MaterialTheme.colorScheme.primary else Color.Gray,
+                                    tint = if (isLabourSelected) PrimaryBlue else TextSecondary,
                                     modifier = Modifier.size(36.dp)
                                 )
                                 Spacer(modifier = Modifier.height(10.dp))
@@ -205,7 +227,7 @@ fun RegisterScreen(
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                    color = if (isLabourSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                    color = TextPrimary
                                 )
                             }
                         }
@@ -216,11 +238,11 @@ fun RegisterScreen(
                             onClick = { selectedRole = Role.OWNER },
                             shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = if (isOwnerSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+                                containerColor = if (isOwnerSelected) PrimaryBlue.copy(alpha = 0.25f) else DarkSurface
                             ),
                             border = BorderStroke(
                                 width = if (isOwnerSelected) 2.dp else 1.dp,
-                                color = if (isOwnerSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+                                color = if (isOwnerSelected) PrimaryBlue else BorderStrokeColor
                             ),
                             modifier = Modifier
                                 .weight(1f)
@@ -236,7 +258,7 @@ fun RegisterScreen(
                                 Icon(
                                     imageVector = Icons.Filled.Business,
                                     contentDescription = null,
-                                    tint = if (isOwnerSelected) MaterialTheme.colorScheme.primary else Color.Gray,
+                                    tint = if (isOwnerSelected) PrimaryBlue else TextSecondary,
                                     modifier = Modifier.size(36.dp)
                                 )
                                 Spacer(modifier = Modifier.height(10.dp))
@@ -245,7 +267,7 @@ fun RegisterScreen(
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                    color = if (isOwnerSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                    color = TextPrimary
                                 )
                             }
                         }
@@ -258,13 +280,15 @@ fun RegisterScreen(
                         text = "App Language",
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
-                        color = MaterialTheme.colorScheme.onBackground
+                        color = TextPrimary
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Box(modifier = Modifier.fillMaxWidth()) {
                         OutlinedCard(
                             onClick = { expandedLangDropdown = true },
                             shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.outlinedCardColors(containerColor = DarkSurface),
+                            border = BorderStroke(1.dp, BorderStrokeColor),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(58.dp)
@@ -280,11 +304,13 @@ fun RegisterScreen(
                                     text = selectedLanguage,
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Medium,
+                                    color = TextPrimary,
                                     modifier = Modifier.weight(1f)
                                 )
                                 Icon(
                                     imageVector = Icons.Filled.KeyboardArrowDown,
-                                    contentDescription = "Expand"
+                                    contentDescription = "Expand",
+                                    tint = TextSecondary
                                 )
                             }
                         }
@@ -292,11 +318,13 @@ fun RegisterScreen(
                         DropdownMenu(
                             expanded = expandedLangDropdown,
                             onDismissRequest = { expandedLangDropdown = false },
-                            modifier = Modifier.fillMaxWidth(0.9f)
+                            modifier = Modifier
+                                .fillMaxWidth(0.9f)
+                                .background(DarkSurfaceElevated)
                         ) {
                             languagesList.forEach { lang ->
                                 DropdownMenuItem(
-                                    text = { Text("${lang.nativeName} (${lang.englishName})") },
+                                    text = { Text("${lang.nativeName} (${lang.englishName})", color = TextPrimary) },
                                     onClick = {
                                         selectedLanguage = lang.englishName
                                         expandedLangDropdown = false
@@ -319,7 +347,6 @@ fun RegisterScreen(
                         val flow = if (needsPassword) {
                             RozgarRepository.registerWithEmail(identifier, password, fullName, role, selectedLanguage)
                         } else {
-                            // Already authenticated via Google or Phone
                             RozgarRepository.register(fullName, identifier, role, selectedLanguage)
                         }
                         
@@ -328,7 +355,6 @@ fun RegisterScreen(
                                 flow.collect { result ->
                                     result.fold(
                                         onSuccess = {
-                                            // Ensure loading is cleared before navigating
                                             delay(500)
                                             isLoading = false
                                             if (role == Role.LABOUR) onLabourRegistered()

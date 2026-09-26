@@ -65,6 +65,8 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.analytics)
     implementation(libs.google.play.auth)
+    implementation(libs.google.play.location)
+
     implementation(libs.kotlinx.coroutines.play.services)
 
     // Navigation

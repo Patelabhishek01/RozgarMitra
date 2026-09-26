@@ -12,6 +12,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,6 +32,7 @@ import com.rozgarmitra.app.presentation.components.PrimaryLargeButton
 import com.rozgarmitra.app.presentation.components.ProfileMenuItem
 import com.rozgarmitra.app.presentation.components.ProfileSection
 import com.rozgarmitra.app.presentation.components.VerifiedBadge
+import com.rozgarmitra.app.ui.theme.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -53,23 +56,26 @@ fun LabourHomeScreen(
     var showNotifDialog by remember { mutableStateOf(false) }
 
     Scaffold(
+        containerColor = DarkBackground,
         topBar = {
             Column {
                 OfflineBanner(isOffline = isOffline)
                 CenterAlignedTopAppBar(
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = DarkSurface),
                     title = {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("RozgarMitra", fontWeight = FontWeight.Black, fontSize = 20.sp, color = MaterialTheme.colorScheme.primary)
+                            Text("RozgarMitra", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = PrimaryIndigo)
                             Surface(
-                                color = Color(0xFFE8F5E9),
-                                shape = RoundedCornerShape(4.dp)
+                                color = SuccessGreen.copy(alpha = 0.15f),
+                                border = BorderStroke(1.dp, SuccessGreen.copy(alpha = 0.3f)),
+                                shape = CircleShape
                             ) {
                                 Text(
                                     "WORKER / LABOUR", 
-                                    fontSize = 10.sp, 
+                                    fontSize = 9.sp, 
                                     fontWeight = FontWeight.Bold, 
-                                    color = Color(0xFF2E7D32),
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    color = SuccessGreen,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                                 )
                             }
                         }
@@ -79,11 +85,11 @@ fun LabourHomeScreen(
                             BadgedBox(
                                 badge = {
                                     if (unreadNotifs > 0) {
-                                        Badge { Text(unreadNotifs.toString()) }
+                                        Badge(containerColor = WarningRose) { Text(unreadNotifs.toString(), color = Color.White) }
                                     }
                                 }
                             ) {
-                                Icon(Icons.Filled.Notifications, contentDescription = "Notifications", modifier = Modifier.size(26.dp))
+                                Icon(Icons.Filled.Notifications, contentDescription = "Notifications", tint = TextPrimary, modifier = Modifier.size(24.dp))
                             }
                         }
                     }
@@ -91,23 +97,36 @@ fun LabourHomeScreen(
             }
         },
         bottomBar = {
-            NavigationBar(
-                tonalElevation = 8.dp,
-                modifier = Modifier.height(80.dp) // Large targets for navigation items
+            Surface(
+                color = DarkSurface,
+                border = BorderStroke(1.dp, BorderStrokeColor)
             ) {
-                val items = listOf(
-                    Triple("Home", Icons.Filled.Home, 0),
-                    Triple("Search", Icons.Filled.Search, 1),
-                    Triple("Chats", Icons.Filled.Chat, 2),
-                    Triple("Profile", Icons.Filled.Person, 3)
-                )
-                items.forEach { (label, icon, index) ->
-                    NavigationBarItem(
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index },
-                        icon = { Icon(icon, contentDescription = label, modifier = Modifier.size(24.dp)) },
-                        label = { Text(label, fontWeight = FontWeight.Bold, fontSize = 12.sp) }
+                NavigationBar(
+                    tonalElevation = 0.dp,
+                    containerColor = DarkSurface,
+                    modifier = Modifier.height(72.dp)
+                ) {
+                    val items = listOf(
+                        Triple("Home", Icons.Filled.Home, 0),
+                        Triple("Search", Icons.Filled.Search, 1),
+                        Triple("Chats", Icons.Filled.Chat, 2),
+                        Triple("Profile", Icons.Filled.Person, 3)
                     )
+                    items.forEach { (label, icon, index) ->
+                        NavigationBarItem(
+                            selected = selectedTab == index,
+                            onClick = { selectedTab = index },
+                            icon = { Icon(icon, contentDescription = label, modifier = Modifier.size(22.dp)) },
+                            label = { Text(label, fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Medium, fontSize = 12.sp) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = PrimaryIndigo,
+                                selectedTextColor = PrimaryIndigo,
+                                unselectedIconColor = TextSecondary,
+                                unselectedTextColor = TextSecondary,
+                                indicatorColor = PrimaryIndigo.copy(alpha = 0.15f)
+                            )
+                        )
+                    }
                 }
             }
         }
@@ -116,6 +135,7 @@ fun LabourHomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .background(DarkBackground)
         ) {
             when (selectedTab) {
                 0 -> LabourHomeFeedTab(onJobClick = onJobClick)
@@ -134,24 +154,25 @@ fun LabourHomeScreen(
     if (showNotifDialog) {
         AlertDialog(
             onDismissRequest = { showNotifDialog = false },
-            title = { Text("Notifications", fontWeight = FontWeight.Bold) },
+            containerColor = DarkSurface,
+            title = { Text("Notifications", fontWeight = FontWeight.Bold, color = TextPrimary) },
             text = {
                 if (notifications.isEmpty()) {
-                    Text("No new notifications.", color = Color.Gray)
+                    Text("No new notifications.", color = TextSecondary)
                 } else {
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         items(notifications) { notif ->
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                colors = CardDefaults.cardColors(containerColor = DarkBackground),
+                                border = BorderStroke(1.dp, BorderStrokeColor)
                             ) {
                                 Column(modifier = Modifier.padding(12.dp)) {
-                                    Text(notif.title, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                    Text(notif.title, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary)
                                     Spacer(modifier = Modifier.height(4.dp))
-                                    Text(notif.message, fontSize = 12.sp, color = Color.DarkGray)
+                                    Text(notif.message, fontSize = 12.sp, color = TextSecondary)
                                 }
                             }
-                            // Mark as read immediately on display
                             RozgarRepository.markNotificationRead(notif.id)
                         }
                     }
@@ -159,7 +180,7 @@ fun LabourHomeScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showNotifDialog = false }) {
-                    Text("Dismiss", fontWeight = FontWeight.Bold)
+                    Text("Dismiss", fontWeight = FontWeight.Bold, color = PrimaryIndigo)
                 }
             }
         )
@@ -175,18 +196,34 @@ fun LabourHomeFeedTab(onJobClick: (String) -> Unit) {
     
     val jobs by RozgarRepository.jobs.collectAsStateWithLifecycle()
     val applications by RozgarRepository.applications.collectAsStateWithLifecycle()
-    val currentUser by RozgarRepository.currentUser.collectAsStateWithLifecycle()
+    val userLocationData by RozgarRepository.userLocationData.collectAsStateWithLifecycle()
+    val searchRadiusKm by RozgarRepository.searchRadiusKm.collectAsStateWithLifecycle()
+
+    var showLocationDialog by remember { mutableStateOf(false) }
+
+    val displayLocation = userLocationData?.addressName?.ifBlank { "Location Available" } ?: "Select Location"
+
+    val filteredJobs = jobs.filter { job ->
+        searchRadiusKm == 0.0 || job.distanceKm == 0.0 || job.distanceKm <= searchRadiusKm
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         TabRow(
             selectedTabIndex = subTabState,
-            containerColor = Color.White,
-            contentColor = MaterialTheme.colorScheme.primary
+            containerColor = DarkSurface,
+            contentColor = PrimaryIndigo,
+            indicator = { tabPositions ->
+                TabRowDefaults.Indicator(
+                    modifier = Modifier.tabIndicatorOffset(tabPositions[subTabState]),
+                    color = PrimaryIndigo,
+                    height = 3.dp
+                )
+            }
         ) {
             Tab(
                 selected = subTabState == 0,
                 onClick = { subTabState = 0 },
-                text = { Text("Nearby Jobs", fontWeight = FontWeight.Bold) }
+                text = { Text("Nearby Jobs", fontWeight = FontWeight.Bold, color = if (subTabState == 0) PrimaryIndigo else TextSecondary) }
             )
             Tab(
                 selected = subTabState == 1,
@@ -195,10 +232,10 @@ fun LabourHomeFeedTab(onJobClick: (String) -> Unit) {
                     BadgedBox(badge = {
                         val pending = applications.count { it.status == ApplicationStatus.APPLIED }
                         if (pending > 0) {
-                            Badge { Text(pending.toString()) }
+                            Badge(containerColor = PrimaryIndigo) { Text(pending.toString(), color = Color.White) }
                         }
                     }) {
-                        Text("My Applications", fontWeight = FontWeight.Bold)
+                        Text("My Applications", fontWeight = FontWeight.Bold, color = if (subTabState == 1) PrimaryIndigo else TextSecondary)
                     }
                 }
             )
@@ -206,29 +243,46 @@ fun LabourHomeFeedTab(onJobClick: (String) -> Unit) {
 
         if (subTabState == 0) {
             // FEED TAB
-            if (jobs.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CustomIcon(Icons.Filled.WorkOutline, contentDescription = null, size = 48, tint = Color.LightGray)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text("No active jobs found nearby.", color = Color.Gray)
-                        TextButton(onClick = { RozgarRepository.observeJobs() }) {
-                            Text("Refresh Feed")
+            Column(modifier = Modifier.fillMaxSize()) {
+                com.rozgarmitra.app.presentation.components.LocationIndicator(
+                    location = displayLocation,
+                    radiusKm = searchRadiusKm,
+                    onClick = { showLocationDialog = true }
+                )
+
+                if (filteredJobs.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Surface(
+                                shape = CircleShape,
+                                color = DarkSurfaceVariant,
+                                modifier = Modifier.size(64.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    CustomIcon(Icons.Filled.WorkOutline, contentDescription = null, size = 32, tint = TextSecondary)
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("No active jobs found nearby.", color = TextSecondary, fontWeight = FontWeight.Medium)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            TextButton(onClick = { RozgarRepository.observeJobs() }) {
+                                Text("Refresh Feed", color = PrimaryIndigo, fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(jobs, key = { it.id.ifBlank { it.title + it.createdAt } }) { job ->
-                        JobFeedCard(
-                            job = job, 
-                            onClick = { onJobClick(job.id) },
-                            onApplyClick = { /* Handled in card */ }
-                        )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(filteredJobs, key = { it.id.ifBlank { it.title + it.createdAt } }) { job ->
+                            JobFeedCard(
+                                job = job, 
+                                onClick = { onJobClick(job.id) },
+                                onApplyClick = { /* Handled in card */ }
+                            )
+                        }
                     }
                 }
             }
@@ -237,18 +291,25 @@ fun LabourHomeFeedTab(onJobClick: (String) -> Unit) {
             if (applications.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CustomIcon(Icons.Filled.ListAlt, contentDescription = null, size = 48, tint = Color.LightGray)
+                        Surface(
+                            shape = CircleShape,
+                            color = DarkSurfaceVariant,
+                            modifier = Modifier.size(64.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                CustomIcon(Icons.Filled.ListAlt, contentDescription = null, size = 32, tint = TextSecondary)
+                            }
+                        }
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("You haven't applied to any jobs yet.", color = Color.Gray)
+                        Text("You haven't applied to any jobs yet.", color = TextSecondary, fontWeight = FontWeight.Medium)
                     }
                 }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Show newest applications first
                     items(applications.asReversed(), key = { it.id }) { app ->
                         ApplicationStatusCard(app = app, onJobClick = onJobClick)
                     }
@@ -263,46 +324,46 @@ private fun CustomIcon(imageVector: ImageVector, contentDescription: String?, si
     Icon(imageVector, contentDescription, modifier = Modifier.size(size.dp), tint = tint)
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ApplicationStatusCard(app: JobApplication, onJobClick: (String) -> Unit) {
     val (statusText, badgeColor) = when (app.status) {
-        ApplicationStatus.APPLIED -> "Applied (ओटीपी भेजा)" to Color(0xFFFBC02D) // Yellow
-        ApplicationStatus.ACCEPTED -> "Hired / Approved (काम मिला)" to Color(0xFF388E3C) // Green
-        ApplicationStatus.COMPLETED -> "Completed (पूर्ण हुआ)" to Color(0xFF1976D2) // Blue
-        ApplicationStatus.REJECTED -> "Rejected (अस्वीकृत)" to Color(0xFFD32F2F) // Red
-        ApplicationStatus.CANCELLED -> "Cancelled (रद्द किया)" to Color(0xFF757575) // Gray
+        ApplicationStatus.APPLIED -> "Applied (ओटीपी भेजा)" to Color(0xFFF59E0B) // Amber
+        ApplicationStatus.ACCEPTED -> "Hired / Approved (काम मिला)" to SuccessGreen
+        ApplicationStatus.COMPLETED -> "Completed (पूर्ण हुआ)" to AccentCyan
+        ApplicationStatus.REJECTED -> "Rejected (अस्वीकृत)" to WarningRose
+        ApplicationStatus.CANCELLED -> "Cancelled (रद्द किया)" to TextMuted
     }
 
     Card(
         onClick = { onJobClick(app.jobId) },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+        border = BorderStroke(1.dp, BorderStrokeColor),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(18.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(app.jobTitle, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                Box(
-                    modifier = Modifier
-                        .background(badgeColor.copy(alpha = 0.15f), RoundedCornerShape(6.dp))
-                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                Text(app.jobTitle, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.width(8.dp))
+                Surface(
+                    color = badgeColor.copy(alpha = 0.15f),
+                    border = BorderStroke(1.dp, badgeColor.copy(alpha = 0.3f)),
+                    shape = CircleShape
                 ) {
-                    Text(statusText, color = badgeColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text(statusText, color = badgeColor, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp))
                 }
             }
             
             Spacer(modifier = Modifier.height(12.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.Work, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(16.dp))
+                Icon(Icons.Filled.Work, contentDescription = null, tint = PrimaryIndigo, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Skills: ${app.labourSkills.joinToString(", ")}", fontSize = 12.sp, color = Color.DarkGray)
+                Text("Skills: ${app.labourSkills.joinToString(", ")}", fontSize = 13.sp, color = TextSecondary)
             }
         }
     }
@@ -341,18 +402,25 @@ fun LabourSearchTab(onJobClick: (String) -> Unit) {
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            placeholder = { Text("Search by trade, area, or keywords...") },
-            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search") },
-            shape = RoundedCornerShape(14.dp),
+            placeholder = { Text("Search by trade, area, or keywords...", color = TextMuted) },
+            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search", tint = PrimaryIndigo) },
+            shape = CircleShape,
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                containerColor = DarkSurface,
+                focusedBorderColor = PrimaryIndigo,
+                unfocusedBorderColor = BorderStrokeColor,
+                focusedTextColor = TextPrimary,
+                unfocusedTextColor = TextPrimary
+            )
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         // Horizontal filter chips
-        Text("Quick Filters", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
-        Spacer(modifier = Modifier.height(6.dp))
+        Text("Quick Filters", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextMuted)
+        Spacer(modifier = Modifier.height(8.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -364,7 +432,17 @@ fun LabourSearchTab(onJobClick: (String) -> Unit) {
                     selectedCategory = if (selectedCategory == null) "Mason" else null
                 },
                 label = { Text("Mason") },
-                shape = RoundedCornerShape(8.dp)
+                shape = CircleShape,
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = PrimaryIndigo,
+                    selectedLabelColor = Color.White,
+                    containerColor = DarkSurface,
+                    labelColor = TextSecondary
+                ),
+                border = FilterChipDefaults.filterChipBorder(
+                    borderColor = BorderStrokeColor,
+                    selectedBorderColor = PrimaryIndigo
+                )
             )
 
             FilterChip(
@@ -373,7 +451,17 @@ fun LabourSearchTab(onJobClick: (String) -> Unit) {
                     selectedDistance = if (selectedDistance == null) 5.0 else null
                 },
                 label = { Text("Under 5 km") },
-                shape = RoundedCornerShape(8.dp)
+                shape = CircleShape,
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = PrimaryIndigo,
+                    selectedLabelColor = Color.White,
+                    containerColor = DarkSurface,
+                    labelColor = TextSecondary
+                ),
+                border = FilterChipDefaults.filterChipBorder(
+                    borderColor = BorderStrokeColor,
+                    selectedBorderColor = PrimaryIndigo
+                )
             )
 
             FilterChip(
@@ -382,7 +470,17 @@ fun LabourSearchTab(onJobClick: (String) -> Unit) {
                     selectedWage = if (selectedWage == null) 700 else null
                 },
                 label = { Text("₹700+ / Day") },
-                shape = RoundedCornerShape(8.dp)
+                shape = CircleShape,
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = PrimaryIndigo,
+                    selectedLabelColor = Color.White,
+                    containerColor = DarkSurface,
+                    labelColor = TextSecondary
+                ),
+                border = FilterChipDefaults.filterChipBorder(
+                    borderColor = BorderStrokeColor,
+                    selectedBorderColor = PrimaryIndigo
+                )
             )
         }
 
@@ -390,19 +488,19 @@ fun LabourSearchTab(onJobClick: (String) -> Unit) {
 
         if (filteredJobs.isEmpty()) {
             Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Text("No matching jobs found.", color = Color.Gray)
+                Text("No matching jobs found.", color = TextSecondary, fontWeight = FontWeight.Medium)
             }
         } else {
             LazyColumn(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(filteredJobs) { job ->
                     JobFeedCard(
-                    job = job, 
-                    onClick = { onJobClick(job.id) },
-                    onApplyClick = { /* Already logged in */ }
-                )
+                        job = job, 
+                        onClick = { onJobClick(job.id) },
+                        onApplyClick = { /* Already logged in */ }
+                    )
                 }
             }
         }
@@ -417,7 +515,19 @@ fun LabourChatsTab(onChatThreadClick: (String) -> Unit) {
 
     if (threads.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No active job chats yet.", color = Color.Gray)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Surface(
+                    shape = CircleShape,
+                    color = DarkSurfaceVariant,
+                    modifier = Modifier.size(64.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(Icons.Filled.Chat, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(32.dp))
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("No active job chats yet.", color = TextSecondary, fontWeight = FontWeight.Medium)
+            }
         }
     } else {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -429,46 +539,49 @@ fun LabourChatsTab(onChatThreadClick: (String) -> Unit) {
                         .padding(horizontal = 16.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(52.dp)
-                            .background(Color(0xFFE0F7FA), CircleShape),
-                        contentAlignment = Alignment.Center
+                    Surface(
+                        shape = CircleShape,
+                        color = PrimaryIndigo.copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, PrimaryIndigo.copy(alpha = 0.3f)),
+                        modifier = Modifier.size(50.dp)
                     ) {
-                        Text(
-                            text = thread.otherUserName.take(1),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp,
-                            color = Color(0xFF006064)
-                        )
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = thread.otherUserName.take(1).uppercase(),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp,
+                                color = PrimaryIndigo
+                            )
+                        }
                     }
 
-                    Spacer(modifier = Modifier.width(16.dp))
+                    Spacer(modifier = Modifier.width(14.dp))
 
                     Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(thread.otherUserName, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            Text(thread.otherUserName, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
                             if (thread.otherUserVerified) {
                                 Spacer(modifier = Modifier.width(4.dp))
                                 VerifiedBadge(size = 14)
                             }
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(thread.lastMessageText, fontSize = 13.sp, color = Color.Gray, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(thread.lastMessageText, fontSize = 13.sp, color = TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
 
                     if (thread.unreadCount > 0) {
-                        Box(
-                            modifier = Modifier
-                                .size(22.dp)
-                                .background(MaterialTheme.colorScheme.primary, CircleShape),
-                            contentAlignment = Alignment.Center
+                        Surface(
+                            shape = CircleShape,
+                            color = PrimaryIndigo,
+                            modifier = Modifier.size(22.dp)
                         ) {
-                            Text(thread.unreadCount.toString(), color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(thread.unreadCount.toString(), color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                 }
-                Divider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(horizontal = 16.dp))
+                Divider(color = BorderStrokeColor.copy(alpha = 0.6f), modifier = Modifier.padding(horizontal = 16.dp))
             }
         }
     }
@@ -485,10 +598,6 @@ fun LabourProfileTab(
 ) {
     val currentUser by RozgarRepository.currentUser.collectAsStateWithLifecycle()
     val isOffline by RozgarRepository.isOffline.collectAsStateWithLifecycle()
-    var isUploadingDoc by remember { mutableStateOf(false) }
-    var uploadStatus by remember { mutableStateOf<String?>(null) }
-    
-    val scope = rememberCoroutineScope()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -497,9 +606,10 @@ fun LabourProfileTab(
         item {
             // Profile Header Card
             Surface(
-                color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 2.dp,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                color = DarkSurface,
+                border = BorderStroke(1.dp, BorderStrokeColor),
+                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier.fillMaxWidth().padding(16.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(24.dp),
@@ -508,28 +618,29 @@ fun LabourProfileTab(
                     Box(
                         modifier = Modifier
                             .size(80.dp)
-                            .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+                            .background(PrimaryIndigo.copy(alpha = 0.15f), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Filled.Person, contentDescription = null, modifier = Modifier.size(40.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                        Icon(Icons.Filled.Person, contentDescription = null, modifier = Modifier.size(40.dp), tint = PrimaryIndigo)
                     }
                     
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Text(currentUser?.name ?: "Worker", fontWeight = FontWeight.Bold, fontSize = 22.sp)
-                    Text(currentUser?.phone ?: "", color = Color.Gray, fontSize = 14.sp)
+                    Text(currentUser?.name ?: "Worker", fontWeight = FontWeight.Bold, fontSize = 22.sp, color = TextPrimary)
+                    Text(currentUser?.phone ?: "", color = TextSecondary, fontSize = 14.sp)
                     
                     Surface(
-                        color = Color(0xFFE8F5E9),
-                        shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.padding(top = 8.dp)
+                        color = SuccessGreen.copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, SuccessGreen.copy(alpha = 0.3f)),
+                        shape = CircleShape,
+                        modifier = Modifier.padding(top = 10.dp)
                     ) {
                         Text(
                             "WORKER / LABOUR", 
-                            color = Color(0xFF2E7D32), 
-                            fontSize = 11.sp, 
+                            color = SuccessGreen, 
+                            fontSize = 10.sp, 
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                         )
                     }
                 }
@@ -561,16 +672,30 @@ fun LabourProfileTab(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Filled.EventAvailable, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(24.dp))
-                        Spacer(modifier = Modifier.width(16.dp))
+                        Surface(
+                            shape = CircleShape,
+                            color = PrimaryIndigo.copy(alpha = 0.12f),
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Filled.EventAvailable, contentDescription = null, tint = PrimaryIndigo, modifier = Modifier.size(18.dp))
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(14.dp))
                         Column {
-                            Text("Available for Work", fontWeight = FontWeight.Medium, fontSize = 16.sp)
-                            Text("Show your profile to employers", fontSize = 12.sp, color = Color.Gray)
+                            Text("Available for Work", fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = TextPrimary)
+                            Text("Show your profile to employers", fontSize = 12.sp, color = TextSecondary)
                         }
                     }
                     Switch(
                         checked = currentUser?.labourProfile?.isAvailable == true,
-                        onCheckedChange = { RozgarRepository.toggleAvailability(it) }
+                        onCheckedChange = { RozgarRepository.toggleAvailability(it) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = PrimaryIndigo,
+                            uncheckedThumbColor = TextSecondary,
+                            uncheckedTrackColor = DarkSurfaceVariant
+                        )
                     )
                 }
                 
@@ -578,7 +703,7 @@ fun LabourProfileTab(
                     icon = Icons.Filled.VerifiedUser,
                     title = if (currentUser?.isVerified == true) "Aadhaar Verified" else "Verify Aadhaar",
                     subtitle = if (currentUser?.isVerified == true) "Badge granted" else "Get a verification badge",
-                    titleColor = if (currentUser?.isVerified == true) Color(0xFF2E7D32) else Color.Unspecified,
+                    titleColor = if (currentUser?.isVerified == true) SuccessGreen else TextPrimary,
                     onClick = { /* TODO: Verification flow */ }
                 )
             }
@@ -599,8 +724,8 @@ fun LabourProfileTab(
                 )
                 ProfileMenuItem(
                     icon = Icons.Filled.BugReport,
-                    title = "Debug: Offline Mode",
-                    subtitle = "Test app without internet",
+                    title = "Offline Mode",
+                    subtitle = "Simulate offline state",
                     onClick = { RozgarRepository.toggleOffline(!isOffline) }
                 )
             }
@@ -608,16 +733,24 @@ fun LabourProfileTab(
 
         item {
             Spacer(modifier = Modifier.height(24.dp))
-            ProfileMenuItem(
-                icon = Icons.Filled.Logout,
-                title = "Logout Account",
-                titleColor = Color.Red,
-                onClick = {
-                    RozgarRepository.logout()
-                    onLogoutClick()
+            Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                OutlinedButton(
+                    onClick = {
+                        RozgarRepository.logout()
+                        onLogoutClick()
+                    },
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    shape = CircleShape,
+                    border = BorderStroke(1.dp, WarningRose.copy(alpha = 0.4f)),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = WarningRose)
+                ) {
+                    Icon(Icons.Filled.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Logout Account", fontWeight = FontWeight.Bold)
                 }
-            )
+            }
             Spacer(modifier = Modifier.height(40.dp))
         }
     }
 }
+

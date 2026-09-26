@@ -1,5 +1,6 @@
 package com.rozgarmitra.app.presentation.job
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,6 +19,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.presentation.components.JobFeedCard
+import com.rozgarmitra.app.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,7 +37,6 @@ fun JobResultsScreen(
         "nearby" -> jobs.sortedBy { it.distanceKm }
         "popular" -> jobs.sortedByDescending { it.ownerRating }
         else -> {
-            // Assume filterType might be a profession if not one of the above
             if (filterType != "all") {
                 jobs.filter { it.category.equals(filterType, ignoreCase = true) }
             } else jobs
@@ -43,38 +44,54 @@ fun JobResultsScreen(
     }
 
     Scaffold(
+        containerColor = DarkBackground,
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = DarkBackground,
+                    titleContentColor = TextPrimary,
+                    navigationIconContentColor = TextPrimary,
+                    actionIconContentColor = TextPrimary
+                ),
                 title = { Text(title, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary)
                     }
                 },
                 actions = {
                     IconButton(onClick = { /* TODO: Filter */ }) {
-                        Icon(Icons.Filled.FilterList, contentDescription = "Filter")
+                        Icon(Icons.Filled.FilterList, contentDescription = "Filter", tint = AccentCyan)
                     }
                 }
             )
         }
     ) { paddingValues ->
         if (filteredJobs.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(DarkBackground)
+                    .padding(paddingValues), 
+                contentAlignment = Alignment.Center
+            ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
                         imageVector = Icons.Filled.SearchOff, 
                         contentDescription = null, 
                         modifier = Modifier.size(64.dp), 
-                        tint = Color.Gray
+                        tint = TextSecondary.copy(alpha = 0.4f)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("No jobs found", fontWeight = FontWeight.Bold, color = Color.Gray)
+                    Text("No jobs found", fontWeight = FontWeight.Bold, color = TextSecondary)
                 }
             }
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(DarkBackground)
+                    .padding(paddingValues),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -83,7 +100,7 @@ fun JobResultsScreen(
                         job = job,
                         onClick = { onJobClick(job.id) },
                         onApplyClick = {
-                            RozgarRepository.setPendingAction { /* Action will be handled on return */ }
+                            RozgarRepository.setPendingAction { }
                             onNavigateToLogin()
                         }
                     )
@@ -93,4 +110,3 @@ fun JobResultsScreen(
     }
 }
 
-private fun Modifier.size(size: Int): Modifier = this.size(size.dp)

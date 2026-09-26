@@ -1,5 +1,6 @@
 package com.rozgarmitra.app.presentation.owner
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,6 +20,7 @@ import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.presentation.components.LoadingOverlay
 import com.rozgarmitra.app.presentation.components.PrimaryLargeButton
 import com.rozgarmitra.app.presentation.components.RatingBar
+import com.rozgarmitra.app.ui.theme.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -38,13 +40,30 @@ fun RatingsScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
+    val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedContainerColor = DarkSurface,
+        unfocusedContainerColor = DarkSurface,
+        focusedBorderColor = PrimaryBlue,
+        unfocusedBorderColor = BorderStrokeColor,
+        focusedLabelColor = AccentCyan,
+        unfocusedLabelColor = TextSecondary,
+        focusedTextColor = TextPrimary,
+        unfocusedTextColor = TextPrimary
+    )
+
     Scaffold(
+        containerColor = DarkBackground,
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = DarkBackground,
+                    titleContentColor = TextPrimary,
+                    navigationIconContentColor = TextPrimary
+                ),
                 title = { Text("Rate Worker", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", modifier = Modifier.size(26.dp))
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", modifier = Modifier.size(26.dp), tint = TextPrimary)
                     }
                 }
             )
@@ -53,6 +72,7 @@ fun RatingsScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(DarkBackground)
                 .padding(paddingValues)
         ) {
             Column(
@@ -67,17 +87,17 @@ fun RatingsScreen(
                         text = "Job Completed! 🎉",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Black,
-                        color = MaterialTheme.colorScheme.primary
+                        color = SuccessGreen
                     )
                     Text(
                         text = "Please rate the worker on the following parameters.",
                         fontSize = 13.sp,
-                        color = Color.Gray,
+                        color = TextSecondary,
                         modifier = Modifier.padding(bottom = 24.dp)
                     )
 
                     // Param 1: Skill
-                    Text("Work Skill / कार्य कौशल", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    Text("Work Skill / कार्य कौशल", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
                         RatingBar(rating = skillRating, onRatingChanged = { skillRating = it })
@@ -91,7 +111,7 @@ fun RatingsScreen(
                                 else -> "Excellent"
                             },
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.secondary,
+                            color = AccentCyan,
                             modifier = Modifier.align(Alignment.CenterVertically)
                         )
                     }
@@ -99,7 +119,7 @@ fun RatingsScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     // Param 2: Punctuality
-                    Text("Punctuality / समय पालन", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    Text("Punctuality / समय पालन", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
                         RatingBar(rating = punctualityRating, onRatingChanged = { punctualityRating = it })
@@ -113,7 +133,7 @@ fun RatingsScreen(
                                 else -> "Highly Reliable"
                             },
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.secondary,
+                            color = AccentCyan,
                             modifier = Modifier.align(Alignment.CenterVertically)
                         )
                     }
@@ -121,7 +141,7 @@ fun RatingsScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     // Param 3: Behaviour
-                    Text("Behaviour & Conduct / व्यवहार", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    Text("Behaviour & Conduct / व्यवहार", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
                         RatingBar(rating = behaviourRating, onRatingChanged = { behaviourRating = it })
@@ -135,7 +155,7 @@ fun RatingsScreen(
                                 else -> "Exceptional"
                             },
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.secondary,
+                            color = AccentCyan,
                             modifier = Modifier.align(Alignment.CenterVertically)
                         )
                     }
@@ -143,15 +163,16 @@ fun RatingsScreen(
                     Spacer(modifier = Modifier.height(28.dp))
 
                     // Comment box
-                    Text("Write a short review (Optional)", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    Text("Write a short review (Optional)", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = commentText,
                         onValueChange = { commentText = it },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("e.g. Completed work quickly, did a great job") },
+                        placeholder = { Text("e.g. Completed work quickly, did a great job", color = TextSecondary.copy(alpha = 0.5f)) },
                         minLines = 3,
                         maxLines = 5,
+                        colors = textFieldColors,
                         shape = RoundedCornerShape(12.dp)
                     )
                 }
@@ -188,3 +209,4 @@ fun RatingsScreen(
         }
     }
 }
+

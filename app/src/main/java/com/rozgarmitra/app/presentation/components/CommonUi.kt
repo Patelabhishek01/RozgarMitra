@@ -3,22 +3,22 @@ package com.rozgarmitra.app.presentation.components
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.rozgarmitra.app.ui.theme.*
 
 @Composable
 fun VerifiedBadge(
@@ -35,7 +36,7 @@ fun VerifiedBadge(
     Icon(
         imageVector = Icons.Filled.CheckCircle,
         contentDescription = "Verified Badge",
-        tint = Color(0xFF2196F3),
+        tint = Color(0xFF38BDF8),
         modifier = modifier.size(size.dp)
     )
 }
@@ -50,7 +51,7 @@ fun OfflineBanner(isOffline: Boolean) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFFE53935))
+                .background(WarningRose.copy(alpha = 0.9f))
                 .padding(vertical = 8.dp, horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
@@ -66,7 +67,7 @@ fun OfflineBanner(isOffline: Boolean) {
                 text = "You are currently offline. Using cached data.",
                 color = Color.White,
                 fontSize = 13.sp,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.SemiBold
             )
         }
     }
@@ -85,31 +86,33 @@ fun LoadingOverlay(
                 dismissOnClickOutside = false
             )
         ) {
-            Box(
-                modifier = Modifier
-                    .size(150.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.surface,
-                        shape = RoundedCornerShape(16.dp)
-                    ),
-                contentAlignment = Alignment.Center
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = DarkSurface,
+                border = BorderStroke(1.dp, BorderStrokeColor),
+                tonalElevation = 12.dp,
+                shadowElevation = 12.dp,
+                modifier = Modifier.size(160.dp)
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    CircularProgressIndicator(
-                        color = MaterialTheme.colorScheme.primary,
-                        strokeWidth = 4.dp
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = text,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+                Box(contentAlignment = Alignment.Center) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        CircularProgressIndicator(
+                            color = PrimaryIndigo,
+                            strokeWidth = 3.dp,
+                            modifier = Modifier.size(40.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = text,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                    }
                 }
             }
         }
@@ -123,16 +126,22 @@ fun PrimaryLargeButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     icon: ImageVector? = null,
-    colors: ButtonColors = ButtonDefaults.buttonColors()
+    colors: ButtonColors = ButtonDefaults.buttonColors(
+        containerColor = PrimaryIndigo,
+        contentColor = Color.White,
+        disabledContainerColor = DarkSurfaceVariant,
+        disabledContentColor = TextMuted
+    )
 ) {
     Button(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp), // Meets the 48dp+ accessibility guidelines with comfort margins
+            .height(52.dp),
         enabled = enabled,
         shape = RoundedCornerShape(14.dp),
-        colors = colors
+        colors = colors,
+        elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp, pressedElevation = 0.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -142,15 +151,15 @@ fun PrimaryLargeButton(
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(10.dp))
             }
             Text(
                 text = text,
-                fontSize = 16.sp,
+                fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
-                letterSpacing = 0.5.sp
+                letterSpacing = 0.3.sp
             )
         }
     }
@@ -162,7 +171,7 @@ fun RatingBar(
     onRatingChanged: (Float) -> Unit,
     modifier: Modifier = Modifier,
     stars: Int = 5,
-    starSize: Int = 36,
+    starSize: Int = 32,
     clickable: Boolean = true
 ) {
     Row(
@@ -174,10 +183,10 @@ fun RatingBar(
             Icon(
                 imageVector = Icons.Filled.Star,
                 contentDescription = "Star $i",
-                tint = if (i <= rating) Color(0xFFFFC107) else Color(0xFFE0E0E0),
+                tint = if (i <= rating) AmberGold else BorderStrokeColor,
                 modifier = Modifier
                     .size(starSize.dp)
-                    .padding(4.dp)
+                    .padding(2.dp)
                     .then(
                         if (clickable) {
                             Modifier.clickable {
@@ -190,18 +199,23 @@ fun RatingBar(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileSection(title: String, content: @Composable ColumnScope.() -> Unit) {
     Column(modifier = Modifier.padding(top = 16.dp)) {
         Text(
-            text = title,
-            fontSize = 14.sp,
+            text = title.uppercase(),
+            fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.Gray,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            color = TextSecondary,
+            letterSpacing = 1.sp,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
         )
-        Surface(color = MaterialTheme.colorScheme.surface) {
+        Surface(
+            color = DarkSurface,
+            shape = RoundedCornerShape(16.dp),
+            border = BorderStroke(1.dp, BorderStrokeColor),
+            modifier = Modifier.padding(horizontal = 16.dp)
+        ) {
             Column(content = content)
         }
     }
@@ -212,7 +226,7 @@ fun ProfileMenuItem(
     icon: ImageVector, 
     title: String, 
     subtitle: String? = null,
-    titleColor: Color = Color.Unspecified,
+    titleColor: Color = TextPrimary,
     onClick: () -> Unit
 ) {
     Row(
@@ -222,14 +236,27 @@ fun ProfileMenuItem(
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(icon, contentDescription = null, tint = if (titleColor == Color.Red) titleColor else Color.Gray, modifier = Modifier.size(24.dp))
-        Spacer(modifier = Modifier.width(16.dp))
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(if (titleColor == WarningRose) WarningRose.copy(alpha = 0.15f) else PrimaryIndigo.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                icon, 
+                contentDescription = null, 
+                tint = if (titleColor == WarningRose) WarningRose else PrimaryIndigo, 
+                modifier = Modifier.size(18.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = titleColor)
+            Text(title, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = titleColor)
             if (subtitle != null) {
-                Text(subtitle, fontSize = 12.sp, color = Color.Gray)
+                Text(subtitle, fontSize = 12.sp, color = TextSecondary)
             }
         }
-        Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = Color.LightGray)
+        Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = TextMuted, modifier = Modifier.size(20.dp))
     }
 }

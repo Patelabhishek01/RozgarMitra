@@ -1,5 +1,6 @@
 package com.rozgarmitra.app.presentation.auth
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -19,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.presentation.components.LoadingOverlay
 import com.rozgarmitra.app.presentation.components.PrimaryLargeButton
+import com.rozgarmitra.app.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -54,16 +56,23 @@ fun OtpScreen(
     }
 
     Scaffold(
+        containerColor = DarkBackground,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = DarkBackground,
+                    titleContentColor = TextPrimary,
+                    navigationIconContentColor = TextPrimary
+                ),
                 title = { Text("Verify Mobile", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.Filled.ArrowBack,
                             contentDescription = "Back",
-                            modifier = Modifier.size(28.dp) // Large tap size!
+                            modifier = Modifier.size(28.dp),
+                            tint = TextPrimary
                         )
                     }
                 }
@@ -73,6 +82,7 @@ fun OtpScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(DarkBackground)
                 .padding(paddingValues)
         ) {
             Column(
@@ -90,7 +100,7 @@ fun OtpScreen(
                     Icon(
                         imageVector = Icons.Filled.LockOpen,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = PrimaryBlue,
                         modifier = Modifier.size(64.dp)
                     )
                     
@@ -99,14 +109,14 @@ fun OtpScreen(
                     Text(
                         text = "We sent an OTP code to",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = Color.Gray
+                        color = TextSecondary
                     )
                     
                     Text(
                         text = "+91 $phone",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground,
+                        color = TextPrimary,
                         modifier = Modifier.padding(top = 4.dp)
                     )
                     
@@ -126,7 +136,8 @@ fun OtpScreen(
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center,
-                            letterSpacing = 8.sp
+                            letterSpacing = 8.sp,
+                            color = TextPrimary
                         ),
                         placeholder = {
                             Text(
@@ -135,7 +146,7 @@ fun OtpScreen(
                                 textAlign = TextAlign.Center,
                                 style = TextStyle(
                                     fontSize = 24.sp,
-                                    color = Color.LightGray,
+                                    color = TextSecondary.copy(alpha = 0.4f),
                                     letterSpacing = 8.sp
                                 )
                             )
@@ -143,8 +154,12 @@ fun OtpScreen(
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                            focusedContainerColor = DarkSurface,
+                            unfocusedContainerColor = DarkSurface,
+                            focusedBorderColor = PrimaryBlue,
+                            unfocusedBorderColor = BorderStrokeColor,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
                         )
                     )
                     
@@ -152,7 +167,7 @@ fun OtpScreen(
                     Text(
                         text = "Enter '123456' to proceed (Demo OTP)",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
+                        color = TextSecondary
                     )
 
                     Spacer(modifier = Modifier.height(32.dp))
@@ -165,14 +180,13 @@ fun OtpScreen(
                         if (timerSeconds > 0) {
                             Text(
                                 text = "Resend OTP in ${timerSeconds}s",
-                                color = Color.Gray,
+                                color = TextSecondary,
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         } else {
                             TextButton(
                                 onClick = {
                                     timerSeconds = 30
-                                    // Simulated OTP resend
                                     RozgarRepository.addNotification("OTP Resent", "A new OTP code has been sent to +91 $phone.")
                                 }
                             ) {
@@ -180,7 +194,7 @@ fun OtpScreen(
                                     "Resend Code",
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = AccentCyan
                                 )
                             }
                         }
@@ -193,7 +207,6 @@ fun OtpScreen(
                         isLoading = true
                         errorMessage = null
                         
-                        // Launch coroutine flow call
                         val flow = RozgarRepository.verifyOtp(phone, otpCode)
                         scope.launch {
                             flow.collectLatest { result ->
@@ -204,7 +217,6 @@ fun OtpScreen(
                                             RozgarRepository.executePendingAction()
                                             onVerificationSuccess(user.profileCompleted)
                                         } else {
-                                            // User is not registered, navigate to Register
                                             onVerificationSuccess(false)
                                         }
                                     },
@@ -224,3 +236,4 @@ fun OtpScreen(
         }
     }
 }
+

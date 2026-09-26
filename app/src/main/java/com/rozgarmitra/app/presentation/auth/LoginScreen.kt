@@ -1,5 +1,6 @@
 package com.rozgarmitra.app.presentation.auth
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
@@ -27,6 +28,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.presentation.components.LoadingOverlay
 import com.rozgarmitra.app.presentation.components.PrimaryLargeButton
+import com.rozgarmitra.app.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -51,7 +53,7 @@ fun LoginScreen(
 
     // Google Sign-In Setup
     val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-        .requestIdToken("665387151392-bra33spjvo6s581tc5nn1bsd9hg325i4.apps.googleusercontent.com") // User needs to replace this
+        .requestIdToken("665387151392-bra33spjvo6s581tc5nn1bsd9hg325i4.apps.googleusercontent.com")
         .requestEmail()
         .build()
     val googleSignInClient = GoogleSignIn.getClient(context, gso)
@@ -93,12 +95,25 @@ fun LoginScreen(
         }
     }
 
+    val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedContainerColor = DarkSurface,
+        unfocusedContainerColor = DarkSurface,
+        focusedBorderColor = PrimaryBlue,
+        unfocusedBorderColor = BorderStrokeColor,
+        focusedLabelColor = AccentCyan,
+        unfocusedLabelColor = TextSecondary,
+        focusedTextColor = TextPrimary,
+        unfocusedTextColor = TextPrimary
+    )
+
     Scaffold(
+        containerColor = DarkBackground,
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(DarkBackground)
                 .padding(paddingValues)
         ) {
             Column(
@@ -118,27 +133,28 @@ fun LoginScreen(
                         text = "RozgarMitra",
                         style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = PrimaryBlue,
                         fontSize = 36.sp
                     )
 
                     Text(
                         text = "Connecting Hands with Opportunities.",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = Color.Gray,
+                        color = TextSecondary,
                         modifier = Modifier.padding(top = 4.dp, bottom = 48.dp)
                     )
 
                     Text(
                         text = if (isRegistering) "Create your account" else "Welcome / स्वागत है!",
                         style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
                     )
 
                     Text(
                         text = if (isRegistering) "Enter details to start your journey." else "Enter your ${if (isEmailLogin) "email" else "mobile number"} to login or register.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray,
+                        color = TextSecondary,
                         modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
                     )
 
@@ -152,9 +168,10 @@ fun LoginScreen(
                                 .height(60.dp),
                             label = { Text("Email Address") },
                             leadingIcon = {
-                                Icon(Icons.Filled.Email, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                Icon(Icons.Filled.Email, contentDescription = null, tint = PrimaryBlue)
                             },
                             singleLine = true,
+                            colors = textFieldColors,
                             shape = MaterialTheme.shapes.medium
                         )
                         Spacer(modifier = Modifier.height(16.dp))
@@ -167,9 +184,10 @@ fun LoginScreen(
                                 .height(60.dp),
                             label = { Text("Password") },
                             leadingIcon = {
-                                Icon(Icons.Filled.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                Icon(Icons.Filled.Lock, contentDescription = null, tint = PrimaryBlue)
                             },
                             singleLine = true,
+                            colors = textFieldColors,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                             shape = MaterialTheme.shapes.medium
                         )
@@ -186,11 +204,12 @@ fun LoginScreen(
                                 .fillMaxWidth()
                                 .height(60.dp),
                             label = { Text("Mobile Number / मोबाइल नंबर") },
-                            placeholder = { Text("Enter 10-digit number") },
+                            placeholder = { Text("Enter 10-digit number", color = TextSecondary.copy(alpha = 0.5f)) },
                             prefix = {
                                 Text(
                                     text = "+91 ",
                                     fontWeight = FontWeight.Bold,
+                                    color = TextPrimary,
                                     modifier = Modifier.padding(end = 4.dp)
                                 )
                             },
@@ -198,10 +217,11 @@ fun LoginScreen(
                                 Icon(
                                     imageVector = Icons.Filled.Phone,
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary
+                                    tint = PrimaryBlue
                                 )
                             },
                             singleLine = true,
+                            colors = textFieldColors,
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Phone
                             ),
@@ -213,7 +233,7 @@ fun LoginScreen(
                     Text(
                         text = "Use '9876543210' for Worker, '8888888888' for Owner demo accounts.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
+                        color = TextSecondary
                     )
                 }
 
@@ -251,7 +271,6 @@ fun LoginScreen(
                                 val flow = RozgarRepository.loginWithEmail(email, password)
                                 scope.launch {
                                     flow.collect { result ->
-                                        // Wait a bit to ensure Firestore syncs profile before callback
                                         delay(1000)
                                         isLoading = false
                                         result.fold(
@@ -295,12 +314,16 @@ fun LoginScreen(
                             },
                             modifier = Modifier.fillMaxWidth().height(56.dp),
                             shape = MaterialTheme.shapes.medium,
-                            border = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray)
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = DarkSurface,
+                                contentColor = TextPrimary
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, BorderStrokeColor)
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Filled.AccountCircle, contentDescription = null, tint = Color.Gray)
+                                Icon(Icons.Filled.AccountCircle, contentDescription = null, tint = AccentCyan)
                                 Spacer(modifier = Modifier.width(12.dp))
-                                Text("Sign in with Google", color = Color.DarkGray, fontWeight = FontWeight.Bold)
+                                Text("Sign in with Google", color = TextPrimary, fontWeight = FontWeight.Bold)
                             }
                         }
 
@@ -315,6 +338,7 @@ fun LoginScreen(
                             Text(
                                 if (isRegistering) "Already have an account? Login" 
                                 else "Don't have an account? Register",
+                                color = AccentCyan,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -328,6 +352,7 @@ fun LoginScreen(
                             Text(
                                 if (isEmailLogin) "Use Phone Number / मोबाइल का उपयोग करें" 
                                 else "Use Email / ईमेल का उपयोग करें",
+                                color = TextSecondary,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -342,7 +367,7 @@ fun LoginScreen(
                             modifier = Modifier
                                 .clickable { onLanguageSelectClick() }
                                 .padding(8.dp),
-                            color = MaterialTheme.colorScheme.primary,
+                            color = PrimaryBlue,
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp
                         )

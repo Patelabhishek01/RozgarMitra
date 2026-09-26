@@ -1,5 +1,6 @@
 package com.rozgarmitra.app.presentation.owner
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,8 +18,8 @@ import androidx.compose.ui.unit.sp
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.presentation.components.LoadingOverlay
 import com.rozgarmitra.app.presentation.components.PrimaryLargeButton
+import com.rozgarmitra.app.ui.theme.*
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -43,17 +44,31 @@ fun OwnerDetailsScreen(
         }
     }
 
+    val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedContainerColor = DarkSurface,
+        unfocusedContainerColor = DarkSurface,
+        focusedBorderColor = PrimaryBlue,
+        unfocusedBorderColor = BorderStrokeColor,
+        focusedLabelColor = AccentCyan,
+        unfocusedLabelColor = TextSecondary,
+        focusedTextColor = TextPrimary,
+        unfocusedTextColor = TextPrimary
+    )
+
     Scaffold(
-        snackbarHost = { snackbarHostState },
+        containerColor = DarkBackground,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Owner Profile Details", fontWeight = FontWeight.Bold) }
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = DarkBackground),
+                title = { Text("Owner Profile Details", fontWeight = FontWeight.Bold, color = TextPrimary) }
             )
         }
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(DarkBackground)
                 .padding(paddingValues)
         ) {
             Column(
@@ -68,12 +83,12 @@ fun OwnerDetailsScreen(
                         text = "Business Details / व्यावसायिक विवरण",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = PrimaryBlue
                     )
                     Text(
                         text = "Specify your work site address and company name.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray,
+                        color = TextSecondary,
                         modifier = Modifier.padding(bottom = 24.dp)
                     )
 
@@ -86,7 +101,8 @@ fun OwnerDetailsScreen(
                         Text(
                             text = "Work Site Address / कार्य स्थल का पता",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp
+                            fontSize = 15.sp,
+                            color = TextPrimary
                         )
                         
                         TextButton(
@@ -100,9 +116,9 @@ fun OwnerDetailsScreen(
                             },
                             enabled = !isLocating
                         ) {
-                            Icon(Icons.Filled.MyLocation, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Filled.MyLocation, contentDescription = null, modifier = Modifier.size(16.dp), tint = AccentCyan)
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(if (isLocating) "Locating..." else "Use GPS")
+                            Text(if (isLocating) "Locating..." else "Use GPS", color = AccentCyan)
                         }
                     }
                     
@@ -111,9 +127,10 @@ fun OwnerDetailsScreen(
                         value = address,
                         onValueChange = { address = it },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Enter full address or use GPS locator above") },
+                        placeholder = { Text("Enter full address or use GPS locator above", color = TextSecondary.copy(alpha = 0.5f)) },
                         minLines = 3,
                         maxLines = 5,
+                        colors = textFieldColors,
                         shape = RoundedCornerShape(12.dp)
                     )
 
@@ -123,7 +140,8 @@ fun OwnerDetailsScreen(
                     Text(
                         text = "Company or Trade Name (Optional)",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
+                        fontSize = 15.sp,
+                        color = TextPrimary
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
@@ -132,8 +150,9 @@ fun OwnerDetailsScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(58.dp),
-                        placeholder = { Text("Example: Sharma Contractors, Shop Owner") },
+                        placeholder = { Text("Example: Sharma Contractors, Shop Owner", color = TextSecondary.copy(alpha = 0.5f)) },
                         singleLine = true,
+                        colors = textFieldColors,
                         shape = RoundedCornerShape(12.dp)
                     )
                 }

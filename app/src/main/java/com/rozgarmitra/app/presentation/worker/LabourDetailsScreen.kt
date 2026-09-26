@@ -1,6 +1,7 @@
 package com.rozgarmitra.app.presentation.worker
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.presentation.components.LoadingOverlay
 import com.rozgarmitra.app.presentation.components.PrimaryLargeButton
+import com.rozgarmitra.app.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -75,17 +77,31 @@ fun LabourDetailsScreen(
         }
     }
 
+    val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedContainerColor = DarkSurface,
+        unfocusedContainerColor = DarkSurface,
+        focusedBorderColor = PrimaryBlue,
+        unfocusedBorderColor = BorderStrokeColor,
+        focusedLabelColor = AccentCyan,
+        unfocusedLabelColor = TextSecondary,
+        focusedTextColor = TextPrimary,
+        unfocusedTextColor = TextPrimary
+    )
+
     Scaffold(
-        snackbarHost = { snackbarHostState },
+        containerColor = DarkBackground,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Labour Profile Details", fontWeight = FontWeight.Bold) }
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = DarkBackground),
+                title = { Text("Labour Profile Details", fontWeight = FontWeight.Bold, color = TextPrimary) }
             )
         }
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(DarkBackground)
                 .padding(paddingValues)
         ) {
             Column(
@@ -100,12 +116,12 @@ fun LabourDetailsScreen(
                         text = "Work Details / काम का विवरण",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = PrimaryBlue
                     )
                     Text(
                         text = "Select your skills so owners can find you easily.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray,
+                        color = TextSecondary,
                         modifier = Modifier.padding(bottom = 20.dp)
                     )
 
@@ -113,7 +129,8 @@ fun LabourDetailsScreen(
                     Text(
                         text = "Select Skills / कौशल चुनें",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
+                        fontSize = 15.sp,
+                        color = TextPrimary
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -142,11 +159,19 @@ fun LabourDetailsScreen(
                                 label = { Text(skill, fontSize = 13.sp, modifier = Modifier.padding(vertical = 4.dp)) },
                                 shape = RoundedCornerShape(20.dp),
                                 colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    containerColor = if (skill == "Other (अन्य)") Color(0xFFFFF3E0) else Color.Transparent
+                                    selectedContainerColor = PrimaryBlue.copy(alpha = 0.25f),
+                                    selectedLabelColor = TextPrimary,
+                                    containerColor = if (skill == "Other (अन्य)") PrimaryBlue.copy(alpha = 0.15f) else DarkSurface,
+                                    labelColor = TextSecondary
+                                ),
+                                border = FilterChipDefaults.filterChipBorder(
+                                    borderColor = BorderStrokeColor,
+                                    selectedBorderColor = PrimaryBlue
                                 )
                             )
+
+
+
                         }
                     }
 
@@ -156,7 +181,8 @@ fun LabourDetailsScreen(
                     Text(
                         text = "Your Experience / आपका अनुभव",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
+                        fontSize = 15.sp,
+                        color = TextPrimary
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -169,11 +195,11 @@ fun LabourDetailsScreen(
                                 onClick = { selectedExperience = tier },
                                 shape = RoundedCornerShape(12.dp),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = if (isSelected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface
+                                    containerColor = if (isSelected) PrimaryBlue.copy(alpha = 0.25f) else DarkSurface
                                 ),
                                 border = BorderStroke(
                                     width = if (isSelected) 2.dp else 1.dp,
-                                    color = if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.outlineVariant
+                                    color = if (isSelected) PrimaryBlue else BorderStrokeColor
                                 ),
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -186,6 +212,7 @@ fun LabourDetailsScreen(
                                     Text(
                                         text = tier,
                                         fontSize = 14.sp,
+                                        color = TextPrimary,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                                     )
                                 }
@@ -199,7 +226,8 @@ fun LabourDetailsScreen(
                     Text(
                         text = "Expected Daily Wage / अपेक्षित दैनिक मजदूरी (₹)",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
+                        fontSize = 15.sp,
+                        color = TextPrimary
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     
@@ -218,8 +246,9 @@ fun LabourDetailsScreen(
                                 .weight(1f)
                                 .height(56.dp),
                             shape = RoundedCornerShape(12.dp),
+                            colors = textFieldColors,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            leadingIcon = { Text("₹", fontWeight = FontWeight.Bold, fontSize = 18.sp) }
+                            leadingIcon = { Text("₹", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = SuccessGreen) }
                         )
                         
                         Spacer(modifier = Modifier.width(12.dp))
@@ -229,9 +258,14 @@ fun LabourDetailsScreen(
                             OutlinedButton(
                                 onClick = { expectedWage = preset },
                                 shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = DarkSurface,
+                                    contentColor = SuccessGreen
+                                ),
+                                border = BorderStroke(1.dp, BorderStrokeColor),
                                 modifier = Modifier.height(48.dp)
                             ) {
-                                Text("₹$preset")
+                                Text("₹$preset", fontWeight = FontWeight.Bold)
                             }
                             Spacer(modifier = Modifier.width(6.dp))
                         }
@@ -277,17 +311,19 @@ fun LabourDetailsScreen(
 
     if (isSuggestingOther) {
         AlertDialog(
+            containerColor = DarkSurfaceElevated,
             onDismissRequest = { isSuggestingOther = false },
-            title = { Text("Suggest New Skill", fontWeight = FontWeight.Bold) },
+            title = { Text("Suggest New Skill", fontWeight = FontWeight.Bold, color = TextPrimary) },
             text = {
                 Column {
-                    Text("Can't find your skill? Tell us what you do.", fontSize = 13.sp, color = Color.Gray)
+                    Text("Can't find your skill? Tell us what you do.", fontSize = 13.sp, color = TextSecondary)
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
                         value = suggestedCategoryName,
                         onValueChange = { suggestedCategoryName = it },
                         label = { Text("Skill Name (e.g. Driver)") },
                         modifier = Modifier.fillMaxWidth(),
+                        colors = textFieldColors,
                         shape = RoundedCornerShape(8.dp)
                     )
                     Spacer(modifier = Modifier.height(12.dp))
@@ -297,6 +333,7 @@ fun LabourDetailsScreen(
                         label = { Text("What work do you do in this?") },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3,
+                        colors = textFieldColors,
                         shape = RoundedCornerShape(8.dp)
                     )
                 }
@@ -315,6 +352,7 @@ fun LabourDetailsScreen(
                             }
                         }
                     },
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue, contentColor = Color.White),
                     enabled = suggestedCategoryName.isNotBlank() && suggestedCategoryDesc.isNotBlank() && !suggestionLoading
                 ) {
                     if (suggestionLoading) CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
@@ -322,8 +360,9 @@ fun LabourDetailsScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { isSuggestingOther = false }) { Text("Cancel") }
+                TextButton(onClick = { isSuggestingOther = false }) { Text("Cancel", color = TextSecondary) }
             }
         )
     }
 }
+

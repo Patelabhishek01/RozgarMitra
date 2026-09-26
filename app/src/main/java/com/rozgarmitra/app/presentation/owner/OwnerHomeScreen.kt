@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -35,6 +36,7 @@ import com.rozgarmitra.app.presentation.components.ProfileMenuItem
 import com.rozgarmitra.app.presentation.components.ProfileSection
 import com.rozgarmitra.app.presentation.components.VerifiedBadge
 import com.rozgarmitra.app.presentation.worker.tradesList
+import com.rozgarmitra.app.ui.theme.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -57,23 +59,26 @@ fun OwnerHomeScreen(
     var showNotifDialog by remember { mutableStateOf(false) }
 
     Scaffold(
+        containerColor = DarkBackground,
         topBar = {
             Column {
                 OfflineBanner(isOffline = isOffline)
                 CenterAlignedTopAppBar(
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = DarkSurface),
                     title = {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("RozgarMitra", fontWeight = FontWeight.Black, fontSize = 20.sp, color = MaterialTheme.colorScheme.primary)
+                            Text("RozgarMitra", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = PrimaryIndigo)
                             Surface(
-                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-                                shape = RoundedCornerShape(4.dp)
+                                color = AccentCyan.copy(alpha = 0.15f),
+                                border = BorderStroke(1.dp, AccentCyan.copy(alpha = 0.3f)),
+                                shape = CircleShape
                             ) {
                                 Text(
                                     "EMPLOYER / OWNER", 
-                                    fontSize = 10.sp, 
+                                    fontSize = 9.sp, 
                                     fontWeight = FontWeight.Bold, 
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    color = AccentCyan,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                                 )
                             }
                         }
@@ -83,11 +88,11 @@ fun OwnerHomeScreen(
                             BadgedBox(
                                 badge = {
                                     if (unreadNotifs > 0) {
-                                        Badge { Text(unreadNotifs.toString()) }
+                                        Badge(containerColor = WarningRose) { Text(unreadNotifs.toString(), color = Color.White) }
                                     }
                                 }
                             ) {
-                                Icon(Icons.Filled.Notifications, contentDescription = "Notifications", modifier = Modifier.size(26.dp))
+                                Icon(Icons.Filled.Notifications, contentDescription = "Notifications", tint = TextPrimary, modifier = Modifier.size(24.dp))
                             }
                         }
                     }
@@ -95,23 +100,36 @@ fun OwnerHomeScreen(
             }
         },
         bottomBar = {
-            NavigationBar(
-                tonalElevation = 8.dp,
-                modifier = Modifier.height(80.dp)
+            Surface(
+                color = DarkSurface,
+                border = BorderStroke(1.dp, BorderStrokeColor)
             ) {
-                val items = listOf(
-                    Triple("Home", Icons.Filled.Home, 0),
-                    Triple("Post Job", Icons.Filled.AddCircle, 1),
-                    Triple("Chats", Icons.Filled.Chat, 2),
-                    Triple("Profile", Icons.Filled.Person, 3)
-                )
-                items.forEach { (label, icon, index) ->
-                    NavigationBarItem(
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index },
-                        icon = { Icon(icon, contentDescription = label, modifier = Modifier.size(24.dp)) },
-                        label = { Text(label, fontWeight = FontWeight.Bold, fontSize = 12.sp) }
+                NavigationBar(
+                    tonalElevation = 0.dp,
+                    containerColor = DarkSurface,
+                    modifier = Modifier.height(72.dp)
+                ) {
+                    val items = listOf(
+                        Triple("Home", Icons.Filled.Home, 0),
+                        Triple("Post Job", Icons.Filled.AddCircle, 1),
+                        Triple("Chats", Icons.Filled.Chat, 2),
+                        Triple("Profile", Icons.Filled.Person, 3)
                     )
+                    items.forEach { (label, icon, index) ->
+                        NavigationBarItem(
+                            selected = selectedTab == index,
+                            onClick = { selectedTab = index },
+                            icon = { Icon(icon, contentDescription = label, modifier = Modifier.size(22.dp)) },
+                            label = { Text(label, fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Medium, fontSize = 12.sp) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = PrimaryIndigo,
+                                selectedTextColor = PrimaryIndigo,
+                                unselectedIconColor = TextSecondary,
+                                unselectedTextColor = TextSecondary,
+                                indicatorColor = PrimaryIndigo.copy(alpha = 0.15f)
+                            )
+                        )
+                    }
                 }
             }
         }
@@ -120,6 +138,7 @@ fun OwnerHomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .background(DarkBackground)
         ) {
             when (selectedTab) {
                 0 -> OwnerDashboardTab(
@@ -140,21 +159,23 @@ fun OwnerHomeScreen(
     if (showNotifDialog) {
         AlertDialog(
             onDismissRequest = { showNotifDialog = false },
-            title = { Text("Notifications", fontWeight = FontWeight.Bold) },
+            containerColor = DarkSurface,
+            title = { Text("Notifications", fontWeight = FontWeight.Bold, color = TextPrimary) },
             text = {
                 if (notifications.isEmpty()) {
-                    Text("No new notifications.", color = Color.Gray)
+                    Text("No new notifications.", color = TextSecondary)
                 } else {
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         items(notifications) { notif ->
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                colors = CardDefaults.cardColors(containerColor = DarkBackground),
+                                border = BorderStroke(1.dp, BorderStrokeColor)
                             ) {
                                 Column(modifier = Modifier.padding(12.dp)) {
-                                    Text(notif.title, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                    Text(notif.title, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary)
                                     Spacer(modifier = Modifier.height(4.dp))
-                                    Text(notif.message, fontSize = 12.sp, color = Color.DarkGray)
+                                    Text(notif.message, fontSize = 12.sp, color = TextSecondary)
                                 }
                             }
                             RozgarRepository.markNotificationRead(notif.id)
@@ -164,7 +185,7 @@ fun OwnerHomeScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showNotifDialog = false }) {
-                    Text("Dismiss", fontWeight = FontWeight.Bold)
+                    Text("Dismiss", fontWeight = FontWeight.Bold, color = PrimaryIndigo)
                 }
             }
         )
@@ -184,13 +205,11 @@ fun OwnerDashboardTab(
     val applications by RozgarRepository.applications.collectAsStateWithLifecycle()
     val currentUser by RozgarRepository.currentUser.collectAsStateWithLifecycle()
 
-    // Filter jobs posted by this owner
     val ownerJobs = jobs.filter { it.ownerId == currentUser?.id }
     val activeJobsCount = ownerJobs.count { it.status == JobStatus.ACTIVE }
     val completedJobsCount = ownerJobs.count { it.status == JobStatus.COMPLETED || it.status == JobStatus.FILLED }
     val totalWorkersHired = ownerJobs.sumOf { it.acceptedWorkersCount }
 
-    // Count applicants waiting
     val activeJobIds = ownerJobs.map { it.id }
     val ownerApps = applications.filter { it.jobId in activeJobIds || it.ownerId == currentUser?.id }
     val applicantsWaitingCount = ownerApps.count { it.status == ApplicationStatus.APPLIED }
@@ -202,8 +221,9 @@ fun OwnerDashboardTab(
     ) {
         item {
             Column {
-                Text("Welcome, ${currentUser?.name ?: "Employer"} 👋", fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurface)
-                Text("Manage your job postings and applicants", fontSize = 13.sp, color = Color.Gray)
+                Text("Welcome, ${currentUser?.name ?: "Employer"} 👋", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = TextPrimary)
+                Spacer(modifier = Modifier.height(2.dp))
+                Text("Manage your job postings and applicants", fontSize = 13.sp, color = TextSecondary)
             }
         }
 
@@ -216,39 +236,48 @@ fun OwnerDashboardTab(
                 // Metric 1: Active
                 Card(
                     modifier = Modifier.weight(1f),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                    colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                    border = BorderStroke(1.dp, PrimaryIndigo.copy(alpha = 0.4f)),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
-                        Text("Active Jobs", fontSize = 11.sp, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
-                        Text(activeJobsCount.toString(), fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        Text("Active Jobs", fontSize = 11.sp, color = TextSecondary, fontWeight = FontWeight.Medium)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(activeJobsCount.toString(), fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = PrimaryIndigo)
                     }
                 }
 
                 // Metric 2: Applications
                 Card(
                     modifier = Modifier.weight(1f),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0))
+                    colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                    border = BorderStroke(1.dp, BorderStrokeColor),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("Applications", fontSize = 11.sp, color = Color(0xFFE65100))
+                            Text("Applications", fontSize = 11.sp, color = TextSecondary, fontWeight = FontWeight.Medium)
                             if (applicantsWaitingCount > 0) {
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Box(modifier = Modifier.size(6.dp).background(Color.Red, CircleShape))
+                                Box(modifier = Modifier.size(6.dp).background(WarningRose, CircleShape))
                             }
                         }
-                        Text(ownerApps.size.toString(), fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFFE65100))
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(ownerApps.size.toString(), fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFFF59E0B))
                     }
                 }
 
                 // Metric 3: Workers Hired
                 Card(
                     modifier = Modifier.weight(1f),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9))
+                    colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                    border = BorderStroke(1.dp, BorderStrokeColor),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
-                        Text("Workers Hired", fontSize = 11.sp, color = Color(0xFF1B5E20))
-                        Text(totalWorkersHired.toString(), fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1B5E20))
+                        Text("Workers Hired", fontSize = 11.sp, color = TextSecondary, fontWeight = FontWeight.Medium)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(totalWorkersHired.toString(), fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = SuccessGreen)
                     }
                 }
             }
@@ -258,9 +287,9 @@ fun OwnerDashboardTab(
         item {
             Card(
                 onClick = onNavigateToPost,
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = PrimaryIndigo.copy(alpha = 0.12f)),
+                border = BorderStroke(1.dp, PrimaryIndigo),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
@@ -270,9 +299,9 @@ fun OwnerDashboardTab(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Icon(Icons.Filled.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+                    Icon(Icons.Filled.Add, contentDescription = null, tint = PrimaryIndigo, modifier = Modifier.size(24.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("+ Post a New Job Now", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("+ Post a New Job Now", color = PrimaryIndigo, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             }
         }
@@ -280,15 +309,15 @@ fun OwnerDashboardTab(
         // Recent Worker Responses Section
         if (ownerApps.isNotEmpty()) {
             item {
-                Text("Recent Worker Responses", fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.padding(top = 4.dp))
+                Text("Recent Worker Responses", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary, modifier = Modifier.padding(top = 4.dp))
             }
 
             items(ownerApps.take(3)) { app ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    border = BorderStroke(1.dp, Color(0xFFE0E0E0))
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                    border = BorderStroke(1.dp, BorderStrokeColor)
                 ) {
                     Row(
                         modifier = Modifier.padding(14.dp),
@@ -296,16 +325,18 @@ fun OwnerDashboardTab(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(app.labourName, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                            Text("Responded to: ${app.jobTitle}", fontSize = 12.sp, color = Color.Gray)
+                            Text(app.labourName, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text("Responded to: ${app.jobTitle}", fontSize = 12.sp, color = TextSecondary)
                         }
 
                         Button(
                             onClick = { onManageApplicantsClick(app.jobId) },
-                            shape = RoundedCornerShape(8.dp),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                            shape = CircleShape,
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryIndigo),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
                         ) {
-                            Text("View Responses", fontSize = 12.sp)
+                            Text("View", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         }
                     }
                 }
@@ -313,7 +344,7 @@ fun OwnerDashboardTab(
         }
 
         item {
-            Text("My Posted Jobs", fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.padding(top = 8.dp))
+            Text("My Posted Jobs", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary, modifier = Modifier.padding(top = 8.dp))
         }
 
         if (ownerJobs.isEmpty()) {
@@ -321,10 +352,10 @@ fun OwnerDashboardTab(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(150.dp),
+                        .height(140.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("No job posts yet. Click above to create one.", color = Color.Gray)
+                    Text("No job posts yet. Click above to create one.", color = TextSecondary)
                 }
             }
         } else {
@@ -333,43 +364,44 @@ fun OwnerDashboardTab(
                 val newAppsCount = jobApps.count { it.status == ApplicationStatus.APPLIED }
 
                 val (badgeText, badgeColor) = when (job.status) {
-                    JobStatus.ACTIVE -> "ACTIVE" to Color(0xFF2E7D32)
-                    JobStatus.FILLED -> "FILLED" to Color(0xFF1565C0)
-                    JobStatus.COMPLETED -> "COMPLETED" to Color(0xFF37474F)
-                    JobStatus.CLOSED -> "CLOSED" to Color(0xFFC62828)
-                    JobStatus.DRAFT -> "DRAFT" to Color(0xFFE65100)
+                    JobStatus.ACTIVE -> "ACTIVE" to SuccessGreen
+                    JobStatus.FILLED -> "FILLED" to PrimaryIndigo
+                    JobStatus.COMPLETED -> "COMPLETED" to TextSecondary
+                    JobStatus.CLOSED -> "CLOSED" to WarningRose
+                    JobStatus.DRAFT -> "DRAFT" to Color(0xFFF59E0B)
                 }
 
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                    border = BorderStroke(1.dp, BorderStrokeColor)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                    Column(modifier = Modifier.padding(18.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.Top
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(job.title, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text("₹${job.wage}/${job.wageType} • 📍 ${job.location}", fontSize = 12.sp, color = Color.Gray)
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text("👷 Workers: ${job.acceptedWorkersCount} / ${job.numberOfWorkersRequired} hired", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
+                                Text(job.title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text("₹${job.wage}/${job.wageType} • 📍 ${job.location}", fontSize = 13.sp, color = TextSecondary)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text("👷 Workers: ${job.acceptedWorkersCount} / ${job.numberOfWorkersRequired} hired", fontSize = 12.sp, color = PrimaryIndigo, fontWeight = FontWeight.Medium)
                             }
 
-                            Box(
-                                modifier = Modifier
-                                    .background(badgeColor.copy(alpha = 0.15f), RoundedCornerShape(6.dp))
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            Surface(
+                                color = badgeColor.copy(alpha = 0.15f),
+                                border = BorderStroke(1.dp, badgeColor.copy(alpha = 0.3f)),
+                                shape = CircleShape
                             ) {
                                 Text(
                                     text = badgeText,
                                     color = badgeColor,
                                     fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                 )
                             }
                         }
@@ -382,24 +414,26 @@ fun OwnerDashboardTab(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             TextButton(onClick = { onJobClick(job.id) }) {
-                                Text("View Details")
+                                Text("View Details", color = PrimaryIndigo, fontWeight = FontWeight.Bold)
                             }
 
                             Button(
                                 onClick = { onManageApplicantsClick(job.id) },
-                                shape = RoundedCornerShape(8.dp)
+                                shape = CircleShape,
+                                colors = ButtonDefaults.buttonColors(containerColor = PrimaryIndigo)
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text("Applications (${jobApps.size})")
+                                    Text("Applications (${jobApps.size})", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                                     if (newAppsCount > 0) {
                                         Spacer(modifier = Modifier.width(6.dp))
-                                        Box(
-                                            modifier = Modifier
-                                                .size(18.dp)
-                                                .background(Color.Red, CircleShape),
-                                            contentAlignment = Alignment.Center
+                                        Surface(
+                                            shape = CircleShape,
+                                            color = WarningRose,
+                                            modifier = Modifier.size(18.dp)
                                         ) {
-                                            Text(newAppsCount.toString(), color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Text(newAppsCount.toString(), color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                            }
                                         }
                                     }
                                 }
@@ -428,7 +462,10 @@ fun OwnerPostJobTab(
     var category by remember { mutableStateOf("") }
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var location by remember { mutableStateOf("Vijay Nagar, Indore") }
+    var location by remember { mutableStateOf("") }
+    var latitude by remember { mutableStateOf(0.0) }
+    var longitude by remember { mutableStateOf(0.0) }
+    var isLocatingLocation by remember { mutableStateOf(false) }
     var date by remember { mutableStateOf("Today") }
     var startTime by remember { mutableStateOf("8:00 AM") }
     var durationDays by remember { mutableStateOf(1) }
@@ -452,11 +489,10 @@ fun OwnerPostJobTab(
     var suggestedCategoryDesc by remember { mutableStateOf("") }
     var suggestionLoading by remember { mutableStateOf(false) }
 
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(20.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         Column {
@@ -466,22 +502,24 @@ fun OwnerPostJobTab(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Step $step of 5", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 14.sp)
+                Text("Step $step of 5", fontWeight = FontWeight.Bold, color = PrimaryIndigo, fontSize = 14.sp)
                 LinearProgressIndicator(
                     progress = step / 5.0f,
+                    color = PrimaryIndigo,
+                    trackColor = DarkSurfaceVariant,
                     modifier = Modifier
                         .width(120.dp)
                         .height(8.dp)
-                        .clip(RoundedCornerShape(4.dp))
+                        .clip(CircleShape)
                 )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
             when (step) {
                 1 -> {
                     // Step 1: Select Category
-                    Text("1. Basic Information / कार्य की श्रेणी", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("1. Basic Information / कार्य की श्रेणी", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
                     Spacer(modifier = Modifier.height(12.dp))
 
                     LazyVerticalGrid(
@@ -504,18 +542,15 @@ fun OwnerPostJobTab(
                                 },
                                 shape = RoundedCornerShape(16.dp),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer
-                                    else if (trade == "Other (अन्य)") Color(0xFFFFF3E0)
-                                    else Color.White
+                                    containerColor = if (isSelected) PrimaryIndigo.copy(alpha = 0.15f) else DarkSurface
                                 ),
                                 border = BorderStroke(
                                     width = if (isSelected) 2.dp else 1.dp,
-                                    color = if (isSelected) MaterialTheme.colorScheme.primary else Color(0xFFF0F0F0)
-                                ),
-                                elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 4.dp else 0.dp)
+                                    color = if (isSelected) PrimaryIndigo else BorderStrokeColor
+                                )
                             ) {
                                 Column(
-                                    modifier = Modifier.fillMaxSize().padding(12.dp),
+                                    modifier = Modifier.fillMaxSize().padding(14.dp),
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.Center
                                 ) {
@@ -535,7 +570,7 @@ fun OwnerPostJobTab(
                                         imageVector = tradeIcon,
                                         contentDescription = null,
                                         modifier = Modifier.size(28.dp),
-                                        tint = if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray
+                                        tint = if (isSelected) PrimaryIndigo else TextSecondary
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
@@ -543,7 +578,7 @@ fun OwnerPostJobTab(
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 12.sp,
                                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                        color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Black
+                                        color = if (isSelected) PrimaryIndigo else TextPrimary
                                     )
                                 }
                             }
@@ -552,101 +587,132 @@ fun OwnerPostJobTab(
                 }
                 2 -> {
                     // Step 2: Work Details
-                    Text("2. Work Details / स्थान और समय", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("2. Work Details / स्थान और समय", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Text("Job Title", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("Job Title", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
                     Spacer(modifier = Modifier.height(4.dp))
                     OutlinedTextField(
                         value = title,
                         onValueChange = { title = it },
-                        placeholder = { Text("e.g. Need 3 construction helpers") },
+                        placeholder = { Text("e.g. Need 3 construction helpers", color = TextMuted) },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        colors = TextFieldDefaults.outlinedTextFieldColors(containerColor = DarkSurface, focusedBorderColor = PrimaryIndigo, unfocusedBorderColor = BorderStrokeColor, focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary)
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Text("Job Description", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("Job Description", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
                     Spacer(modifier = Modifier.height(4.dp))
                     OutlinedTextField(
                         value = description,
                         onValueChange = { description = it },
-                        placeholder = { Text("Describe the work responsibilities...") },
+                        placeholder = { Text("Describe the work responsibilities...", color = TextMuted) },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                        maxLines = 3
+                        shape = RoundedCornerShape(12.dp),
+                        maxLines = 3,
+                        colors = TextFieldDefaults.outlinedTextFieldColors(containerColor = DarkSurface, focusedBorderColor = PrimaryIndigo, unfocusedBorderColor = BorderStrokeColor, focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary)
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Text("Work Location", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Work Location", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
+                        val context = LocalContext.current
+                        TextButton(
+                            onClick = {
+                                isLocatingLocation = true
+                                scope.launch {
+                                    val locData = LocationHelper.getCurrentLocation(context)
+                                    isLocatingLocation = false
+                                    if (locData != null) {
+                                        location = locData.addressName
+                                        latitude = locData.latitude
+                                        longitude = locData.longitude
+                                    }
+                                }
+                            },
+                            enabled = !isLocatingLocation
+                        ) {
+                            Icon(Icons.Filled.MyLocation, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(if (isLocatingLocation) "Detecting..." else "Use GPS Location", color = AccentCyan, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
                     Spacer(modifier = Modifier.height(4.dp))
                     OutlinedTextField(
                         value = location,
                         onValueChange = { location = it },
-                        placeholder = { Text("e.g. Vijay Nagar, Indore") },
+                        placeholder = { Text("e.g. HSR Layout, Bengaluru or shop address", color = TextMuted) },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                        leadingIcon = { Icon(Icons.Filled.LocationOn, contentDescription = null) }
+                        shape = RoundedCornerShape(12.dp),
+                        leadingIcon = { Icon(Icons.Filled.LocationOn, contentDescription = null, tint = AccentCyan) },
+                        colors = TextFieldDefaults.outlinedTextFieldColors(containerColor = DarkSurface, focusedBorderColor = PrimaryIndigo, unfocusedBorderColor = BorderStrokeColor, focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary)
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     // Date & Time
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Start Date", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            Text("Start Date", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
                             Spacer(modifier = Modifier.height(4.dp))
                             OutlinedTextField(
                                 value = date,
                                 onValueChange = { date = it },
-                                placeholder = { Text("e.g. 25 Sept / Today") },
-                                shape = RoundedCornerShape(8.dp),
-                                singleLine = true
+                                placeholder = { Text("Today", color = TextMuted) },
+                                shape = RoundedCornerShape(12.dp),
+                                singleLine = true,
+                                colors = TextFieldDefaults.outlinedTextFieldColors(containerColor = DarkSurface, focusedBorderColor = PrimaryIndigo, unfocusedBorderColor = BorderStrokeColor, focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary)
                             )
                         }
 
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Start Time", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            Text("Start Time", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
                             Spacer(modifier = Modifier.height(4.dp))
                             OutlinedTextField(
                                 value = startTime,
                                 onValueChange = { startTime = it },
-                                placeholder = { Text("e.g. 8:00 AM") },
-                                shape = RoundedCornerShape(8.dp),
-                                singleLine = true
+                                placeholder = { Text("8:00 AM", color = TextMuted) },
+                                shape = RoundedCornerShape(12.dp),
+                                singleLine = true,
+                                colors = TextFieldDefaults.outlinedTextFieldColors(containerColor = DarkSurface, focusedBorderColor = PrimaryIndigo, unfocusedBorderColor = BorderStrokeColor, focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary)
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     // Workers required & duration
                     Row(modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Workers Needed", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                            Spacer(modifier = Modifier.height(6.dp))
+                            Text("Workers Needed", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
+                            Spacer(modifier = Modifier.height(4.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 IconButton(onClick = { if (workersRequired > 1) workersRequired-- }) {
-                                    Icon(Icons.Filled.Remove, contentDescription = "Decrease")
+                                    Icon(Icons.Filled.Remove, contentDescription = "Decrease", tint = TextPrimary)
                                 }
-                                Text(workersRequired.toString(), fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, modifier = Modifier.padding(horizontal = 8.dp))
+                                Text(workersRequired.toString(), fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary, modifier = Modifier.padding(horizontal = 8.dp))
                                 IconButton(onClick = { workersRequired++ }) {
-                                    Icon(Icons.Filled.Add, contentDescription = "Increase")
+                                    Icon(Icons.Filled.Add, contentDescription = "Increase", tint = TextPrimary)
                                 }
                             }
                         }
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Duration (Days)", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                            Spacer(modifier = Modifier.height(6.dp))
+                            Text("Duration (Days)", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
+                            Spacer(modifier = Modifier.height(4.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 IconButton(onClick = { if (durationDays > 1) durationDays-- }) {
-                                    Icon(Icons.Filled.Remove, contentDescription = "Decrease")
+                                    Icon(Icons.Filled.Remove, contentDescription = "Decrease", tint = TextPrimary)
                                 }
-                                Text(durationDays.toString(), fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, modifier = Modifier.padding(horizontal = 8.dp))
+                                Text(durationDays.toString(), fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary, modifier = Modifier.padding(horizontal = 8.dp))
                                 IconButton(onClick = { durationDays++ }) {
-                                    Icon(Icons.Filled.Add, contentDescription = "Increase")
+                                    Icon(Icons.Filled.Add, contentDescription = "Increase", tint = TextPrimary)
                                 }
                             }
                         }
@@ -654,23 +720,24 @@ fun OwnerPostJobTab(
                 }
                 3 -> {
                     // Step 3: Payment
-                    Text("3. Payment & Perks / मजदूरी", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("3. Payment & Perks / मजदूरी", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Text("Wage Amount (₹)", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("Wage Amount (₹)", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         OutlinedTextField(
                             value = wage,
                             onValueChange = { if (it.all { char -> char.isDigit() }) wage = it },
                             modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(8.dp),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                            shape = RoundedCornerShape(12.dp),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            colors = TextFieldDefaults.outlinedTextFieldColors(containerColor = DarkSurface, focusedBorderColor = PrimaryIndigo, unfocusedBorderColor = BorderStrokeColor, focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         listOf("500", "700", "900").forEach { p ->
-                            OutlinedButton(onClick = { wage = p }, shape = RoundedCornerShape(8.dp)) {
-                                Text("₹$p")
+                            OutlinedButton(onClick = { wage = p }, shape = CircleShape, border = BorderStroke(1.dp, BorderStrokeColor)) {
+                                Text("₹$p", color = PrimaryIndigo, fontWeight = FontWeight.Bold)
                             }
                             Spacer(modifier = Modifier.width(4.dp))
                         }
@@ -678,7 +745,7 @@ fun OwnerPostJobTab(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Text("Wage Type", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("Wage Type", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         listOf("per day", "per hour", "fixed").forEach { type ->
@@ -687,15 +754,17 @@ fun OwnerPostJobTab(
                                 selected = isSelected,
                                 onClick = { wageType = type },
                                 label = { Text(type.replaceFirstChar { it.uppercase() }) },
-                                shape = RoundedCornerShape(8.dp),
-                                modifier = Modifier.weight(1f)
+                                shape = CircleShape,
+                                modifier = Modifier.weight(1f),
+                                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = PrimaryIndigo, selectedLabelColor = Color.White, containerColor = DarkSurface, labelColor = TextSecondary),
+                                border = FilterChipDefaults.filterChipBorder(borderColor = BorderStrokeColor, selectedBorderColor = PrimaryIndigo)
                             )
                         }
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    Text("Included Perks (Optional)", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("Included Perks (Optional)", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -703,43 +772,50 @@ fun OwnerPostJobTab(
                             selected = perkFood,
                             onClick = { perkFood = !perkFood },
                             label = { Text("Food") },
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.weight(1f)
+                            shape = CircleShape,
+                            modifier = Modifier.weight(1f),
+                            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = PrimaryIndigo, selectedLabelColor = Color.White, containerColor = DarkSurface, labelColor = TextSecondary),
+                            border = FilterChipDefaults.filterChipBorder(borderColor = BorderStrokeColor, selectedBorderColor = PrimaryIndigo)
                         )
                         FilterChip(
                             selected = perkAccommodation,
                             onClick = { perkAccommodation = !perkAccommodation },
                             label = { Text("Shelter") },
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.weight(1f)
+                            shape = CircleShape,
+                            modifier = Modifier.weight(1f),
+                            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = PrimaryIndigo, selectedLabelColor = Color.White, containerColor = DarkSurface, labelColor = TextSecondary),
+                            border = FilterChipDefaults.filterChipBorder(borderColor = BorderStrokeColor, selectedBorderColor = PrimaryIndigo)
                         )
                         FilterChip(
                             selected = perkTransport,
                             onClick = { perkTransport = !perkTransport },
                             label = { Text("Transport") },
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.weight(1f)
+                            shape = CircleShape,
+                            modifier = Modifier.weight(1f),
+                            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = PrimaryIndigo, selectedLabelColor = Color.White, containerColor = DarkSurface, labelColor = TextSecondary),
+                            border = FilterChipDefaults.filterChipBorder(borderColor = BorderStrokeColor, selectedBorderColor = PrimaryIndigo)
                         )
                     }
                 }
                 4 -> {
                     // Step 4: Requirements & Urgent Flag
-                    Text("4. Skills & Requirements", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("4. Skills & Requirements", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Text("Skills Required (Comma separated)", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("Skills Required (Comma separated)", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
                     Spacer(modifier = Modifier.height(4.dp))
                     OutlinedTextField(
                         value = skillsRequired,
                         onValueChange = { skillsRequired = it },
-                        placeholder = { Text("e.g. bricklaying, cement mixing, loading") },
+                        placeholder = { Text("e.g. bricklaying, cement mixing, loading", color = TextMuted) },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        colors = TextFieldDefaults.outlinedTextFieldColors(containerColor = DarkSurface, focusedBorderColor = PrimaryIndigo, unfocusedBorderColor = BorderStrokeColor, focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary)
                     )
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    Text("Difficulty Level", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("Difficulty Level", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Row(
@@ -751,12 +827,13 @@ fun OwnerPostJobTab(
                             OutlinedButton(
                                 onClick = { difficulty = lvl },
                                 modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(8.dp),
+                                shape = CircleShape,
+                                border = BorderStroke(1.dp, if (isSelected) PrimaryIndigo else BorderStrokeColor),
                                 colors = ButtonDefaults.outlinedButtonColors(
-                                    containerColor = if (isSelected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent
+                                    containerColor = if (isSelected) PrimaryIndigo.copy(alpha = 0.15f) else Color.Transparent
                                 )
                             ) {
-                                Text(lvl, color = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface)
+                                Text(lvl, color = if (isSelected) PrimaryIndigo else TextSecondary, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -764,50 +841,53 @@ fun OwnerPostJobTab(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(checked = isUrgent, onCheckedChange = { isUrgent = it })
+                        Checkbox(
+                            checked = isUrgent,
+                            onCheckedChange = { isUrgent = it },
+                            colors = CheckboxDefaults.colors(checkedColor = WarningRose, checkmarkColor = Color.White)
+                        )
                         Spacer(modifier = Modifier.width(6.dp))
                         Column {
-                            Text("Mark as Urgent Hiring", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                            Text("Urgent jobs are highlighted red to workers", fontSize = 11.sp, color = Color.Gray)
+                            Text("Mark as Urgent Hiring", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary)
+                            Text("Urgent jobs are highlighted to workers", fontSize = 12.sp, color = TextSecondary)
                         }
                     }
                 }
                 5 -> {
                     // Step 5: Review & Publish
-                    Text("5. Review & Publish Job", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("5. Review & Publish Job", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                        border = BorderStroke(1.dp, Color(0xFFEEEEEE))
+                        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                        border = BorderStroke(1.dp, BorderStrokeColor)
                     ) {
                         Column(modifier = Modifier.padding(20.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Surface(
-                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
-                                    shape = RoundedCornerShape(8.dp),
-                                    modifier = Modifier.size(40.dp)
+                                    color = PrimaryIndigo.copy(alpha = 0.15f),
+                                    shape = CircleShape,
+                                    modifier = Modifier.size(42.dp)
                                 ) {
                                     Box(contentAlignment = Alignment.Center) {
-                                        Icon(Icons.Filled.Work, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                                        Icon(Icons.Filled.Work, contentDescription = null, tint = PrimaryIndigo, modifier = Modifier.size(20.dp))
                                     }
                                 }
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
-                                    Text(title.ifBlank { "Untitled Job" }, fontWeight = FontWeight.Black, fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
-                                    Text(category, fontSize = 12.sp, color = Color.Gray)
+                                    Text(title.ifBlank { "Untitled Job" }, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
+                                    Text(category, fontSize = 13.sp, color = PrimaryIndigo, fontWeight = FontWeight.SemiBold)
                                 }
                             }
 
-                            Divider(modifier = Modifier.padding(vertical = 14.dp), color = Color(0xFFF5F5F5))
+                            Divider(modifier = Modifier.padding(vertical = 14.dp), color = BorderStrokeColor.copy(alpha = 0.6f))
 
                             PreviewRow(Icons.Filled.LocationOn, "Location", location)
                             PreviewRow(Icons.Filled.CalendarMonth, "Date & Time", "$date • $startTime")
                             PreviewRow(Icons.Filled.Group, "Workers Needed", "$workersRequired workers required")
-                            PreviewRow(Icons.Filled.Payments, "Wage", "₹$wage / $wageType", valueColor = Color(0xFF2E7D32))
+                            PreviewRow(Icons.Filled.Payments, "Wage", "₹$wage / $wageType", valueColor = SuccessGreen)
 
                             val perksList = mutableListOf<String>()
                             if (perkFood) perksList.add("Food")
@@ -816,9 +896,9 @@ fun OwnerPostJobTab(
                             PreviewRow(Icons.Filled.Star, "Perks", perksList.joinToString(", ").ifBlank { "None" })
 
                             if (isUrgent) {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Surface(color = Color(0xFFFFEBEE), shape = RoundedCornerShape(4.dp)) {
-                                    Text("⚠️ URGENT HIRING ACTIVE", color = Color(0xFFD32F2F), fontWeight = FontWeight.Bold, fontSize = 11.sp, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Surface(color = WarningRose.copy(alpha = 0.15f), border = BorderStroke(1.dp, WarningRose.copy(alpha = 0.3f)), shape = CircleShape) {
+                                    Text("⚡ URGENT HIRING ACTIVE", color = WarningRose, fontWeight = FontWeight.Bold, fontSize = 11.sp, modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp))
                                 }
                             }
                         }
@@ -830,7 +910,7 @@ fun OwnerPostJobTab(
         // Action Buttons Row
         Column(modifier = Modifier.fillMaxWidth()) {
             AnimatedVisibility(visible = postError != null) {
-                Text(text = postError ?: "", color = Color.Red, fontSize = 13.sp, modifier = Modifier.padding(bottom = 8.dp))
+                Text(text = postError ?: "", color = WarningRose, fontSize = 13.sp, modifier = Modifier.padding(bottom = 8.dp))
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -839,14 +919,15 @@ fun OwnerPostJobTab(
                 if (step > 1) {
                     OutlinedButton(
                         onClick = { step-- },
-                        shape = RoundedCornerShape(10.dp),
+                        shape = CircleShape,
+                        border = BorderStroke(1.dp, BorderStrokeColor),
                         modifier = Modifier
                             .weight(1f)
-                            .height(52.dp)
+                            .height(48.dp)
                     ) {
-                        Text("Back")
+                        Text("Back", color = TextSecondary, fontWeight = FontWeight.Bold)
                     }
-                    Spacer(modifier = Modifier.width(16.dp))
+                    Spacer(modifier = Modifier.width(14.dp))
                 }
 
                 Button(
@@ -867,6 +948,8 @@ fun OwnerPostJobTab(
                                 category = category,
                                 description = description,
                                 location = location,
+                                latitude = latitude,
+                                longitude = longitude,
                                 date = date,
                                 startTime = startTime,
                                 duration = "$durationDays Days",
@@ -895,10 +978,11 @@ fun OwnerPostJobTab(
                             }
                         }
                     },
-                    shape = RoundedCornerShape(10.dp),
+                    shape = CircleShape,
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryIndigo),
                     modifier = Modifier
                         .weight(2f)
-                        .height(52.dp),
+                        .height(48.dp),
                     enabled = when (step) {
                         1 -> category.isNotBlank()
                         2 -> title.isNotBlank() && location.isNotBlank()
@@ -906,38 +990,40 @@ fun OwnerPostJobTab(
                         else -> true
                     }
                 ) {
-                    Text(if (step == 5) "Publish Job" else "Next Step")
+                    Text(if (step == 5) "Publish Job" else "Next Step", fontWeight = FontWeight.Bold, color = Color.White)
                 }
             }
         }
     }
 
-    
     com.rozgarmitra.app.presentation.components.LoadingOverlay(isLoading = isLoading, text = "Publishing Job...")
 
     if (isSuggestingOther) {
         AlertDialog(
             onDismissRequest = { isSuggestingOther = false },
-            title = { Text("Suggest New Category", fontWeight = FontWeight.Bold) },
+            containerColor = DarkSurface,
+            title = { Text("Suggest New Category", fontWeight = FontWeight.Bold, color = TextPrimary) },
             text = {
                 Column {
-                    Text("Can't find your trade? Suggest it to us.", fontSize = 13.sp, color = Color.Gray)
+                    Text("Can't find your trade? Suggest it to us.", fontSize = 13.sp, color = TextSecondary)
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
                         value = suggestedCategoryName,
                         onValueChange = { suggestedCategoryName = it },
-                        label = { Text("Trade Name (e.g. Driver)") },
+                        label = { Text("Trade Name (e.g. Driver)", color = TextSecondary) },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        colors = TextFieldDefaults.outlinedTextFieldColors(containerColor = DarkBackground, focusedBorderColor = PrimaryIndigo, unfocusedBorderColor = BorderStrokeColor, focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary)
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     OutlinedTextField(
                         value = suggestedCategoryDesc,
                         onValueChange = { suggestedCategoryDesc = it },
-                        label = { Text("Brief Description about work") },
+                        label = { Text("Brief Description about work", color = TextSecondary) },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3,
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        colors = TextFieldDefaults.outlinedTextFieldColors(containerColor = DarkBackground, focusedBorderColor = PrimaryIndigo, unfocusedBorderColor = BorderStrokeColor, focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary)
                     )
                 }
             },
@@ -955,28 +1041,30 @@ fun OwnerPostJobTab(
                             }
                         }
                     },
+                    shape = CircleShape,
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryIndigo),
                     enabled = suggestedCategoryName.isNotBlank() && suggestedCategoryDesc.isNotBlank() && !suggestionLoading
                 ) {
                     if (suggestionLoading) CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
-                    else Text("Submit Suggestion")
+                    else Text("Submit Suggestion", fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { isSuggestingOther = false }) { Text("Cancel") }
+                TextButton(onClick = { isSuggestingOther = false }) { Text("Cancel", color = TextSecondary) }
             }
         )
     }
 }
 
 @Composable
-fun PreviewRow(icon: ImageVector, label: String, value: String, valueColor: Color = Color.Black) {
+fun PreviewRow(icon: ImageVector, label: String, value: String, valueColor: Color = TextPrimary) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(icon, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(16.dp))
+        Icon(icon, contentDescription = null, tint = TextMuted, modifier = Modifier.size(16.dp))
         Spacer(modifier = Modifier.width(12.dp))
-        Text(text = "$label: ", fontSize = 13.sp, color = Color.Gray)
+        Text(text = "$label: ", fontSize = 13.sp, color = TextSecondary)
         Text(text = value, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = valueColor)
     }
 }
@@ -989,7 +1077,19 @@ fun OwnerChatsTab(onChatThreadClick: (String) -> Unit) {
 
     if (threads.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No active chats with workers yet.", color = Color.Gray)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Surface(
+                    shape = CircleShape,
+                    color = DarkSurfaceVariant,
+                    modifier = Modifier.size(64.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(Icons.Filled.Chat, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(32.dp))
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("No active chats with workers yet.", color = TextSecondary, fontWeight = FontWeight.Medium)
+            }
         }
     } else {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -1001,46 +1101,49 @@ fun OwnerChatsTab(onChatThreadClick: (String) -> Unit) {
                         .padding(horizontal = 16.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(52.dp)
-                            .background(Color(0xFFE8F5E9), CircleShape),
-                        contentAlignment = Alignment.Center
+                    Surface(
+                        shape = CircleShape,
+                        color = PrimaryIndigo.copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, PrimaryIndigo.copy(alpha = 0.3f)),
+                        modifier = Modifier.size(50.dp)
                     ) {
-                        Text(
-                            text = thread.otherUserName.take(1),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp,
-                            color = Color(0xFF1B5E20)
-                        )
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = thread.otherUserName.take(1).uppercase(),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp,
+                                color = PrimaryIndigo
+                            )
+                        }
                     }
 
-                    Spacer(modifier = Modifier.width(16.dp))
+                    Spacer(modifier = Modifier.width(14.dp))
 
                     Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(thread.otherUserName, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            Text(thread.otherUserName, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
                             if (thread.otherUserVerified) {
                                 Spacer(modifier = Modifier.width(4.dp))
                                 VerifiedBadge(size = 14)
                             }
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(thread.lastMessageText, fontSize = 13.sp, color = Color.Gray, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(thread.lastMessageText, fontSize = 13.sp, color = TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
 
                     if (thread.unreadCount > 0) {
-                        Box(
-                            modifier = Modifier
-                                .size(22.dp)
-                                .background(MaterialTheme.colorScheme.primary, CircleShape),
-                            contentAlignment = Alignment.Center
+                        Surface(
+                            shape = CircleShape,
+                            color = PrimaryIndigo,
+                            modifier = Modifier.size(22.dp)
                         ) {
-                            Text(thread.unreadCount.toString(), color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(thread.unreadCount.toString(), color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                 }
-                Divider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(horizontal = 16.dp))
+                Divider(color = BorderStrokeColor.copy(alpha = 0.6f), modifier = Modifier.padding(horizontal = 16.dp))
             }
         }
     }
@@ -1055,10 +1158,6 @@ fun OwnerProfileTab(
 ) {
     val currentUser by RozgarRepository.currentUser.collectAsStateWithLifecycle()
     val isOffline by RozgarRepository.isOffline.collectAsStateWithLifecycle()
-    
-    var isUploadingDoc by remember { mutableStateOf(false) }
-    var uploadStatus by remember { mutableStateOf<String?>(null) }
-    val scope = rememberCoroutineScope()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -1067,9 +1166,10 @@ fun OwnerProfileTab(
         item {
             // Profile Header Card
             Surface(
-                color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 2.dp,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                color = DarkSurface,
+                border = BorderStroke(1.dp, BorderStrokeColor),
+                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier.fillMaxWidth().padding(16.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(24.dp),
@@ -1078,28 +1178,29 @@ fun OwnerProfileTab(
                     Box(
                         modifier = Modifier
                             .size(80.dp)
-                            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                            .background(PrimaryIndigo.copy(alpha = 0.15f), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Filled.Person, contentDescription = null, modifier = Modifier.size(40.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                        Icon(Icons.Filled.Person, contentDescription = null, modifier = Modifier.size(40.dp), tint = PrimaryIndigo)
                     }
                     
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Text(currentUser?.name ?: "Employer", fontWeight = FontWeight.Bold, fontSize = 22.sp)
-                    Text(currentUser?.phone ?: currentUser?.id ?: "", color = Color.Gray, fontSize = 14.sp)
+                    Text(currentUser?.name ?: "Employer", fontWeight = FontWeight.Bold, fontSize = 22.sp, color = TextPrimary)
+                    Text(currentUser?.phone ?: currentUser?.id ?: "", color = TextSecondary, fontSize = 14.sp)
                     
                     Surface(
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-                        shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.padding(top = 8.dp)
+                        color = AccentCyan.copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, AccentCyan.copy(alpha = 0.3f)),
+                        shape = CircleShape,
+                        modifier = Modifier.padding(top = 10.dp)
                     ) {
                         Text(
                             "JOB POSTER / OWNER", 
-                            color = MaterialTheme.colorScheme.primary, 
-                            fontSize = 11.sp, 
+                            color = AccentCyan, 
+                            fontSize = 10.sp, 
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                         )
                     }
                 }
@@ -1129,7 +1230,7 @@ fun OwnerProfileTab(
                     icon = Icons.Filled.VerifiedUser,
                     title = if (currentUser?.isVerified == true) "Business Verified" else "Verify Business",
                     subtitle = if (currentUser?.isVerified == true) "Badge active" else "Submit trade license",
-                    titleColor = if (currentUser?.isVerified == true) Color(0xFF2E7D32) else Color.Unspecified,
+                    titleColor = if (currentUser?.isVerified == true) SuccessGreen else TextPrimary,
                     onClick = { /* TODO */ }
                 )
             }
@@ -1150,8 +1251,8 @@ fun OwnerProfileTab(
                 )
                 ProfileMenuItem(
                     icon = Icons.Filled.BugReport,
-                    title = "Debug: Offline Mode",
-                    subtitle = "Test app without internet",
+                    title = "Offline Mode",
+                    subtitle = "Simulate offline state",
                     onClick = { RozgarRepository.toggleOffline(!isOffline) }
                 )
             }
@@ -1159,16 +1260,24 @@ fun OwnerProfileTab(
 
         item {
             Spacer(modifier = Modifier.height(24.dp))
-            ProfileMenuItem(
-                icon = Icons.Filled.Logout,
-                title = "Logout Account",
-                titleColor = Color.Red,
-                onClick = {
-                    RozgarRepository.logout()
-                    onLogoutClick()
+            Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                OutlinedButton(
+                    onClick = {
+                        RozgarRepository.logout()
+                        onLogoutClick()
+                    },
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    shape = CircleShape,
+                    border = BorderStroke(1.dp, WarningRose.copy(alpha = 0.4f)),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = WarningRose)
+                ) {
+                    Icon(Icons.Filled.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Logout Account", fontWeight = FontWeight.Bold)
                 }
-            )
+            }
             Spacer(modifier = Modifier.height(40.dp))
         }
     }
 }
+

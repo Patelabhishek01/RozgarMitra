@@ -57,6 +57,37 @@ object RozgarRepository {
     private val _jobs = MutableStateFlow<List<Job>>(emptyList())
     val jobs: StateFlow<List<Job>> = _jobs
 
+    private val _userLocationData = MutableStateFlow<LocationData?>(null)
+    val userLocationData: StateFlow<LocationData?> = _userLocationData
+
+    private val _searchRadiusKm = MutableStateFlow<Double>(0.0) // 0.0 = All Jobs
+    val searchRadiusKm: StateFlow<Double> = _searchRadiusKm
+
+    fun updateUserLocation(locationData: LocationData) {
+        _userLocationData.value = locationData
+        recalculateJobDistances()
+    }
+
+    fun setSearchRadius(radiusKm: Double) {
+        _searchRadiusKm.value = radiusKm
+    }
+
+    fun recalculateJobDistances() {
+        val userLoc = _userLocationData.value ?: return
+        val currentJobs = _jobs.value
+        val updatedJobs = currentJobs.map { job ->
+            if (job.latitude != 0.0 && job.longitude != 0.0) {
+                val dist = LocationHelper.calculateDistanceKm(
+                    userLoc.latitude, userLoc.longitude,
+                    job.latitude, job.longitude
+                )
+                job.copy(distanceKm = dist)
+            } else job
+        }
+        _jobs.value = updatedJobs
+    }
+
+
     private val _applications = MutableStateFlow<List<JobApplication>>(emptyList())
     val applications: StateFlow<List<JobApplication>> = _applications
 
@@ -162,11 +193,24 @@ object RozgarRepository {
                     return@addSnapshotListener
                 }
                 if (snapshots != null) {
-                    val jobList = snapshots.documents.mapNotNull { doc -> doc.toJobSafe() }
+                    var jobList = snapshots.documents.mapNotNull { doc -> doc.toJobSafe() }
                         .sortedByDescending { it.createdAt }
+                    val userLoc = _userLocationData.value
+                    if (userLoc != null) {
+                        jobList = jobList.map { job ->
+                            if (job.latitude != 0.0 && job.longitude != 0.0) {
+                                val dist = LocationHelper.calculateDistanceKm(
+                                    userLoc.latitude, userLoc.longitude,
+                                    job.latitude, job.longitude
+                                )
+                                job.copy(distanceKm = dist)
+                            } else job
+                        }
+                    }
                     Log.d("Firebase", "Jobs Snapshot received. Total count: ${jobList.size}")
                     _jobs.value = jobList
                 }
+
             }
     }
 
@@ -575,8 +619,14 @@ object RozgarRepository {
         skills: List<String> = emptyList(),
         urgent: Boolean = false
     ): Flow<Result<Boolean>> = flow {
-        val user = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
-        val jobId = "job_${System.currentTimeMillis()}"
+        val user = _currentUser.value ?: throw Exception("User not logged in")
+        val jobId = UUID.randomUUID().toString()
+
+        val userLoc = _userLocationData.value
+        val calculatedDistance = if (userLoc != null && latitude != 0.0 && longitude != 0.0) {
+            LocationHelper.calculateDistanceKm(userLoc.latitude, userLoc.longitude, latitude, longitude)
+        } else 0.0
+
         val job = Job(
             id = jobId,
             title = title,
@@ -585,7 +635,8 @@ object RozgarRepository {
             location = location,
             latitude = latitude,
             longitude = longitude,
-            distanceKm = (1..5).random() + Math.random(),
+            distanceKm = calculatedDistance,
+
             date = date,
             startTime = startTime,
             duration = duration,

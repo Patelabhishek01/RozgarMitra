@@ -1,5 +1,6 @@
 package com.rozgarmitra.app.presentation.settings
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.data.ThemeMode
+import com.rozgarmitra.app.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,12 +31,18 @@ fun SettingsScreen(
     var showThemeDialog by remember { mutableStateOf(false) }
 
     Scaffold(
+        containerColor = DarkBackground,
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = DarkBackground,
+                    titleContentColor = TextPrimary,
+                    navigationIconContentColor = TextPrimary
+                ),
                 title = { Text("Settings", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary)
                     }
                 }
             )
@@ -43,6 +51,7 @@ fun SettingsScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .background(DarkBackground)
                 .padding(paddingValues)
         ) {
             item { SettingsSectionHeader("Account") }
@@ -140,7 +149,7 @@ fun SettingsSectionHeader(title: String) {
     Text(
         text = title,
         fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.primary,
+        color = AccentCyan,
         fontSize = 14.sp,
         modifier = Modifier.padding(start = 16.dp, top = 24.dp, bottom = 8.dp)
     )
@@ -154,22 +163,23 @@ fun SettingsItem(
     onClick: () -> Unit
 ) {
     Surface(
+        color = DarkSurface,
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(icon, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(24.dp))
+            Icon(icon, contentDescription = null, tint = PrimaryBlue, modifier = Modifier.size(24.dp))
             Spacer(modifier = Modifier.width(16.dp))
             Column {
-                Text(title, fontWeight = FontWeight.Medium, fontSize = 16.sp)
+                Text(title, fontWeight = FontWeight.Medium, fontSize = 16.sp, color = TextPrimary)
                 if (subtitle != null) {
-                    Text(subtitle, color = Color.Gray, fontSize = 13.sp)
+                    Text(subtitle, color = TextSecondary, fontSize = 13.sp)
                 }
             }
             Spacer(modifier = Modifier.weight(1f))
-            Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = Color.LightGray)
+            Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = TextSecondary)
         }
     }
 }
@@ -181,8 +191,9 @@ fun ThemeSelectionDialog(
     onSelect: (ThemeMode) -> Unit
 ) {
     AlertDialog(
+        containerColor = DarkSurfaceElevated,
         onDismissRequest = onDismiss,
-        title = { Text("Select Appearance") },
+        title = { Text("Select Appearance", color = TextPrimary) },
         text = {
             Column {
                 ThemeOption("Light", ThemeMode.LIGHT, currentMode == ThemeMode.LIGHT, onSelect)
@@ -191,7 +202,7 @@ fun ThemeSelectionDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text("Cancel", color = AccentCyan) }
         }
     )
 }
@@ -207,8 +218,13 @@ fun ThemeOption(
         modifier = Modifier.fillMaxWidth().clickable { onSelect(mode) }.padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        RadioButton(selected = isSelected, onClick = { onSelect(mode) })
+        RadioButton(
+            selected = isSelected,
+            onClick = { onSelect(mode) },
+            colors = RadioButtonDefaults.colors(selectedColor = PrimaryBlue, unselectedColor = TextSecondary)
+        )
         Spacer(modifier = Modifier.width(8.dp))
-        Text(label)
+        Text(label, color = TextPrimary)
     }
 }
+

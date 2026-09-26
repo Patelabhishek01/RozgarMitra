@@ -26,6 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rozgarmitra.app.data.ApplicationStatus
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.presentation.components.LoadingOverlay
+import com.rozgarmitra.app.ui.theme.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -47,12 +48,14 @@ fun ApplicantsScreen(
     val scope = rememberCoroutineScope()
 
     Scaffold(
+        containerColor = DarkBackground,
         topBar = {
             TopAppBar(
-                title = { Text(job?.title?.take(20) ?: "Applicants", fontWeight = FontWeight.Bold) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkSurface),
+                title = { Text(job?.title?.take(20) ?: "Applicants", fontWeight = FontWeight.Bold, color = TextPrimary) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", modifier = Modifier.size(26.dp))
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary, modifier = Modifier.size(24.dp))
                     }
                 }
             )
@@ -62,6 +65,7 @@ fun ApplicantsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .background(DarkBackground)
         ) {
             Column(
                 modifier = Modifier
@@ -72,13 +76,14 @@ fun ApplicantsScreen(
                     text = "Review Applicants (${jobApps.size})",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
+                    color = TextPrimary,
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
 
                 AnimatedVisibility(visible = actionError != null) {
                     Text(
                         text = actionError ?: "",
-                        color = Color.Red,
+                        color = WarningRose,
                         fontSize = 13.sp,
                         modifier = Modifier.padding(bottom = 10.dp)
                     )
@@ -86,33 +91,35 @@ fun ApplicantsScreen(
 
                 if (jobApps.isEmpty()) {
                     Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Text("No applicants yet for this job.", color = Color.Gray)
+                        Text("No applicants yet for this job.", color = TextSecondary)
                     }
                 } else {
                     LazyColumn(
                         modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(jobApps) { app ->
                             Card(
-                                shape = RoundedCornerShape(16.dp),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                                shape = RoundedCornerShape(20.dp),
+                                colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                                border = BorderStroke(1.dp, BorderStrokeColor),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Column(modifier = Modifier.padding(16.dp)) {
+                                Column(modifier = Modifier.padding(18.dp)) {
                                     // Row 1: Profile snippet
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(46.dp)
-                                                .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
-                                            contentAlignment = Alignment.Center
+                                        Surface(
+                                            shape = CircleShape,
+                                            color = PrimaryIndigo.copy(alpha = 0.15f),
+                                            border = BorderStroke(1.dp, PrimaryIndigo.copy(alpha = 0.3f)),
+                                            modifier = Modifier.size(48.dp)
                                         ) {
-                                            Text(app.labourName.take(1), fontWeight = FontWeight.Bold)
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Text(app.labourName.take(1).uppercase(), fontWeight = FontWeight.Bold, fontSize = 18.sp, color = PrimaryIndigo)
+                                            }
                                         }
 
                                         Spacer(modifier = Modifier.width(12.dp))
@@ -121,31 +128,33 @@ fun ApplicantsScreen(
                                             Text(
                                                 text = app.labourName,
                                                 fontWeight = FontWeight.Bold,
-                                                fontSize = 15.sp,
+                                                fontSize = 16.sp,
+                                                color = TextPrimary,
                                                 modifier = Modifier.clickable { onWorkerClick(app.labourId) }
                                             )
+                                            Spacer(modifier = Modifier.height(2.dp))
                                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Icon(Icons.Filled.Star, contentDescription = null, tint = Color(0xFFFFC107), modifier = Modifier.size(14.dp))
+                                                Icon(Icons.Filled.Star, contentDescription = null, tint = Color(0xFFF59E0B), modifier = Modifier.size(14.dp))
                                                 Spacer(modifier = Modifier.width(4.dp))
-                                                Text("${app.labourRating} • ${app.labourExperience} Exp", fontSize = 12.sp, color = Color.Gray)
+                                                Text("${app.labourRating} • ${app.labourExperience} Exp", fontSize = 12.sp, color = TextSecondary)
                                             }
                                         }
                                         
                                         // Status badge
                                         if (app.status != ApplicationStatus.APPLIED) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .background(
-                                                        if (app.status == ApplicationStatus.ACCEPTED) Color(0xFFE8F5E9) else Color(0xFFFFEBEE),
-                                                        RoundedCornerShape(6.dp)
-                                                    )
-                                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                                            val isAccepted = app.status == ApplicationStatus.ACCEPTED
+                                            val bColor = if (isAccepted) SuccessGreen else WarningRose
+                                            Surface(
+                                                color = bColor.copy(alpha = 0.15f),
+                                                border = BorderStroke(1.dp, bColor.copy(alpha = 0.3f)),
+                                                shape = CircleShape
                                             ) {
                                                 Text(
                                                     text = app.status.name,
-                                                    color = if (app.status == ApplicationStatus.ACCEPTED) Color(0xFF2E7D32) else Color(0xFFC62828),
+                                                    color = bColor,
                                                     fontSize = 10.sp,
-                                                    fontWeight = FontWeight.Bold
+                                                    fontWeight = FontWeight.Bold,
+                                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                                                 )
                                             }
                                         }
@@ -156,13 +165,13 @@ fun ApplicantsScreen(
                                     Text(
                                         text = "Trade: ${app.labourSkills.joinToString(", ")}",
                                         fontSize = 13.sp,
-                                        color = Color.DarkGray
+                                        color = TextSecondary
                                     )
 
                                     Spacer(modifier = Modifier.height(16.dp))
 
                                     if (app.status == ApplicationStatus.APPLIED) {
-                                        // Decisions Buttons (Large click targets)
+                                        // Decisions Buttons
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
                                             horizontalArrangement = Arrangement.End
@@ -180,17 +189,17 @@ fun ApplicantsScreen(
                                                         }
                                                     }
                                                 },
-                                                shape = RoundedCornerShape(8.dp),
-                                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFC62828)),
-                                                border = BorderStroke(1.dp, Color(0xFFC62828)),
-                                                modifier = Modifier.height(48.dp)
+                                                shape = CircleShape,
+                                                colors = ButtonDefaults.outlinedButtonColors(contentColor = WarningRose),
+                                                border = BorderStroke(1.dp, WarningRose.copy(alpha = 0.4f)),
+                                                modifier = Modifier.height(44.dp)
                                             ) {
-                                                Icon(Icons.Filled.Close, contentDescription = "Reject")
+                                                Icon(Icons.Filled.Close, contentDescription = "Reject", modifier = Modifier.size(16.dp))
                                                 Spacer(modifier = Modifier.width(6.dp))
-                                                Text("Reject")
+                                                Text("Reject", fontWeight = FontWeight.Bold)
                                             }
 
-                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Spacer(modifier = Modifier.width(10.dp))
 
                                             Button(
                                                 onClick = {
@@ -205,24 +214,24 @@ fun ApplicantsScreen(
                                                         }
                                                     }
                                                 },
-                                                shape = RoundedCornerShape(8.dp),
-                                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)),
-                                                modifier = Modifier.height(48.dp)
+                                                shape = CircleShape,
+                                                colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen, contentColor = Color.White),
+                                                modifier = Modifier.height(44.dp)
                                             ) {
-                                                Icon(Icons.Filled.Check, contentDescription = "Accept")
+                                                Icon(Icons.Filled.Check, contentDescription = "Accept", modifier = Modifier.size(16.dp))
                                                 Spacer(modifier = Modifier.width(6.dp))
-                                                Text("Hire Worker")
+                                                Text("Hire Worker", fontWeight = FontWeight.Bold)
                                             }
                                         }
                                     } else {
-                                        // Communicate option for matched worker
                                         if (app.status == ApplicationStatus.ACCEPTED) {
                                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                                                 Button(
                                                     onClick = { onWorkerClick(app.labourId) },
-                                                    shape = RoundedCornerShape(8.dp)
+                                                    shape = CircleShape,
+                                                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryIndigo)
                                                 ) {
-                                                    Text("Contact Worker")
+                                                    Text("Contact Worker", fontWeight = FontWeight.Bold)
                                                 }
                                             }
                                         }
@@ -238,3 +247,4 @@ fun ApplicantsScreen(
         }
     }
 }
+

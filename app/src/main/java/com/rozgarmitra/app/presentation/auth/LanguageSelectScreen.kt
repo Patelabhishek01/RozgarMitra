@@ -1,6 +1,7 @@
 package com.rozgarmitra.app.presentation.auth
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -18,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.presentation.components.PrimaryLargeButton
+import com.rozgarmitra.app.ui.theme.*
 
 data class LanguageItem(
     val englishName: String,
@@ -46,13 +48,15 @@ fun LanguageSelectScreen(
     var selectedLanguage by remember { mutableStateOf("English") }
 
     Scaffold(
+        containerColor = DarkBackground,
         topBar = {
             CenterAlignedTopAppBar(
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = DarkBackground),
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Filled.Translate, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.Filled.Translate, contentDescription = null, tint = PrimaryBlue)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Select Language", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                        Text("Select Language", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = TextPrimary)
                     }
                 }
             )
@@ -61,6 +65,7 @@ fun LanguageSelectScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(DarkBackground)
                 .padding(paddingValues)
                 .padding(24.dp),
             verticalArrangement = Arrangement.SpaceBetween
@@ -70,6 +75,7 @@ fun LanguageSelectScreen(
                     text = "चुनें अपनी भाषा / Select your language",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
+                    color = TextSecondary,
                     modifier = Modifier.padding(bottom = 20.dp)
                 )
 
@@ -85,14 +91,14 @@ fun LanguageSelectScreen(
                             onClick = { selectedLanguage = lang.englishName },
                             shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+                                containerColor = if (isSelected) PrimaryBlue.copy(alpha = 0.25f) else DarkSurface
                             ),
                             border = BorderStroke(
                                 width = if (isSelected) 2.dp else 1.dp,
-                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+                                color = if (isSelected) PrimaryBlue else BorderStrokeColor
                             ),
                             modifier = Modifier
-                                .height(80.dp) // Large tap targets!
+                                .height(80.dp)
                                 .fillMaxWidth()
                         ) {
                             Column(
@@ -106,12 +112,12 @@ fun LanguageSelectScreen(
                                     text = lang.nativeName,
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                    color = if (isSelected) TextPrimary else TextPrimary.copy(alpha = 0.85f)
                                 )
                                 Text(
                                     text = lang.englishName,
                                     fontSize = 12.sp,
-                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f) else Color.Gray
+                                    color = if (isSelected) AccentCyan else TextSecondary
                                 )
                             }
                         }
@@ -132,3 +138,4 @@ fun LanguageSelectScreen(
         }
     }
 }
+

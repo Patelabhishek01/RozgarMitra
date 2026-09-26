@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rozgarmitra.app.data.RozgarRepository
+import com.rozgarmitra.app.ui.theme.*
 import kotlinx.coroutines.delay
 
 @Composable
@@ -39,7 +40,7 @@ fun SplashScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+            .background(DarkBackground),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -59,14 +60,14 @@ fun SplashScreen(
                         modifier = Modifier
                             .size(120.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
+                            .background(PrimaryBlue.copy(alpha = 0.2f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Handshake,
                             contentDescription = "RozgarMitra Logo",
                             modifier = Modifier.size(70.dp),
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = PrimaryBlue
                         )
                     }
 
@@ -77,14 +78,14 @@ fun SplashScreen(
                         text = "RozgarMitra",
                         style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.Black,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = TextPrimary,
                         letterSpacing = 2.sp
                     )
                     
                     Text(
                         text = "Bridging Hands, Building Future",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray,
+                        color = AccentCyan,
                         modifier = Modifier.padding(top = 4.dp)
                     )
                 }
@@ -95,10 +96,11 @@ fun SplashScreen(
         Text(
             text = "Made for Bharat",
             style = MaterialTheme.typography.labelSmall,
-            color = Color.LightGray,
+            color = TextSecondary,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 32.dp)
         )
     }
 }
+
