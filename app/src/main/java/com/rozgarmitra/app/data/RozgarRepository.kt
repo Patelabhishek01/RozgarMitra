@@ -125,7 +125,22 @@ object RozgarRepository {
                     return@addSnapshotListener
                 }
                 if (snapshot != null && snapshot.exists()) {
-                    val user = snapshot.toObject(User::class.java)
+                    val user = try {
+                        val parsed = snapshot.toObject(User::class.java)
+                        if (parsed != null && parsed.id.isBlank()) parsed.copy(id = snapshot.id) else parsed
+                    } catch (err: Exception) {
+                        Log.e("Firebase", "Failed to parse user profile ${snapshot.id}", err)
+                        try {
+                            val name = snapshot.getString("name") ?: ""
+                            val phone = snapshot.getString("phone") ?: ""
+                            val roleStr = snapshot.getString("role") ?: "LABOUR"
+                            val role = try { Role.valueOf(roleStr.uppercase()) } catch (ex: Exception) { Role.LABOUR }
+                            val language = snapshot.getString("language") ?: "English"
+                            val isVerified = snapshot.getBoolean("isVerified") ?: false
+                            val profileCompleted = snapshot.getBoolean("profileCompleted") ?: false
+                            User(id = snapshot.id, name = name, phone = phone, role = role, language = language, isVerified = isVerified, profileCompleted = profileCompleted)
+                        } catch (fatal: Exception) { null }
+                    }
                     _currentUser.value = user
                     user?.id?.let { userId ->
                         observeUserApplications(userId)
@@ -247,7 +262,9 @@ object RozgarRepository {
                     return@addSnapshotListener
                 }
                 if (snapshots != null) {
-                    val allApps = snapshots.toObjects(JobApplication::class.java)
+                    val allApps = snapshots.documents.mapNotNull { doc ->
+                        try { doc.toObject(JobApplication::class.java)?.copy(id = doc.id) } catch (err: Exception) { null }
+                    }
                     val filtered = if (user.role == Role.LABOUR) {
                         allApps.filter { it.labourId == uid }
                     } else {
@@ -268,7 +285,9 @@ object RozgarRepository {
                     return@addSnapshotListener
                 }
                 if (snapshots != null) {
-                    val allNotifs = snapshots.toObjects(Notification::class.java)
+                    val allNotifs = snapshots.documents.mapNotNull { doc ->
+                        try { doc.toObject(Notification::class.java)?.copy(id = doc.id) } catch (err: Exception) { null }
+                    }
                     val userNotifs = allNotifs
                         .filter { it.recipientUserId == uid }
                         .sortedByDescending { it.timestamp }
@@ -286,7 +305,9 @@ object RozgarRepository {
                     return@addSnapshotListener
                 }
                 if (snapshots != null) {
-                    val allThreads = snapshots.toObjects(ChatThread::class.java)
+                    val allThreads = snapshots.documents.mapNotNull { doc ->
+                        try { doc.toObject(ChatThread::class.java)?.copy(id = doc.id) } catch (err: Exception) { null }
+                    }
                     val userThreads = allThreads.filter { uid in it.participants || it.ownerId == uid || it.workerId == uid }
                     _threads.value = userThreads
                     
@@ -307,7 +328,9 @@ object RozgarRepository {
                     return@addSnapshotListener
                 }
                 if (snapshots != null) {
-                    val messageList = snapshots.toObjects(ChatMessage::class.java).sortedBy { it.timestamp }
+                    val messageList = snapshots.documents.mapNotNull { doc ->
+                        try { doc.toObject(ChatMessage::class.java)?.copy(id = doc.id) } catch (err: Exception) { null }
+                    }.sortedBy { it.timestamp }
                     val currentMap = _messages.value.toMutableMap()
                     currentMap[threadId] = messageList
                     _messages.value = currentMap
