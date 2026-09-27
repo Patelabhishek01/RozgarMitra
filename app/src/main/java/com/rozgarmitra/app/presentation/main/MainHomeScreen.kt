@@ -160,9 +160,13 @@ fun MainHomeScreen(
             notifications = notifications,
             onDismiss = { showNotifDialog = false },
             onNotificationClick = { notif ->
-                RozgarRepository.markNotificationRead(notif.id)
-                if (notif.relatedJobId.isNotBlank()) {
-                    onNavigateToJobDetails(notif.relatedJobId)
+                try {
+                    if (notif.relatedJobId.isNotBlank()) {
+                        onNavigateToJobDetails(notif.relatedJobId)
+                    }
+                    RozgarRepository.markNotificationRead(notif.id)
+                } catch (e: Exception) {
+                    android.util.Log.e("MainHomeScreen", "Failed to navigate for notification: ${notif.id}", e)
                 }
             }
         )

@@ -170,34 +170,38 @@ fun OwnerHomeScreen(
             notifications = notifications,
             onDismiss = { showNotifDialog = false },
             onNotificationClick = { notif ->
-                RozgarRepository.markNotificationRead(notif.id)
-                when (notif.type) {
-                    com.rozgarmitra.app.data.NotificationType.JOB_APPLICATION.name -> {
-                        if (notif.relatedJobId.isNotBlank()) {
-                            onManageApplicantsClick(notif.relatedJobId)
-                        } else {
-                            onApplicationsClick()
+                try {
+                    when (notif.type) {
+                        com.rozgarmitra.app.data.NotificationType.JOB_APPLICATION.name -> {
+                            if (notif.relatedJobId.isNotBlank()) {
+                                onManageApplicantsClick(notif.relatedJobId)
+                            } else {
+                                onApplicationsClick()
+                            }
+                        }
+                        com.rozgarmitra.app.data.NotificationType.NEW_MESSAGE.name -> {
+                            if (notif.relatedThreadId.isNotBlank()) {
+                                onChatThreadClick(notif.relatedThreadId)
+                            } else {
+                                selectedTab = 2
+                            }
+                        }
+                        com.rozgarmitra.app.data.NotificationType.JOB_STATUS_CHANGED.name -> {
+                            if (notif.relatedJobId.isNotBlank()) {
+                                onJobClick(notif.relatedJobId)
+                            } else {
+                                onActiveJobsClick()
+                            }
+                        }
+                        else -> {
+                            if (notif.relatedJobId.isNotBlank()) {
+                                onJobClick(notif.relatedJobId)
+                            }
                         }
                     }
-                    com.rozgarmitra.app.data.NotificationType.NEW_MESSAGE.name -> {
-                        if (notif.relatedThreadId.isNotBlank()) {
-                            onChatThreadClick(notif.relatedThreadId)
-                        } else {
-                            selectedTab = 2
-                        }
-                    }
-                    com.rozgarmitra.app.data.NotificationType.JOB_STATUS_CHANGED.name -> {
-                        if (notif.relatedJobId.isNotBlank()) {
-                            onJobClick(notif.relatedJobId)
-                        } else {
-                            onActiveJobsClick()
-                        }
-                    }
-                    else -> {
-                        if (notif.relatedJobId.isNotBlank()) {
-                            onJobClick(notif.relatedJobId)
-                        }
-                    }
+                    RozgarRepository.markNotificationRead(notif.id)
+                } catch (e: Exception) {
+                    android.util.Log.e("OwnerHomeScreen", "Failed to navigate for notification: ${notif.id}", e)
                 }
             }
         )

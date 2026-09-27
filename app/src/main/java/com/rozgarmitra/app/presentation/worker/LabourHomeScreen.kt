@@ -158,28 +158,32 @@ fun LabourHomeScreen(
             notifications = notifications,
             onDismiss = { showNotifDialog = false },
             onNotificationClick = { notif ->
-                RozgarRepository.markNotificationRead(notif.id)
-                when (notif.type) {
-                    com.rozgarmitra.app.data.NotificationType.NEW_MESSAGE.name -> {
-                        if (notif.relatedThreadId.isNotBlank()) {
-                            onChatThreadClick(notif.relatedThreadId)
-                        } else {
-                            selectedTab = 2
+                try {
+                    when (notif.type) {
+                        com.rozgarmitra.app.data.NotificationType.NEW_MESSAGE.name -> {
+                            if (notif.relatedThreadId.isNotBlank()) {
+                                onChatThreadClick(notif.relatedThreadId)
+                            } else {
+                                selectedTab = 2
+                            }
+                        }
+                        com.rozgarmitra.app.data.NotificationType.APPLICATION_ACCEPTED.name,
+                        com.rozgarmitra.app.data.NotificationType.APPLICATION_REJECTED.name -> {
+                            if (notif.relatedJobId.isNotBlank()) {
+                                onJobClick(notif.relatedJobId)
+                            } else {
+                                onApplicationsClick()
+                            }
+                        }
+                        else -> {
+                            if (notif.relatedJobId.isNotBlank()) {
+                                onJobClick(notif.relatedJobId)
+                            }
                         }
                     }
-                    com.rozgarmitra.app.data.NotificationType.APPLICATION_ACCEPTED.name,
-                    com.rozgarmitra.app.data.NotificationType.APPLICATION_REJECTED.name -> {
-                        if (notif.relatedJobId.isNotBlank()) {
-                            onJobClick(notif.relatedJobId)
-                        } else {
-                            onApplicationsClick()
-                        }
-                    }
-                    else -> {
-                        if (notif.relatedJobId.isNotBlank()) {
-                            onJobClick(notif.relatedJobId)
-                        }
-                    }
+                    RozgarRepository.markNotificationRead(notif.id)
+                } catch (e: Exception) {
+                    android.util.Log.e("LabourHomeScreen", "Failed to navigate for notification: ${notif.id}", e)
                 }
             }
         )

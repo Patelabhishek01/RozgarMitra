@@ -179,12 +179,14 @@ fun HomeFeedTab(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeHeader(
     userName: String?,
     role: Role?,
     onLoginClick: () -> Unit,
-    onNotificationClick: () -> Unit
+    onNotificationClick: () -> Unit,
+    unreadNotifsCount: Int = 0
 ) {
     Row(
         modifier = Modifier
@@ -228,7 +230,15 @@ fun HomeHeader(
                 modifier = Modifier.size(42.dp)
             ) {
                 IconButton(onClick = onNotificationClick) {
-                    Icon(Icons.Filled.NotificationsNone, contentDescription = "Notifications", tint = TextPrimary, modifier = Modifier.size(20.dp))
+                    BadgedBox(
+                        badge = {
+                            if (unreadNotifsCount > 0) {
+                                Badge(containerColor = WarningRose) { Text(unreadNotifsCount.toString(), color = Color.White) }
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Filled.NotificationsNone, contentDescription = "Notifications", tint = TextPrimary, modifier = Modifier.size(20.dp))
+                    }
                 }
             }
             if (userName == null) {
