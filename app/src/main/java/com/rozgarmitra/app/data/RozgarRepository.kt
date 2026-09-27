@@ -365,7 +365,7 @@ object RozgarRepository {
                     val userNotifs = snapshots.documents.mapNotNull { doc ->
                         try { doc.toObject(Notification::class.java)?.copy(id = doc.id) } catch (err: Exception) { null }
                     }
-                    .filter { !it.isRead }
+                    .filter { it.recipientUserId == uid && !it.isRead }
                     .sortedByDescending { it.timestamp }
                     _notifications.value = userNotifs
                 }
