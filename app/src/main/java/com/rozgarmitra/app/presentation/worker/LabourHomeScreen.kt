@@ -512,6 +512,7 @@ fun LabourSearchTab(onJobClick: (String) -> Unit) {
 @Composable
 fun LabourChatsTab(onChatThreadClick: (String) -> Unit) {
     val threads by RozgarRepository.threads.collectAsStateWithLifecycle()
+    val currentUser by RozgarRepository.currentUser.collectAsStateWithLifecycle()
 
     if (threads.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -532,6 +533,7 @@ fun LabourChatsTab(onChatThreadClick: (String) -> Unit) {
     } else {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(threads) { thread ->
+                val displayName = thread.getOtherUserName(currentUser?.id ?: "")
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -547,7 +549,7 @@ fun LabourChatsTab(onChatThreadClick: (String) -> Unit) {
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
-                                text = thread.otherUserName.take(1).uppercase(),
+                                text = displayName.take(1).uppercase(),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 18.sp,
                                 color = PrimaryIndigo
@@ -559,7 +561,7 @@ fun LabourChatsTab(onChatThreadClick: (String) -> Unit) {
 
                     Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(thread.otherUserName, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
+                            Text(displayName, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
                             if (thread.otherUserVerified) {
                                 Spacer(modifier = Modifier.width(4.dp))
                                 VerifiedBadge(size = 14)

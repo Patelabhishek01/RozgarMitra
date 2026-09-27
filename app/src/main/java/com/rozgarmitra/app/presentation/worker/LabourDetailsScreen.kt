@@ -94,7 +94,22 @@ fun LabourDetailsScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = DarkBackground),
-                title = { Text("Labour Profile Details", fontWeight = FontWeight.Bold, color = TextPrimary) }
+                title = { Text("Labour Profile Details", fontWeight = FontWeight.Bold, color = TextPrimary) },
+                actions = {
+                    TextButton(
+                        onClick = {
+                            isLoading = true
+                            scope.launch {
+                                RozgarRepository.skipLabourProfile().collectLatest { result ->
+                                    isLoading = false
+                                    onProfileCompleted()
+                                }
+                            }
+                        }
+                    ) {
+                        Text("Skip / छोड़ें", color = AccentCyan, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    }
+                }
             )
         }
     ) { paddingValues ->
@@ -274,35 +289,53 @@ fun LabourDetailsScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                PrimaryLargeButton(
-                    text = "Complete Profile / प्रोफ़ाइल पूरी करें",
-                    onClick = {
-                        isLoading = true
-                        errorMessage = null
-                        
-                        val flow = RozgarRepository.completeLabourProfile(
-                            skills = selectedSkills.map { it.substringBefore(" (") },
-                            experience = selectedExperience.substringBefore(" ("),
-                            wage = expectedWage.toIntOrNull() ?: 0
-                        )
-                        scope.launch {
-                            flow.collectLatest { result ->
-                                result.fold(
-                                    onSuccess = {
-                                        delay(500)
-                                        isLoading = false
-                                        onProfileCompleted()
-                                    },
-                                    onFailure = { error ->
-                                        isLoading = false
-                                        errorMessage = error.localizedMessage ?: "Failed to save profile."
-                                    }
-                                )
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    PrimaryLargeButton(
+                        text = "Complete Profile / प्रोफ़ाइल पूरी करें",
+                        onClick = {
+                            isLoading = true
+                            errorMessage = null
+                            
+                            val flow = RozgarRepository.completeLabourProfile(
+                                skills = selectedSkills.map { it.substringBefore(" (") },
+                                experience = selectedExperience.substringBefore(" ("),
+                                wage = expectedWage.toIntOrNull() ?: 0
+                            )
+                            scope.launch {
+                                flow.collectLatest { result ->
+                                    result.fold(
+                                        onSuccess = {
+                                            delay(500)
+                                            isLoading = false
+                                            onProfileCompleted()
+                                        },
+                                        onFailure = { error ->
+                                            isLoading = false
+                                            errorMessage = error.localizedMessage ?: "Failed to save profile."
+                                        }
+                                    )
+                                }
+                            }
+                        },
+                        enabled = selectedSkills.isNotEmpty() && selectedExperience.isNotBlank() && expectedWage.isNotBlank()
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    TextButton(
+                        onClick = {
+                            isLoading = true
+                            scope.launch {
+                                RozgarRepository.skipLabourProfile().collectLatest { result ->
+                                    isLoading = false
+                                    onProfileCompleted()
+                                }
                             }
                         }
-                    },
-                    enabled = selectedSkills.isNotEmpty() && selectedExperience.isNotBlank() && expectedWage.isNotBlank()
-                )
+                    ) {
+                        Text("Skip for now / बाद में भरें", color = TextSecondary, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                    }
+                }
             }
 
             LoadingOverlay(isLoading = isLoading, text = "Saving Profile...")

@@ -1,7 +1,5 @@
 package com.rozgarmitra.app.data
 
-import com.google.firebase.firestore.DocumentId
-
 enum class Role {
     LABOUR, OWNER
 }
@@ -44,7 +42,7 @@ data class OwnerProfile(
 )
 
 data class User(
-    @DocumentId val id: String = "",
+    val id: String = "",
     val name: String = "",
     val phone: String = "",
     val role: Role = Role.LABOUR,
@@ -60,7 +58,7 @@ data class User(
 )
 
 data class Job(
-    @DocumentId val id: String = "",
+    val id: String = "",
     val title: String = "",
     val category: String = "",
     val description: String = "",
@@ -91,7 +89,7 @@ data class Job(
 )
 
 data class JobApplication(
-    @DocumentId val id: String = "",
+    val id: String = "",
     val jobId: String = "",
     val jobTitle: String = "",
     val ownerId: String = "",
@@ -102,6 +100,7 @@ data class JobApplication(
     val labourExperience: String = "",
     val labourPhone: String = "",
     val status: ApplicationStatus = ApplicationStatus.APPLIED,
+    val chatApproved: Boolean = false,
     val appliedAt: Long = System.currentTimeMillis()
 )
 
@@ -125,7 +124,9 @@ data class ChatThread(
     val applicationId: String = "",
     val participants: List<String> = emptyList(),
     val ownerId: String = "",
+    val ownerName: String = "",
     val workerId: String = "",
+    val workerName: String = "",
     val otherUserId: String = "",
     val otherUserName: String = "",
     val otherUserRole: Role = Role.LABOUR,
@@ -133,7 +134,15 @@ data class ChatThread(
     val lastMessageText: String = "",
     val lastMessageTime: Long = System.currentTimeMillis(),
     val unreadCount: Int = 0
-)
+) {
+    fun getOtherUserName(currentUserId: String): String {
+        return if (currentUserId == ownerId) {
+            workerName.ifBlank { if (otherUserId != currentUserId && otherUserName.isNotBlank()) otherUserName else "Worker" }
+        } else {
+            ownerName.ifBlank { if (otherUserId != currentUserId && otherUserName.isNotBlank()) otherUserName else "Employer" }
+        }
+    }
+}
 
 data class Notification(
     val id: String = "",
@@ -145,5 +154,15 @@ data class Notification(
     val relatedApplicationId: String = "",
     val timestamp: Long = System.currentTimeMillis(),
     val isRead: Boolean = false
+)
+
+data class Rating(
+    val id: String = "",
+    val reviewerId: String = "",
+    val targetId: String = "",
+    val jobId: String = "",
+    val stars: Float = 5.0f,
+    val comment: String = "",
+    val createdAt: Long = System.currentTimeMillis()
 )
 

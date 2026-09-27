@@ -40,6 +40,15 @@ fun WorkerProfileView(
     val applications by RozgarRepository.applications.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            errorMessage = null
+        }
+    }
 
     // Search for worker in applications
     val appMatch = applications.firstOrNull { it.labourId == workerId }
@@ -53,6 +62,7 @@ fun WorkerProfileView(
 
     Scaffold(
         containerColor = DarkBackground,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -215,18 +225,33 @@ fun WorkerProfileView(
                 PrimaryLargeButton(
                     text = "Message Worker / संदेश भेजें",
                     onClick = {
-                        isLoading = true
-                        scope.launch {
-                            RozgarRepository.getOrCreateConversation(
-                                jobId = appMatch?.jobId ?: "",
-                                applicationId = appMatch?.id ?: "",
-                                targetUserId = workerId
-                            ).collect { res ->
-                                isLoading = false
-                                res.fold(
-                                    onSuccess = { threadId -> onNavigateToChat(threadId) },
-                                    onFailure = { }
-                                )
+                        val app = appMatch
+                        val canChat = app != null && (app.chatApproved || app.status == ApplicationStatus.ACCEPTED || app.status == ApplicationStatus.COMPLETED)
+                        when {
+                            app == null -> {
+                                errorMessage = "No application found for this worker."
+                            }
+                            app.status == ApplicationStatus.REJECTED || app.status == ApplicationStatus.CANCELLED -> {
+                                errorMessage = "Chat is unavailable for this application."
+                            }
+                            canChat -> {
+                                isLoading = true
+                                scope.launch {
+                                    RozgarRepository.getOrCreateConversation(
+                                        jobId = app.jobId,
+                                        applicationId = app.id,
+                                        targetUserId = workerId
+                                    ).collect { res ->
+                                        isLoading = false
+                                        res.fold(
+                                            onSuccess = { threadId -> onNavigateToChat(threadId) },
+                                            onFailure = { err -> errorMessage = err.localizedMessage }
+                                        )
+                                    }
+                                }
+                            }
+                            else -> {
+                                errorMessage = "Chat will be available after your application is accepted or chat is approved."
                             }
                         }
                     },

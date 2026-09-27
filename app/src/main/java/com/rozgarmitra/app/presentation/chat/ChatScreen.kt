@@ -120,7 +120,7 @@ fun ChatScreen(
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkSurface),
                     title = {
                         Column {
-                            Text(thread?.otherUserName?.ifBlank { "Chat" } ?: "Chat", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+                            Text(thread?.getOtherUserName(currentUser?.id ?: "")?.ifBlank { "Chat" } ?: "Chat", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
                             if (relatedJob != null) {
                                 Text("${relatedJob.title} • ₹${relatedJob.wage}/${relatedJob.wageType}", fontSize = 11.sp, color = TextSecondary)
                             } else {

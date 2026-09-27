@@ -47,6 +47,13 @@ fun LoginScreen(
     var isRegistering by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    var showResetDialog by remember { mutableStateOf(false) }
+    var resetEmail by remember { mutableStateOf("") }
+    var isResetLoading by remember { mutableStateOf(false) }
+    var resetError by remember { mutableStateOf<String?>(null) }
+    var resetSuccess by remember { mutableStateOf<String?>(null) }
+
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
@@ -191,6 +198,29 @@ fun LoginScreen(
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                             shape = MaterialTheme.shapes.medium
                         )
+
+                        if (!isRegistering) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                TextButton(
+                                    onClick = {
+                                        resetEmail = email
+                                        resetError = null
+                                        resetSuccess = null
+                                        showResetDialog = true
+                                    }
+                                ) {
+                                    Text(
+                                        text = "Forgot Password? / पासवर्ड भूल गए?",
+                                        color = AccentCyan,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
                     } else {
                         // Mobile Field
                         OutlinedTextField(
@@ -380,6 +410,100 @@ fun LoginScreen(
                 isLoading = isLoading, 
                 text = if (isEmailLogin) "Authenticating..." else "Sending OTP..."
             )
+
+            if (showResetDialog) {
+                AlertDialog(
+                    onDismissRequest = { 
+                        if (!isResetLoading) showResetDialog = false 
+                    },
+                    containerColor = DarkSurface,
+                    title = {
+                        Text(
+                            text = "Reset Password / पासवर्ड रीसेट",
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                    },
+                    text = {
+                        Column {
+                            Text(
+                                text = "Enter your registered email address. We will send you a password reset link.",
+                                fontSize = 13.sp,
+                                color = TextSecondary
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            OutlinedTextField(
+                                value = resetEmail,
+                                onValueChange = { resetEmail = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text("Registered Email") },
+                                singleLine = true,
+                                colors = textFieldColors
+                            )
+                            if (resetError != null) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = resetError!!,
+                                    color = WarningRose,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                            if (resetSuccess != null) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = resetSuccess!!,
+                                    color = SuccessGreen,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                isResetLoading = true
+                                resetError = null
+                                resetSuccess = null
+                                scope.launch {
+                                    RozgarRepository.sendPasswordResetEmail(resetEmail).collect { res ->
+                                        isResetLoading = false
+                                        res.fold(
+                                            onSuccess = {
+                                                resetSuccess = "Reset link sent! Please check your email inbox and spam folder."
+                                            },
+                                            onFailure = { err ->
+                                                resetError = err.localizedMessage ?: "Failed to send reset link."
+                                            }
+                                        )
+                                    }
+                                }
+                            },
+                            enabled = !isResetLoading && resetEmail.isNotBlank(),
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
+                        ) {
+                            if (isResetLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    color = Color.White,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Text("Send Reset Link", fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            onClick = { showResetDialog = false },
+                            enabled = !isResetLoading
+                        ) {
+                            Text("Cancel", color = TextSecondary)
+                        }
+                    }
+                )
+            }
         }
     }
 }

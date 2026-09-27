@@ -93,16 +93,35 @@ fun JobDetailsScreen(
                                 if (currentUser == null) {
                                     onNavigateToLogin()
                                 } else {
-                                    scope.launch {
-                                        RozgarRepository.getOrCreateConversation(
-                                            jobId = job.id,
-                                            applicationId = userApp?.id ?: "",
-                                            targetUserId = job.ownerId
-                                        ).collect { res ->
-                                            res.fold(
-                                                onSuccess = { threadId -> onNavigateToChat(threadId) },
-                                                onFailure = { err -> actionError = err.localizedMessage }
-                                            )
+                                    val app = userApp
+                                    val canChat = app != null && (
+                                        app.status == ApplicationStatus.ACCEPTED ||
+                                        app.status == ApplicationStatus.COMPLETED ||
+                                        app.chatApproved
+                                    )
+                                    when {
+                                        app == null -> {
+                                            actionError = "Apply to this job first to start chatting with the employer."
+                                        }
+                                        canChat -> {
+                                            scope.launch {
+                                                RozgarRepository.getOrCreateConversation(
+                                                    jobId = job.id,
+                                                    applicationId = app.id,
+                                                    targetUserId = job.ownerId
+                                                ).collect { res ->
+                                                    res.fold(
+                                                        onSuccess = { threadId -> onNavigateToChat(threadId) },
+                                                        onFailure = { err -> actionError = err.localizedMessage }
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        app.status == ApplicationStatus.REJECTED || app.status == ApplicationStatus.CANCELLED -> {
+                                            actionError = "Chat is unavailable for this application."
+                                        }
+                                        else -> {
+                                            actionError = "Chat will be available after your application is accepted or chat is approved."
                                         }
                                     }
                                 }

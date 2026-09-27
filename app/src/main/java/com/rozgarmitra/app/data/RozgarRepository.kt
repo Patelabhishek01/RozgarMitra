@@ -299,42 +299,41 @@ object RozgarRepository {
     private fun observeUserApplications(uid: String) {
         val user = _currentUser.value ?: return
         applicationsListener?.remove()
-        applicationsListener = db.collection("applications")
-            .addSnapshotListener { snapshots, e ->
-                if (e != null) {
-                    Log.e("Firebase", "Applications listener failed", e)
-                    return@addSnapshotListener
-                }
-                if (snapshots != null) {
-                    val allApps = snapshots.documents.mapNotNull { doc ->
-                        try { doc.toObject(JobApplication::class.java)?.copy(id = doc.id) } catch (err: Exception) { null }
-                    }
-                    val filtered = if (user.role == Role.LABOUR) {
-                        allApps.filter { it.labourId == uid }
-                    } else {
-                        allApps.filter { it.ownerId == uid || _jobs.value.any { job -> job.ownerId == uid && job.id == it.jobId } }
-                    }
-                    Log.d("Firebase", "Applications Synced: ${filtered.size}")
-                    _applications.value = filtered
-                }
+
+        val query = if (user.role == Role.LABOUR) {
+            db.collection("applications").whereEqualTo("labourId", uid)
+        } else {
+            db.collection("applications").whereEqualTo("ownerId", uid)
+        }
+
+        applicationsListener = query.addSnapshotListener { snapshots, e ->
+            if (e != null) {
+                Log.e("Firebase", "Applications listener failed", e)
+                return@addSnapshotListener
             }
+            if (snapshots != null) {
+                val appList = snapshots.documents.mapNotNull { doc ->
+                    try { doc.toObject(JobApplication::class.java)?.copy(id = doc.id) } catch (err: Exception) { null }
+                }.sortedByDescending { it.appliedAt }
+                Log.d("Firebase", "Applications Synced: ${appList.size}")
+                _applications.value = appList
+            }
+        }
     }
 
     private fun observeUserNotifications(uid: String) {
         notificationsListener?.remove()
         notificationsListener = db.collection("notifications")
+            .whereEqualTo("recipientUserId", uid)
             .addSnapshotListener { snapshots, e ->
                 if (e != null) {
                     Log.e("Firebase", "Notifications listener failed", e)
                     return@addSnapshotListener
                 }
                 if (snapshots != null) {
-                    val allNotifs = snapshots.documents.mapNotNull { doc ->
+                    val userNotifs = snapshots.documents.mapNotNull { doc ->
                         try { doc.toObject(Notification::class.java)?.copy(id = doc.id) } catch (err: Exception) { null }
-                    }
-                    val userNotifs = allNotifs
-                        .filter { it.recipientUserId == uid }
-                        .sortedByDescending { it.timestamp }
+                    }.sortedByDescending { it.timestamp }
                     _notifications.value = userNotifs
                 }
             }
@@ -343,16 +342,16 @@ object RozgarRepository {
     private fun observeUserConversations(uid: String) {
         conversationsListener?.remove()
         conversationsListener = db.collection("conversations")
+            .whereArrayContains("participants", uid)
             .addSnapshotListener { snapshots, e ->
                 if (e != null) {
                     Log.e("Firebase", "Conversations listener failed", e)
                     return@addSnapshotListener
                 }
                 if (snapshots != null) {
-                    val allThreads = snapshots.documents.mapNotNull { doc ->
+                    val userThreads = snapshots.documents.mapNotNull { doc ->
                         try { doc.toObject(ChatThread::class.java)?.copy(id = doc.id) } catch (err: Exception) { null }
-                    }
-                    val userThreads = allThreads.filter { uid in it.participants || it.ownerId == uid || it.workerId == uid }
+                    }.sortedByDescending { it.lastMessageTime }
                     _threads.value = userThreads
                     
                     // Observe messages for each active thread
@@ -364,6 +363,7 @@ object RozgarRepository {
     }
 
     fun observeMessages(threadId: String) {
+        val user = _currentUser.value ?: return
         db.collection("messages")
             .whereEqualTo("threadId", threadId)
             .addSnapshotListener { snapshots, e ->
@@ -374,20 +374,14 @@ object RozgarRepository {
                 if (snapshots != null) {
                     val messageList = snapshots.documents.mapNotNull { doc ->
                         try { doc.toObject(ChatMessage::class.java)?.copy(id = doc.id) } catch (err: Exception) { null }
-                    }.sortedBy { it.timestamp }
+                    }.filter { it.senderId == user.id || it.receiverId == user.id || it.threadId == threadId }
+                    .sortedBy { it.timestamp }
+
                     val currentMap = _messages.value.toMutableMap()
                     currentMap[threadId] = messageList
                     _messages.value = currentMap
                 }
             }
-    }
-
-    fun seedDatabase() {
-        val mockJobs = listOf(
-            Job("job_1", "Need 3 Masons for Bricklaying", "Mason", "Need bricklayer helpers", "HSR Layout, Bengaluru", 12.91, 77.64, 1.8, "25 Sept", "8:00 AM", "1 Day", 1, 8, 3, 0, 750, "per day", listOf("Food"), "Medium", listOf("Brickwork"), true, "owner_1", "Harish Sharma", true, 4.7f, JobStatus.ACTIVE),
-            Job("job_2", "House Painting Helper", "Painter", "Wall scraper needed", "Koramangala, Bengaluru", 12.93, 77.62, 3.2, "26 Sept", "9:00 AM", "2 Days", 2, 9, 2, 0, 600, "per day", listOf("Food"), "Easy", listOf("Wall Scraping"), false, "owner_2", "Anil Mehta", false, 4.2f, JobStatus.ACTIVE)
-        )
-        mockJobs.forEach { db.collection("jobs").document(it.id).set(it) }
     }
 
     fun setLanguage(language: String) {
@@ -428,6 +422,20 @@ object RozgarRepository {
                 emit(Result.success(user))
             } else { emit(Result.failure(Exception("Login failed: User null"))) }
         } catch (e: Exception) { emit(Result.failure(e)) }
+    }
+
+    fun sendPasswordResetEmail(email: String): Flow<Result<Boolean>> = flow {
+        val trimmedEmail = email.trim()
+        if (trimmedEmail.isBlank() || !trimmedEmail.contains("@")) {
+            return@flow emit(Result.failure(Exception("Please enter a valid email address.")))
+        }
+        try {
+            auth.sendPasswordResetEmail(trimmedEmail).await()
+            emit(Result.success(true))
+        } catch (e: Exception) {
+            Log.e("Firebase", "Password reset email failed", e)
+            emit(Result.failure(e))
+        }
     }
 
     fun loginWithGoogle(idToken: String): Flow<Result<User?>> = flow {
@@ -551,9 +559,35 @@ object RozgarRepository {
         } catch (e: Exception) { emit(Result.failure(e)) }
     }
 
+    fun skipLabourProfile(): Flow<Result<Boolean>> = flow {
+        val current = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
+        val updated = current.copy(
+            profileCompleted = true,
+            labourProfile = current.labourProfile ?: LabourProfile(skills = listOf("Daily Labour"), experience = "Available", expectedWage = 500)
+        )
+        try {
+            db.collection("users").document(current.id).set(updated).await()
+            _currentUser.value = updated
+            emit(Result.success(true))
+        } catch (e: Exception) { emit(Result.failure(e)) }
+    }
+
     fun completeOwnerProfile(address: String, company: String): Flow<Result<Boolean>> = flow {
         val current = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
         val updated = current.copy(profileCompleted = true, ownerProfile = OwnerProfile(address, company))
+        try {
+            db.collection("users").document(current.id).set(updated).await()
+            _currentUser.value = updated
+            emit(Result.success(true))
+        } catch (e: Exception) { emit(Result.failure(e)) }
+    }
+
+    fun skipOwnerProfile(): Flow<Result<Boolean>> = flow {
+        val current = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
+        val updated = current.copy(
+            profileCompleted = true,
+            ownerProfile = current.ownerProfile ?: OwnerProfile(address = "Location Not Specified", companyName = "")
+        )
         try {
             db.collection("users").document(current.id).set(updated).await()
             _currentUser.value = updated
@@ -736,7 +770,7 @@ object RozgarRepository {
         }
     }
 
-    fun acceptApplicant(applicationId: String): Flow<Result<Boolean>> = flow {
+    fun approveChat(applicationId: String): Flow<Result<Boolean>> = flow {
         val owner = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
 
         val appDoc = db.collection("applications").document(applicationId).get().await()
@@ -744,43 +778,104 @@ object RozgarRepository {
             return@flow emit(Result.failure(Exception("Application not found")))
         }
 
-        val app = appDoc.toObject(JobApplication::class.java) ?: return@flow emit(Result.failure(Exception("Failed to read application")))
-        val jobDoc = db.collection("jobs").document(app.jobId).get().await()
-        if (!jobDoc.exists()) {
-            return@flow emit(Result.failure(Exception("Associated job not found")))
+        val app = appDoc.toObject(JobApplication::class.java)
+            ?: return@flow emit(Result.failure(Exception("Failed to read application")))
+
+        if (app.ownerId != owner.id) {
+            return@flow emit(Result.failure(Exception("Unauthorized: Only job owner can approve chat")))
         }
 
-        val job = jobDoc.toObject(Job::class.java) ?: return@flow emit(Result.failure(Exception("Failed to read job")))
-
-        if (job.acceptedWorkersCount >= job.numberOfWorkersRequired) {
-            return@flow emit(Result.failure(Exception("Job capacity reached (${job.numberOfWorkersRequired} workers already hired)")))
+        if (app.chatApproved) {
+            emit(Result.success(true))
+            return@flow
         }
-
-        val newAcceptedCount = job.acceptedWorkersCount + 1
-        val newJobStatus = if (newAcceptedCount >= job.numberOfWorkersRequired) JobStatus.FILLED else job.status
 
         try {
-            // Update application status
-            db.collection("applications").document(applicationId).update("status", ApplicationStatus.ACCEPTED).await()
+            db.collection("applications").document(applicationId).update("chatApproved", true).await()
 
-            // Update job accepted count and status if filled
-            db.collection("jobs").document(job.id).update(
-                mapOf(
-                    "acceptedWorkersCount" to newAcceptedCount,
-                    "status" to newJobStatus,
-                    "updatedAt" to System.currentTimeMillis()
-                )
-            ).await()
-
-            // Send notification to worker
             sendNotificationToUser(
                 recipientUserId = app.labourId,
-                type = NotificationType.APPLICATION_ACCEPTED.name,
-                title = "Application Accepted! 🎉",
-                message = "Your application for '${job.title}' was accepted by ${owner.name}.",
-                relatedJobId = job.id,
+                type = NotificationType.NEW_MESSAGE.name,
+                title = "Chat Approved 🎉",
+                message = "The employer has approved chat for '${app.jobTitle}'. You can now chat with the employer before hiring.",
+                relatedJobId = app.jobId,
                 relatedApplicationId = app.id
             )
+
+            emit(Result.success(true))
+        } catch (e: Exception) {
+            Log.e("Firebase", "Approve chat failed", e)
+            emit(Result.failure(e))
+        }
+    }
+
+    fun acceptApplicant(applicationId: String): Flow<Result<Boolean>> = flow {
+        val owner = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
+
+        try {
+            var workerIdToNotify = ""
+            var jobTitleToNotify = ""
+            var jobIdToNotify = ""
+
+            db.runTransaction { transaction ->
+                val appRef = db.collection("applications").document(applicationId)
+                val appSnapshot = transaction.get(appRef)
+                if (!appSnapshot.exists()) {
+                    throw FirebaseException("Application not found")
+                }
+
+                val app = appSnapshot.toObject(JobApplication::class.java)
+                    ?: throw FirebaseException("Failed to read application")
+
+                val jobRef = db.collection("jobs").document(app.jobId)
+                val jobSnapshot = transaction.get(jobRef)
+                if (!jobSnapshot.exists()) {
+                    throw FirebaseException("Associated job not found")
+                }
+
+                val job = jobSnapshot.toObject(Job::class.java)
+                    ?: throw FirebaseException("Failed to read job")
+
+                if (job.ownerId != owner.id && app.ownerId != owner.id) {
+                    throw FirebaseException("Unauthorized: Only job owner can accept applicants")
+                }
+
+                if (app.status == ApplicationStatus.ACCEPTED) {
+                    return@runTransaction
+                }
+
+                if (job.acceptedWorkersCount >= job.numberOfWorkersRequired) {
+                    throw FirebaseException("Job capacity reached (${job.numberOfWorkersRequired} workers already hired)")
+                }
+
+                val newAcceptedCount = job.acceptedWorkersCount + 1
+                val newJobStatus = if (newAcceptedCount >= job.numberOfWorkersRequired) JobStatus.FILLED else job.status
+
+                transaction.update(appRef, mapOf(
+                    "status" to ApplicationStatus.ACCEPTED.name,
+                    "chatApproved" to true
+                ))
+                transaction.update(jobRef, mapOf(
+                    "acceptedWorkersCount" to newAcceptedCount,
+                    "status" to newJobStatus.name,
+                    "updatedAt" to System.currentTimeMillis()
+                ))
+
+                workerIdToNotify = app.labourId
+                jobTitleToNotify = job.title
+                jobIdToNotify = job.id
+            }.await()
+
+            if (workerIdToNotify.isNotBlank()) {
+                sendNotificationToUser(
+                    recipientUserId = workerIdToNotify,
+                    type = NotificationType.APPLICATION_ACCEPTED.name,
+                    title = "You Have Been Hired! 🎉",
+                    message = "You have been hired for '$jobTitleToNotify'.",
+                    relatedJobId = jobIdToNotify,
+                    relatedApplicationId = applicationId
+                )
+            }
 
             emit(Result.success(true))
         } catch (e: Exception) {
@@ -790,15 +885,20 @@ object RozgarRepository {
     }
 
     fun rejectApplicant(applicationId: String): Flow<Result<Boolean>> = flow {
+        val owner = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
+
         val appDoc = db.collection("applications").document(applicationId).get().await()
         if (!appDoc.exists()) {
             return@flow emit(Result.failure(Exception("Application not found")))
         }
 
         val app = appDoc.toObject(JobApplication::class.java) ?: return@flow emit(Result.failure(Exception("Failed to read application")))
+        if (app.ownerId != owner.id) {
+            return@flow emit(Result.failure(Exception("Unauthorized: Only job owner can reject applicants")))
+        }
 
         try {
-            db.collection("applications").document(applicationId).update("status", ApplicationStatus.REJECTED).await()
+            db.collection("applications").document(applicationId).update("status", ApplicationStatus.REJECTED.name).await()
 
             sendNotificationToUser(
                 recipientUserId = app.labourId,
@@ -816,24 +916,140 @@ object RozgarRepository {
         }
     }
 
-    fun completeJob(id: String): Flow<Result<Boolean>> = flow {
+    fun completeJob(jobId: String): Flow<Result<Boolean>> = flow {
+        val user = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
+
+        val jobDoc = db.collection("jobs").document(jobId).get().await()
+        if (!jobDoc.exists()) {
+            return@flow emit(Result.failure(Exception("Job not found")))
+        }
+
+        val job = jobDoc.toJobSafe() ?: return@flow emit(Result.failure(Exception("Failed to read job")))
+        if (job.ownerId != user.id) {
+            return@flow emit(Result.failure(Exception("Unauthorized: Only the job owner can mark this job as completed")))
+        }
+
         try {
-            db.collection("jobs").document(id).update(
+            // Update job status to COMPLETED
+            db.collection("jobs").document(jobId).update(
                 mapOf(
-                    "status" to JobStatus.COMPLETED,
+                    "status" to JobStatus.COMPLETED.name,
                     "updatedAt" to System.currentTimeMillis()
                 )
             ).await()
+
+            // Fetch and update all ACCEPTED applications for this job to COMPLETED
+            val acceptedAppsQuery = db.collection("applications")
+                .whereEqualTo("jobId", jobId)
+                .whereEqualTo("status", ApplicationStatus.ACCEPTED.name)
+                .get()
+                .await()
+
+            if (!acceptedAppsQuery.isEmpty) {
+                val batch = db.batch()
+                acceptedAppsQuery.documents.forEach { doc ->
+                    batch.update(doc.reference, "status", ApplicationStatus.COMPLETED.name)
+                }
+                batch.commit().await()
+
+                acceptedAppsQuery.documents.forEach { doc ->
+                    val labourId = doc.getString("labourId")
+                    if (!labourId.isNullOrBlank()) {
+                        sendNotificationToUser(
+                            recipientUserId = labourId,
+                            type = NotificationType.JOB_STATUS_CHANGED.name,
+                            title = "Job Completed! 🏆",
+                            message = "The job '${job.title}' has been marked completed by the owner.",
+                            relatedJobId = jobId,
+                            relatedApplicationId = doc.id
+                        )
+                    }
+                }
+            }
+
             emit(Result.success(true))
-        } catch (e: Exception) { emit(Result.failure(e)) }
+        } catch (e: Exception) {
+            Log.e("Firebase", "Complete job failed", e)
+            emit(Result.failure(e))
+        }
     }
 
     fun submitRating(jobId: String, targetUserId: String, stars: Float, comment: String): Flow<Result<Boolean>> = flow {
-        val rating = mapOf("jobId" to jobId, "targetId" to targetUserId, "stars" to stars, "comment" to comment)
+        val reviewer = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
+
+        val jobDoc = db.collection("jobs").document(jobId).get().await()
+        if (!jobDoc.exists()) {
+            return@flow emit(Result.failure(Exception("Job not found")))
+        }
+
+        val job = jobDoc.toJobSafe() ?: return@flow emit(Result.failure(Exception("Failed to read job")))
+        if (job.status != JobStatus.COMPLETED) {
+            return@flow emit(Result.failure(Exception("Reviews can only be submitted for completed jobs")))
+        }
+
+        // Verify reviewer was accepted/completed worker on this job or is job owner
+        val appQuery = db.collection("applications")
+            .whereEqualTo("jobId", jobId)
+            .whereEqualTo("labourId", reviewer.id)
+            .get()
+            .await()
+
+        val validApp = appQuery.documents.mapNotNull { doc ->
+            try { doc.toObject(JobApplication::class.java) } catch (e: Exception) { null }
+        }.firstOrNull { it.status == ApplicationStatus.ACCEPTED || it.status == ApplicationStatus.COMPLETED }
+
+        if (validApp == null && reviewer.id != job.ownerId) {
+            return@flow emit(Result.failure(Exception("Only accepted workers for this job can submit a review")))
+        }
+
+        val targetId = if (reviewer.role == Role.LABOUR) job.ownerId else targetUserId
+        if (targetId.isBlank()) {
+            return@flow emit(Result.failure(Exception("Invalid target user for rating")))
+        }
+
+        val existingReviewQuery = db.collection("ratings")
+            .whereEqualTo("jobId", jobId)
+            .whereEqualTo("reviewerId", reviewer.id)
+            .get()
+            .await()
+
+        if (!existingReviewQuery.isEmpty) {
+            return@flow emit(Result.failure(Exception("You have already submitted a review for this job")))
+        }
+
+        val ratingId = "rating_${UUID.randomUUID()}"
+        val rating = Rating(
+            id = ratingId,
+            reviewerId = reviewer.id,
+            targetId = targetId,
+            jobId = jobId,
+            stars = stars,
+            comment = comment,
+            createdAt = System.currentTimeMillis()
+        )
+
         try {
-            db.collection("ratings").add(rating).await()
+            db.collection("ratings").document(ratingId).set(rating).await()
             emit(Result.success(true))
-        } catch (e: Exception) { emit(Result.failure(e)) }
+        } catch (e: Exception) {
+            Log.e("Firebase", "Submit rating failed", e)
+            emit(Result.failure(e))
+        }
+    }
+
+    fun getPublicUserProfile(userId: String): Flow<Result<User>> = flow {
+        val current = _currentUser.value
+        try {
+            val doc = db.collection("users").document(userId).get().await()
+            if (!doc.exists()) {
+                return@flow emit(Result.failure(Exception("User profile not found")))
+            }
+            val user = doc.toObject(User::class.java) ?: return@flow emit(Result.failure(Exception("Failed to read user profile")))
+            val sanitized = if (current?.id == userId) user else user.copy(phone = "")
+            emit(Result.success(sanitized))
+        } catch (e: Exception) {
+            emit(Result.failure(e))
+        }
     }
 
     // --- Notifications Helper ---
@@ -875,45 +1091,107 @@ object RozgarRepository {
     // --- Chat & Conversations ---
 
     fun getOrCreateConversation(jobId: String, applicationId: String, targetUserId: String): Flow<Result<String>> = flow {
-        val current = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
-
-        val participantIds = listOf(current.id, targetUserId).sorted()
-        val convId = "conv_${jobId}_${participantIds.joinToString("_")}"
-
-        val convDoc = db.collection("conversations").document(convId).get().await()
-        if (convDoc.exists()) {
-            emit(Result.success(convId))
-            return@flow
-        }
-
-        // Fetch target user metadata
-        val targetUserDoc = db.collection("users").document(targetUserId).get().await()
-        val targetUser = if (targetUserDoc.exists()) targetUserDoc.toObject(User::class.java) else null
-
-        val ownerId = if (current.role == Role.OWNER) current.id else targetUserId
-        val workerId = if (current.role == Role.LABOUR) current.id else targetUserId
-
-        val newThread = ChatThread(
-            id = convId,
-            jobId = jobId,
-            applicationId = applicationId,
-            participants = participantIds,
-            ownerId = ownerId,
-            workerId = workerId,
-            otherUserId = targetUserId,
-            otherUserName = targetUser?.name ?: "User",
-            otherUserRole = targetUser?.role ?: Role.LABOUR,
-            otherUserVerified = targetUser?.isVerified ?: false,
-            lastMessageText = "Conversation started",
-            lastMessageTime = System.currentTimeMillis(),
-            unreadCount = 0
-        )
-
         try {
+            val current = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
+
+            // 1. Verify Job exists and is valid
+            val jobDoc = db.collection("jobs").document(jobId).get().await()
+            if (!jobDoc.exists()) {
+                return@flow emit(Result.failure(Exception("Job no longer exists")))
+            }
+            val job = jobDoc.toJobSafe() ?: return@flow emit(Result.failure(Exception("Failed to read job")))
+
+            // 2. Fetch/Verify Application
+            val appQuery = if (applicationId.isNotBlank()) {
+                val appDoc = db.collection("applications").document(applicationId).get().await()
+                if (appDoc.exists()) listOf(appDoc) else emptyList()
+            } else {
+                val workerUid = if (current.role == Role.LABOUR) current.id else targetUserId
+                db.collection("applications")
+                    .whereEqualTo("jobId", jobId)
+                    .whereEqualTo("labourId", workerUid)
+                    .get()
+                    .await()
+                    .documents
+            }
+
+            if (appQuery.isEmpty()) {
+                return@flow emit(Result.failure(Exception("Apply to this job first to start chatting with the employer.")))
+            }
+
+            val appDoc = appQuery.first()
+            val app = appDoc.toObject(JobApplication::class.java)
+                ?: return@flow emit(Result.failure(Exception("Failed to read application")))
+
+            val canChat = app.status == ApplicationStatus.ACCEPTED ||
+                          app.status == ApplicationStatus.COMPLETED ||
+                          app.chatApproved
+
+            if (!canChat) {
+                if (app.status == ApplicationStatus.REJECTED || app.status == ApplicationStatus.CANCELLED) {
+                    return@flow emit(Result.failure(Exception("Chat is unavailable for this application.")))
+                }
+                return@flow emit(Result.failure(Exception("Chat will be available after your application is accepted or chat is approved.")))
+            }
+
+            val resolvedOwnerId = job.ownerId
+            val resolvedWorkerId = app.labourId
+
+            val participantIds = listOf(current.id, targetUserId).sorted()
+            val expectedParticipants = listOf(resolvedOwnerId, resolvedWorkerId).sorted()
+
+            if (participantIds != expectedParticipants) {
+                return@flow emit(Result.failure(Exception("Unauthorized chat creation: Participants do not match job/application")))
+            }
+
+            val convId = "conv_${jobId}_${participantIds.joinToString("_")}"
+
+            val convDoc = try {
+                db.collection("conversations").document(convId).get().await()
+            } catch (ex: Exception) {
+                null
+            }
+
+            if (convDoc != null && convDoc.exists()) {
+                emit(Result.success(convId))
+                return@flow
+            }
+
+            // Fetch target user public metadata (without private contact info)
+            val targetUserDoc = try {
+                db.collection("users").document(targetUserId).get().await()
+            } catch (ex: Exception) { null }
+            val targetUser = if (targetUserDoc != null && targetUserDoc.exists()) targetUserDoc.toObject(User::class.java) else null
+
+            val ownerName = job.ownerName.ifBlank {
+                if (current.id == resolvedOwnerId) current.name else (targetUser?.name ?: "Employer")
+            }
+            val workerName = app.labourName.ifBlank {
+                if (current.id == resolvedWorkerId) current.name else (targetUser?.name ?: "Worker")
+            }
+
+            val newThread = ChatThread(
+                id = convId,
+                jobId = jobId,
+                applicationId = app.id.ifBlank { applicationId },
+                participants = participantIds,
+                ownerId = resolvedOwnerId,
+                ownerName = ownerName,
+                workerId = resolvedWorkerId,
+                workerName = workerName,
+                otherUserId = targetUserId,
+                otherUserName = targetUser?.name ?: "User",
+                otherUserRole = targetUser?.role ?: Role.LABOUR,
+                otherUserVerified = targetUser?.isVerified ?: false,
+                lastMessageText = "Conversation started",
+                lastMessageTime = System.currentTimeMillis(),
+                unreadCount = 0
+            )
+
             db.collection("conversations").document(convId).set(newThread).await()
             emit(Result.success(convId))
         } catch (e: Exception) {
-            Log.e("Firebase", "Create conversation failed", e)
+            Log.e("Firebase", "getOrCreateConversation failed", e)
             emit(Result.failure(e))
         }
     }
@@ -928,9 +1206,18 @@ object RozgarRepository {
         val sender = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
 
         val threadDoc = db.collection("conversations").document(threadId).get().await()
-        val thread = if (threadDoc.exists()) threadDoc.toObject(ChatThread::class.java) else null
+        if (!threadDoc.exists()) {
+            return@flow emit(Result.failure(Exception("Conversation not found")))
+        }
 
-        val receiverId = thread?.participants?.firstOrNull { it != sender.id } ?: ""
+        val thread = threadDoc.toObject(ChatThread::class.java)
+            ?: return@flow emit(Result.failure(Exception("Failed to read conversation")))
+
+        if (sender.id !in thread.participants) {
+            return@flow emit(Result.failure(Exception("Unauthorized: You are not a participant of this chat")))
+        }
+
+        val receiverId = thread.participants.firstOrNull { it != sender.id } ?: ""
 
         val msgId = "msg_${UUID.randomUUID()}"
         val msg = ChatMessage(
@@ -964,7 +1251,7 @@ object RozgarRepository {
                     type = NotificationType.NEW_MESSAGE.name,
                     title = "New Message from ${sender.name}",
                     message = text,
-                    relatedJobId = thread?.jobId ?: ""
+                    relatedJobId = thread.jobId
                 )
             }
 

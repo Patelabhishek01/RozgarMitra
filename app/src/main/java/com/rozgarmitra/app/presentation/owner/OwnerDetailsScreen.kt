@@ -61,7 +61,22 @@ fun OwnerDetailsScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = DarkBackground),
-                title = { Text("Owner Profile Details", fontWeight = FontWeight.Bold, color = TextPrimary) }
+                title = { Text("Owner Profile Details", fontWeight = FontWeight.Bold, color = TextPrimary) },
+                actions = {
+                    TextButton(
+                        onClick = {
+                            isLoading = true
+                            scope.launch {
+                                RozgarRepository.skipOwnerProfile().collectLatest { result ->
+                                    isLoading = false
+                                    onProfileCompleted()
+                                }
+                            }
+                        }
+                    ) {
+                        Text("Skip / छोड़ें", color = AccentCyan, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    }
+                }
             )
         }
     ) { paddingValues ->
@@ -159,34 +174,52 @@ fun OwnerDetailsScreen(
 
                 Spacer(modifier = Modifier.height(40.dp))
 
-                PrimaryLargeButton(
-                    text = "Complete Profile / प्रोफ़ाइल पूरी करें",
-                    onClick = {
-                        isLoading = true
-                        errorMessage = null
-                        
-                        val flow = RozgarRepository.completeOwnerProfile(
-                            address = address,
-                            company = companyName
-                        )
-                        scope.launch {
-                            flow.collectLatest { result ->
-                                result.fold(
-                                    onSuccess = {
-                                        delay(500)
-                                        isLoading = false
-                                        onProfileCompleted()
-                                    },
-                                    onFailure = { error ->
-                                        isLoading = false
-                                        errorMessage = error.localizedMessage ?: "Failed to save profile."
-                                    }
-                                )
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    PrimaryLargeButton(
+                        text = "Complete Profile / प्रोफ़ाइल पूरी करें",
+                        onClick = {
+                            isLoading = true
+                            errorMessage = null
+                            
+                            val flow = RozgarRepository.completeOwnerProfile(
+                                address = address,
+                                company = companyName
+                            )
+                            scope.launch {
+                                flow.collectLatest { result ->
+                                    result.fold(
+                                        onSuccess = {
+                                            delay(500)
+                                            isLoading = false
+                                            onProfileCompleted()
+                                        },
+                                        onFailure = { error ->
+                                            isLoading = false
+                                            errorMessage = error.localizedMessage ?: "Failed to save profile."
+                                        }
+                                    )
+                                }
+                            }
+                        },
+                        enabled = address.isNotBlank()
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    TextButton(
+                        onClick = {
+                            isLoading = true
+                            scope.launch {
+                                RozgarRepository.skipOwnerProfile().collectLatest { result ->
+                                    isLoading = false
+                                    onProfileCompleted()
+                                }
                             }
                         }
-                    },
-                    enabled = address.isNotBlank()
-                )
+                    ) {
+                        Text("Skip for now / बाद में भरें", color = TextSecondary, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                    }
+                }
             }
 
             LoadingOverlay(isLoading = isLoading, text = "Saving Profile...")

@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -35,7 +36,8 @@ import kotlinx.coroutines.launch
 fun ApplicantsScreen(
     jobId: String,
     onBackClick: () -> Unit,
-    onWorkerClick: (String) -> Unit
+    onWorkerClick: (String) -> Unit,
+    onNavigateToChat: (String) -> Unit = {}
 ) {
     val applications by RozgarRepository.applications.collectAsStateWithLifecycle()
     val jobs by RozgarRepository.jobs.collectAsStateWithLifecycle()
@@ -171,10 +173,11 @@ fun ApplicantsScreen(
                                     Spacer(modifier = Modifier.height(16.dp))
 
                                     if (app.status == ApplicationStatus.APPLIED) {
-                                        // Decisions Buttons
+                                        // Decision Buttons: Reject, Approve Chat, Hire Worker
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.End
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             OutlinedButton(
                                                 onClick = {
@@ -192,14 +195,67 @@ fun ApplicantsScreen(
                                                 shape = CircleShape,
                                                 colors = ButtonDefaults.outlinedButtonColors(contentColor = WarningRose),
                                                 border = BorderStroke(1.dp, WarningRose.copy(alpha = 0.4f)),
-                                                modifier = Modifier.height(44.dp)
+                                                modifier = Modifier.weight(1f).height(40.dp),
+                                                contentPadding = PaddingValues(horizontal = 4.dp)
                                             ) {
-                                                Icon(Icons.Filled.Close, contentDescription = "Reject", modifier = Modifier.size(16.dp))
-                                                Spacer(modifier = Modifier.width(6.dp))
-                                                Text("Reject", fontWeight = FontWeight.Bold)
+                                                Icon(Icons.Filled.Close, contentDescription = "Reject", modifier = Modifier.size(14.dp))
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text("Reject", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                                             }
 
-                                            Spacer(modifier = Modifier.width(10.dp))
+                                            if (app.chatApproved) {
+                                                Button(
+                                                    onClick = {
+                                                        isActionLoading = true
+                                                        scope.launch {
+                                                            RozgarRepository.getOrCreateConversation(
+                                                                jobId = app.jobId,
+                                                                applicationId = app.id,
+                                                                targetUserId = app.labourId
+                                                            ).collect { res ->
+                                                                isActionLoading = false
+                                                                res.fold(
+                                                                    onSuccess = { threadId -> onNavigateToChat(threadId) },
+                                                                    onFailure = { err -> actionError = err.localizedMessage }
+                                                                )
+                                                            }
+                                                        }
+                                                    },
+                                                    shape = CircleShape,
+                                                    colors = ButtonDefaults.buttonColors(containerColor = AccentCyan.copy(alpha = 0.2f), contentColor = AccentCyan),
+                                                    border = BorderStroke(1.dp, AccentCyan.copy(alpha = 0.5f)),
+                                                    modifier = Modifier.weight(1.2f).height(40.dp),
+                                                    contentPadding = PaddingValues(horizontal = 4.dp)
+                                                ) {
+                                                    Icon(Icons.Filled.Email, contentDescription = "Chat Approved", modifier = Modifier.size(14.dp))
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                    Text("Chat Approved ✓", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                                }
+                                            } else {
+                                                OutlinedButton(
+                                                    onClick = {
+                                                        isActionLoading = true
+                                                        scope.launch {
+                                                            RozgarRepository.approveChat(app.id).collect { result ->
+                                                                isActionLoading = false
+                                                                result.fold(
+                                                                    onSuccess = {},
+                                                                    onFailure = { err -> actionError = err.localizedMessage }
+                                                                )
+                                                            }
+                                                        }
+                                                    },
+                                                    shape = CircleShape,
+                                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentCyan),
+                                                    border = BorderStroke(1.dp, AccentCyan.copy(alpha = 0.4f)),
+                                                    modifier = Modifier.weight(1.2f).height(40.dp),
+                                                    contentPadding = PaddingValues(horizontal = 4.dp)
+                                                ) {
+                                                    Icon(Icons.Filled.Email, contentDescription = "Approve Chat", modifier = Modifier.size(14.dp))
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                    Text("Approve Chat", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                                }
+                                            }
 
                                             Button(
                                                 onClick = {
@@ -216,21 +272,39 @@ fun ApplicantsScreen(
                                                 },
                                                 shape = CircleShape,
                                                 colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen, contentColor = Color.White),
-                                                modifier = Modifier.height(44.dp)
+                                                modifier = Modifier.weight(1.1f).height(40.dp),
+                                                contentPadding = PaddingValues(horizontal = 4.dp)
                                             ) {
-                                                Icon(Icons.Filled.Check, contentDescription = "Accept", modifier = Modifier.size(16.dp))
-                                                Spacer(modifier = Modifier.width(6.dp))
-                                                Text("Hire Worker", fontWeight = FontWeight.Bold)
+                                                Icon(Icons.Filled.Check, contentDescription = "Hire", modifier = Modifier.size(14.dp))
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text("Hire Worker", fontWeight = FontWeight.Bold, fontSize = 11.sp)
                                             }
                                         }
                                     } else {
-                                        if (app.status == ApplicationStatus.ACCEPTED) {
+                                        if (app.status == ApplicationStatus.ACCEPTED || app.status == ApplicationStatus.COMPLETED) {
                                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                                                 Button(
-                                                    onClick = { onWorkerClick(app.labourId) },
+                                                    onClick = {
+                                                        isActionLoading = true
+                                                        scope.launch {
+                                                            RozgarRepository.getOrCreateConversation(
+                                                                jobId = app.jobId,
+                                                                applicationId = app.id,
+                                                                targetUserId = app.labourId
+                                                            ).collect { res ->
+                                                                isActionLoading = false
+                                                                res.fold(
+                                                                    onSuccess = { threadId -> onNavigateToChat(threadId) },
+                                                                    onFailure = { err -> actionError = err.localizedMessage }
+                                                                )
+                                                            }
+                                                        }
+                                                    },
                                                     shape = CircleShape,
                                                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryIndigo)
                                                 ) {
+                                                    Icon(Icons.Filled.Email, contentDescription = "Contact Worker", modifier = Modifier.size(16.dp))
+                                                    Spacer(modifier = Modifier.width(6.dp))
                                                     Text("Contact Worker", fontWeight = FontWeight.Bold)
                                                 }
                                             }

@@ -297,6 +297,9 @@ fun AppNavGraph() {
                 },
                 onWorkerClick = { workerId ->
                     navController.navigate(Screen.WorkerProfileView.createRoute(workerId))
+                },
+                onNavigateToChat = { threadId ->
+                    navController.navigate(Screen.Chat.createRoute(threadId))
                 }
             )
         }
