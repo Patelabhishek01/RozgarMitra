@@ -560,16 +560,9 @@ object RozgarRepository {
     }
 
     fun skipLabourProfile(): Flow<Result<Boolean>> = flow {
-        val current = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
-        val updated = current.copy(
-            profileCompleted = true,
-            labourProfile = current.labourProfile ?: LabourProfile(skills = listOf("Daily Labour"), experience = "Available", expectedWage = 500)
-        )
-        try {
-            db.collection("users").document(current.id).set(updated).await()
-            _currentUser.value = updated
-            emit(Result.success(true))
-        } catch (e: Exception) { emit(Result.failure(e)) }
+        // Skip does NOT mark profileCompleted=true and does NOT create fake/placeholder data.
+        // User can continue using the app while profile status remains incomplete.
+        emit(Result.success(true))
     }
 
     fun completeOwnerProfile(address: String, company: String): Flow<Result<Boolean>> = flow {
@@ -583,16 +576,9 @@ object RozgarRepository {
     }
 
     fun skipOwnerProfile(): Flow<Result<Boolean>> = flow {
-        val current = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
-        val updated = current.copy(
-            profileCompleted = true,
-            ownerProfile = current.ownerProfile ?: OwnerProfile(address = "Location Not Specified", companyName = "")
-        )
-        try {
-            db.collection("users").document(current.id).set(updated).await()
-            _currentUser.value = updated
-            emit(Result.success(true))
-        } catch (e: Exception) { emit(Result.failure(e)) }
+        // Skip does NOT mark profileCompleted=true and does NOT create fake/placeholder data.
+        // User can continue using the app while profile status remains incomplete.
+        emit(Result.success(true))
     }
 
     fun suggestNewCategory(name: String, description: String): Flow<Result<Boolean>> = flow {
@@ -654,6 +640,9 @@ object RozgarRepository {
         urgent: Boolean = false
     ): Flow<Result<Boolean>> = flow {
         val user = _currentUser.value ?: throw Exception("User not logged in")
+        if (user.role != Role.OWNER) {
+            throw Exception("Unauthorized: Only employers/owners can post jobs.")
+        }
         val jobId = UUID.randomUUID().toString()
 
         val userLoc = _userLocationData.value
@@ -1017,7 +1006,7 @@ object RozgarRepository {
             return@flow emit(Result.failure(Exception("You have already submitted a review for this job")))
         }
 
-        val ratingId = "rating_${UUID.randomUUID()}"
+        val ratingId = "rating_${jobId}_${reviewer.id}"
         val rating = Rating(
             id = ratingId,
             reviewerId = reviewer.id,
@@ -1157,18 +1146,14 @@ object RozgarRepository {
                 return@flow
             }
 
-            // Fetch target user public metadata (without private contact info)
-            val targetUserDoc = try {
-                db.collection("users").document(targetUserId).get().await()
-            } catch (ex: Exception) { null }
-            val targetUser = if (targetUserDoc != null && targetUserDoc.exists()) targetUserDoc.toObject(User::class.java) else null
-
             val ownerName = job.ownerName.ifBlank {
-                if (current.id == resolvedOwnerId) current.name else (targetUser?.name ?: "Employer")
+                if (current.id == resolvedOwnerId) current.name else "Employer"
             }
             val workerName = app.labourName.ifBlank {
-                if (current.id == resolvedWorkerId) current.name else (targetUser?.name ?: "Worker")
+                if (current.id == resolvedWorkerId) current.name else "Worker"
             }
+            val otherUserName = if (targetUserId == resolvedOwnerId) ownerName else workerName
+            val otherUserRole = if (targetUserId == resolvedOwnerId) Role.OWNER else Role.LABOUR
 
             val newThread = ChatThread(
                 id = convId,
@@ -1180,9 +1165,9 @@ object RozgarRepository {
                 workerId = resolvedWorkerId,
                 workerName = workerName,
                 otherUserId = targetUserId,
-                otherUserName = targetUser?.name ?: "User",
-                otherUserRole = targetUser?.role ?: Role.LABOUR,
-                otherUserVerified = targetUser?.isVerified ?: false,
+                otherUserName = otherUserName,
+                otherUserRole = otherUserRole,
+                otherUserVerified = false,
                 lastMessageText = "Conversation started",
                 lastMessageTime = System.currentTimeMillis(),
                 unreadCount = 0

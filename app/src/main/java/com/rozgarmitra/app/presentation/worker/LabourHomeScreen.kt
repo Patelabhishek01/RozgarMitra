@@ -650,6 +650,29 @@ fun LabourProfileTab(
         }
 
         item {
+            if (currentUser?.profileCompleted != true) {
+                Surface(
+                    color = WarningRose.copy(alpha = 0.12f),
+                    border = BorderStroke(1.dp, WarningRose.copy(alpha = 0.4f)),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Filled.Warning, contentDescription = null, tint = WarningRose)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Complete Your Profile", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 15.sp)
+                            Text("Add your skills and experience to get hired faster", fontSize = 12.sp, color = TextSecondary)
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
             ProfileSection(title = "Work & Applications") {
                 ProfileMenuItem(
                     icon = Icons.Filled.Work,

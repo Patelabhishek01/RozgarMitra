@@ -2,44 +2,86 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // --- HELPER FUNCTIONS ---
+    
+    // Check if user has OWNER role
+    function isOwnerUser(uid) {
+      let userPath = /databases/$(database)/documents/users/$(uid);
+      return exists(userPath) && get(userPath).data.role == "OWNER";
+    }
+
+    // Check if chat is authorized for an application
+    function isValidApplicationChat(conv) {
+      let appPath = /databases/$(database)/documents/applications/$(conv.applicationId);
+      return exists(appPath) &&
+        get(appPath).data.jobId == conv.jobId &&
+        get(appPath).data.ownerId == conv.ownerId &&
+        get(appPath).data.labourId == conv.workerId &&
+        (get(appPath).data.get("chatApproved", false) == true || 
+         get(appPath).data.status == "ACCEPTED" || 
+         get(appPath).data.status == "COMPLETED");
+    }
+
+    // Check if user is participant of thread
+    function isThreadParticipant(threadId) {
+      let threadPath = /databases/$(database)/documents/conversations/$(threadId);
+      return exists(threadPath) &&
+        (request.auth.uid in get(threadPath).data.participants ||
+         get(threadPath).data.ownerId == request.auth.uid ||
+         get(threadPath).data.workerId == request.auth.uid) &&
+        isValidApplicationChat(get(threadPath).data);
+    }
+
     // --- JOBS COLLECTION ---
     // READ: Public / Unauthenticated users are allowed to browse active jobs
-    // CREATE: Authenticated users (must specify ownerId == auth.uid)
-    // UPDATE / DELETE: Authenticated Owner only for their own posted job
+    // CREATE: Authenticated OWNER users (must specify ownerId == auth.uid)
+    // UPDATE / DELETE: Authenticated Owner only for their own posted job, ownerId immutable
     match /jobs/{jobId} {
       allow read: if true;
-      allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
-      allow update, delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+      allow create: if request.auth != null && 
+        request.resource.data.ownerId == request.auth.uid &&
+        isOwnerUser(request.auth.uid);
+      allow update: if request.auth != null && 
+        resource.data.ownerId == request.auth.uid &&
+        request.resource.data.ownerId == resource.data.ownerId;
+      allow delete: if request.auth != null && 
+        resource.data.ownerId == request.auth.uid;
     }
 
     // --- USERS COLLECTION ---
-    // Authenticated users can read profiles; only owner can write/update their profile
+    // User Privacy: Each user can only read/write their own document
     match /users/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
     // --- APPLICATIONS COLLECTION ---
     // READ: Worker (labourId) or Owner (ownerId) related to the application
     // CREATE: Authenticated worker creating application for themselves with status APPLIED
-    // UPDATE: Owner can update status / chatApproved; Worker can only update without setting ACCEPTED/REJECTED/COMPLETED and without setting chatApproved
-    // DELETE: Worker or Owner related to the application
+    // UPDATE: Owner can update status / chatApproved; Worker can update non-critical fields but cannot alter status to ACCEPTED/REJECTED/COMPLETED or set chatApproved
+    // Immutability: ownerId, labourId, jobId cannot be changed
     match /applications/{applicationId} {
       allow read: if request.auth != null && 
         (resource.data.labourId == request.auth.uid || resource.data.ownerId == request.auth.uid);
       
       allow create: if request.auth != null && 
         request.resource.data.labourId == request.auth.uid &&
-        request.resource.data.status == "APPLIED";
+        request.resource.data.status == "APPLIED" &&
+        (!("chatApproved" in request.resource.data) || request.resource.data.chatApproved == false);
         
-      allow update: if request.auth != null && (
-        resource.data.ownerId == request.auth.uid ||
-        (resource.data.labourId == request.auth.uid &&
-         request.resource.data.status != "ACCEPTED" &&
-         request.resource.data.status != "REJECTED" &&
-         request.resource.data.status != "COMPLETED" &&
-         (!("chatApproved" in request.resource.data) || request.resource.data.chatApproved == resource.data.get("chatApproved", false)))
-      );
+      allow update: if request.auth != null &&
+        request.resource.data.ownerId == resource.data.ownerId &&
+        request.resource.data.labourId == resource.data.labourId &&
+        request.resource.data.jobId == resource.data.jobId &&
+        (
+          resource.data.ownerId == request.auth.uid ||
+          (
+            resource.data.labourId == request.auth.uid &&
+            request.resource.data.status != "ACCEPTED" &&
+            request.resource.data.status != "REJECTED" &&
+            request.resource.data.status != "COMPLETED" &&
+            request.resource.data.get("chatApproved", false) == resource.data.get("chatApproved", false)
+          )
+        );
       
       allow delete: if request.auth != null && 
         (resource.data.labourId == request.auth.uid || resource.data.ownerId == request.auth.uid);
@@ -53,45 +95,45 @@ service cloud.firestore {
     }
 
     // --- CONVERSATIONS COLLECTION ---
-    // Helper function to check if chat is authorized for an application
-    function isApplicationChatApproved(appId) {
-      let app = get(/databases/$(database)/documents/applications/$(appId)).data;
-      return app.status == "ACCEPTED" || app.status == "COMPLETED" || app.get("chatApproved", false) == true;
-    }
-
-    // Only authorized participants of the chat thread can read/write if chat is approved
+    // Only authorized participants (Owner & Worker) of a valid application can read/create/update conversation
     match /conversations/{threadId} {
       allow read: if request.auth != null && 
-        (resource == null || (request.auth.uid in resource.data.participants && isApplicationChatApproved(resource.data.applicationId)));
+        (resource.data.ownerId == request.auth.uid || resource.data.workerId == request.auth.uid || request.auth.uid in resource.data.participants) &&
+        isValidApplicationChat(resource.data);
       allow create: if request.auth != null && 
-        (request.auth.uid in request.resource.data.participants) &&
-        isApplicationChatApproved(request.resource.data.applicationId);
-      allow update, delete: if request.auth != null && 
-        (request.auth.uid in resource.data.participants) &&
-        isApplicationChatApproved(resource.data.applicationId);
+        (request.resource.data.ownerId == request.auth.uid || request.resource.data.workerId == request.auth.uid || request.auth.uid in request.resource.data.participants) &&
+        request.resource.data.participants.hasAll([request.resource.data.ownerId, request.resource.data.workerId]) &&
+        isValidApplicationChat(request.resource.data);
+      allow update: if request.auth != null && 
+        (resource.data.ownerId == request.auth.uid || resource.data.workerId == request.auth.uid || request.auth.uid in resource.data.participants) &&
+        request.resource.data.ownerId == resource.data.ownerId &&
+        request.resource.data.workerId == resource.data.workerId &&
+        request.resource.data.jobId == resource.data.jobId &&
+        request.resource.data.applicationId == resource.data.applicationId &&
+        isValidApplicationChat(resource.data);
+      allow delete: if false;
     }
 
     // --- MESSAGES COLLECTION ---
-    // Helper function to check if sender is participant of thread
-    function isThreadParticipant(threadId) {
-      let thread = get(/databases/$(database)/documents/conversations/$(threadId)).data;
-      return request.auth.uid in thread.participants;
-    }
-
-    // Only sender or receiver can read; only participant sender can create message with senderId == auth.uid
+    // Only authorized participants of thread can read/create messages
     match /messages/{messageId} {
       allow read: if request.auth != null && 
-        (resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid);
+        isThreadParticipant(resource.data.threadId);
       allow create: if request.auth != null && 
         request.resource.data.senderId == request.auth.uid &&
         isThreadParticipant(request.resource.data.threadId);
+      allow update, delete: if false;
     }
 
     // --- RATINGS COLLECTION ---
-    // Anyone can read ratings; create restricted to reviewerId == auth.uid
+    // Anyone can read ratings; create restricted to reviewerId == auth.uid & job status COMPLETED & deterministic ID
     match /ratings/{ratingId} {
       allow read: if true;
-      allow create: if request.auth != null && request.resource.data.reviewerId == request.auth.uid;
+      allow create: if request.auth != null && 
+        request.resource.data.reviewerId == request.auth.uid &&
+        ratingId == "rating_" + request.resource.data.jobId + "_" + request.auth.uid &&
+        exists(/databases/$(database)/documents/jobs/$(request.resource.data.jobId)) &&
+        get(/databases/$(database)/documents/jobs/$(request.resource.data.jobId)).data.status == "COMPLETED";
       allow update, delete: if false;
     }
   }
