@@ -47,7 +47,11 @@ fun OwnerHomeScreen(
     onManageApplicantsClick: (String) -> Unit,
     onChatThreadClick: (String) -> Unit,
     onSettingsClick: () -> Unit,
-    onLogoutClick: () -> Unit
+    onCompleteProfileClick: () -> Unit = {},
+    onLogoutClick: () -> Unit,
+    onActiveJobsClick: () -> Unit = {},
+    onApplicationsClick: () -> Unit = {},
+    onWorkersHiredClick: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableStateOf(0) }
     
@@ -144,12 +148,17 @@ fun OwnerHomeScreen(
                 0 -> OwnerDashboardTab(
                     onJobClick = onJobClick, 
                     onManageApplicantsClick = onManageApplicantsClick,
-                    onNavigateToPost = { selectedTab = 1 }
+                    onNavigateToPost = { selectedTab = 1 },
+                    onCompleteProfileClick = onCompleteProfileClick,
+                    onActiveJobsClick = onActiveJobsClick,
+                    onApplicationsClick = onApplicationsClick,
+                    onWorkersHiredClick = onWorkersHiredClick
                 )
                 1 -> OwnerPostJobTab(onPostSuccess = { selectedTab = 0 })
                 2 -> OwnerChatsTab(onChatThreadClick = onChatThreadClick)
                 3 -> OwnerProfileTab(
                     onSettingsClick = onSettingsClick,
+                    onCompleteProfileClick = onCompleteProfileClick,
                     onLogoutClick = onLogoutClick
                 )
             }
@@ -157,39 +166,43 @@ fun OwnerHomeScreen(
     }
 
     if (showNotifDialog) {
-        AlertDialog(
-            onDismissRequest = { showNotifDialog = false },
-            containerColor = DarkSurface,
-            title = { Text("Notifications", fontWeight = FontWeight.Bold, color = TextPrimary) },
-            text = {
-                if (notifications.isEmpty()) {
-                    Text("No new notifications.", color = TextSecondary)
-                } else {
-                    LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        items(notifications) { notif ->
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(containerColor = DarkBackground),
-                                border = BorderStroke(1.dp, BorderStrokeColor)
-                            ) {
-                                Column(modifier = Modifier.padding(12.dp)) {
-                                    Text(notif.title, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary)
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(notif.message, fontSize = 12.sp, color = TextSecondary)
-                                }
-                            }
-                            RozgarRepository.markNotificationRead(notif.id)
+        com.rozgarmitra.app.presentation.components.NotificationsDialog(
+            notifications = notifications,
+            onDismiss = { showNotifDialog = false },
+            onNotificationClick = { notif ->
+                RozgarRepository.markNotificationRead(notif.id)
+                when (notif.type) {
+                    com.rozgarmitra.app.data.NotificationType.JOB_APPLICATION.name -> {
+                        if (notif.relatedJobId.isNotBlank()) {
+                            onManageApplicantsClick(notif.relatedJobId)
+                        } else {
+                            onApplicationsClick()
                         }
                     }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showNotifDialog = false }) {
-                    Text("Dismiss", fontWeight = FontWeight.Bold, color = PrimaryIndigo)
+                    com.rozgarmitra.app.data.NotificationType.NEW_MESSAGE.name -> {
+                        if (notif.relatedThreadId.isNotBlank()) {
+                            onChatThreadClick(notif.relatedThreadId)
+                        } else {
+                            selectedTab = 2
+                        }
+                    }
+                    com.rozgarmitra.app.data.NotificationType.JOB_STATUS_CHANGED.name -> {
+                        if (notif.relatedJobId.isNotBlank()) {
+                            onJobClick(notif.relatedJobId)
+                        } else {
+                            onActiveJobsClick()
+                        }
+                    }
+                    else -> {
+                        if (notif.relatedJobId.isNotBlank()) {
+                            onJobClick(notif.relatedJobId)
+                        }
+                    }
                 }
             }
         )
     }
+
 }
 
 // --- TAB 1: OWNER DASHBOARD ---
@@ -199,7 +212,11 @@ fun OwnerHomeScreen(
 fun OwnerDashboardTab(
     onJobClick: (String) -> Unit,
     onManageApplicantsClick: (String) -> Unit,
-    onNavigateToPost: () -> Unit
+    onNavigateToPost: () -> Unit,
+    onCompleteProfileClick: () -> Unit = {},
+    onActiveJobsClick: () -> Unit = {},
+    onApplicationsClick: () -> Unit = {},
+    onWorkersHiredClick: () -> Unit = {}
 ) {
     val jobs by RozgarRepository.jobs.collectAsStateWithLifecycle()
     val applications by RozgarRepository.applications.collectAsStateWithLifecycle()
@@ -214,6 +231,8 @@ fun OwnerDashboardTab(
     val ownerApps = applications.filter { it.jobId in activeJobIds || it.ownerId == currentUser?.id }
     val applicantsWaitingCount = ownerApps.count { it.status == ApplicationStatus.APPLIED }
 
+    val ownerDisplayName = currentUser?.name?.takeIf { it.isNotBlank() } ?: "Owner"
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -221,9 +240,35 @@ fun OwnerDashboardTab(
     ) {
         item {
             Column {
-                Text("Welcome, ${currentUser?.name ?: "Employer"} 👋", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = TextPrimary)
+                Text("🙏 Namaste, $ownerDisplayName", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = TextPrimary)
                 Spacer(modifier = Modifier.height(2.dp))
                 Text("Manage your job postings and applicants", fontSize = 13.sp, color = TextSecondary)
+            }
+        }
+
+        if (currentUser?.profileCompleted != true) {
+            item {
+                Surface(
+                    color = WarningRose.copy(alpha = 0.12f),
+                    border = BorderStroke(1.dp, WarningRose.copy(alpha = 0.4f)),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onCompleteProfileClick() }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Filled.Warning, contentDescription = null, tint = WarningRose)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Complete Your Profile", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 15.sp)
+                            Text("Specify your work site address and company details", fontSize = 12.sp, color = TextSecondary)
+                        }
+                        Icon(Icons.Filled.ArrowForward, contentDescription = null, tint = WarningRose)
+                    }
+                }
             }
         }
 
@@ -235,6 +280,7 @@ fun OwnerDashboardTab(
             ) {
                 // Metric 1: Active
                 Card(
+                    onClick = onActiveJobsClick,
                     modifier = Modifier.weight(1f),
                     colors = CardDefaults.cardColors(containerColor = DarkSurface),
                     border = BorderStroke(1.dp, PrimaryIndigo.copy(alpha = 0.4f)),
@@ -249,6 +295,7 @@ fun OwnerDashboardTab(
 
                 // Metric 2: Applications
                 Card(
+                    onClick = onApplicationsClick,
                     modifier = Modifier.weight(1f),
                     colors = CardDefaults.cardColors(containerColor = DarkSurface),
                     border = BorderStroke(1.dp, BorderStrokeColor),
@@ -269,6 +316,7 @@ fun OwnerDashboardTab(
 
                 // Metric 3: Workers Hired
                 Card(
+                    onClick = onWorkersHiredClick,
                     modifier = Modifier.weight(1f),
                     colors = CardDefaults.cardColors(containerColor = DarkSurface),
                     border = BorderStroke(1.dp, BorderStrokeColor),
@@ -282,6 +330,7 @@ fun OwnerDashboardTab(
                 }
             }
         }
+
 
         // Post a job button
         item {
@@ -1156,6 +1205,7 @@ fun OwnerChatsTab(onChatThreadClick: (String) -> Unit) {
 @Composable
 fun OwnerProfileTab(
     onSettingsClick: () -> Unit,
+    onCompleteProfileClick: () -> Unit = {},
     onLogoutClick: () -> Unit
 ) {
     val currentUser by RozgarRepository.currentUser.collectAsStateWithLifecycle()
@@ -1215,7 +1265,10 @@ fun OwnerProfileTab(
                     color = WarningRose.copy(alpha = 0.12f),
                     border = BorderStroke(1.dp, WarningRose.copy(alpha = 0.4f)),
                     shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                        .clickable { onCompleteProfileClick() }
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp),
@@ -1227,6 +1280,7 @@ fun OwnerProfileTab(
                             Text("Complete Your Profile", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 15.sp)
                             Text("Specify your work site address and company details", fontSize = 12.sp, color = TextSecondary)
                         }
+                        Icon(Icons.Filled.ArrowForward, contentDescription = null, tint = WarningRose)
                     }
                 }
             }

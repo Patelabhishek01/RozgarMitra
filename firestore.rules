@@ -58,7 +58,7 @@ service cloud.firestore {
     // READ: Worker (labourId) or Owner (ownerId) related to the application
     // CREATE: Authenticated worker creating application for themselves with status APPLIED
     // UPDATE: Owner can update status / chatApproved; Worker can update non-critical fields but cannot alter status to ACCEPTED/REJECTED/COMPLETED or set chatApproved
-    // Immutability: ownerId, labourId, jobId cannot be changed
+    // Immutability: ownerId, labourId, jobId, appliedAt cannot be changed
     match /applications/{applicationId} {
       allow read: if request.auth != null && 
         (resource.data.labourId == request.auth.uid || resource.data.ownerId == request.auth.uid);
@@ -72,6 +72,7 @@ service cloud.firestore {
         request.resource.data.ownerId == resource.data.ownerId &&
         request.resource.data.labourId == resource.data.labourId &&
         request.resource.data.jobId == resource.data.jobId &&
+        (!("appliedAt" in request.resource.data) || request.resource.data.appliedAt == resource.data.appliedAt) &&
         (
           resource.data.ownerId == request.auth.uid ||
           (

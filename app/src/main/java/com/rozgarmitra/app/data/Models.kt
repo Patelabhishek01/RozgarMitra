@@ -152,6 +152,7 @@ data class Notification(
     val message: String = "",
     val relatedJobId: String = "",
     val relatedApplicationId: String = "",
+    val relatedThreadId: String = "",
     val timestamp: Long = System.currentTimeMillis(),
     val isRead: Boolean = false
 )

@@ -65,6 +65,30 @@ object RozgarRepository {
 
     fun updateUserLocation(locationData: LocationData) {
         _userLocationData.value = locationData
+        val user = _currentUser.value
+        if (user != null) {
+            _currentUser.value = user.copy(
+                latitude = locationData.latitude,
+                longitude = locationData.longitude
+            )
+            val uid = auth.currentUser?.uid
+            if (uid != null && uid == user.id) {
+                scope.launch {
+                    try {
+                        val updates = mutableMapOf<String, Any>(
+                            "latitude" to locationData.latitude,
+                            "longitude" to locationData.longitude
+                        )
+                        if (locationData.addressName.isNotBlank()) {
+                            updates["addressName"] = locationData.addressName
+                        }
+                        db.collection("users").document(uid).set(updates, SetOptions.merge())
+                    } catch (e: Exception) {
+                        Log.e("Firebase", "Failed to save user location to Firestore", e)
+                    }
+                }
+            }
+        }
         recalculateJobDistances()
     }
 
@@ -173,6 +197,13 @@ object RozgarRepository {
                         } catch (fatal: Exception) { null }
                     }
                     _currentUser.value = user
+                    val lat = user?.latitude ?: snapshot.getDouble("latitude") ?: 0.0
+                    val lng = user?.longitude ?: snapshot.getDouble("longitude") ?: 0.0
+                    val addrName = snapshot.getString("addressName") ?: ""
+                    if ((lat != 0.0 || lng != 0.0 || addrName.isNotBlank()) && _userLocationData.value == null) {
+                        _userLocationData.value = LocationData(latitude = lat, longitude = lng, addressName = addrName)
+                        recalculateJobDistances()
+                    }
                     user?.id?.let { userId ->
                         observeUserApplications(userId)
                         observeUserNotifications(userId)
@@ -333,7 +364,9 @@ object RozgarRepository {
                 if (snapshots != null) {
                     val userNotifs = snapshots.documents.mapNotNull { doc ->
                         try { doc.toObject(Notification::class.java)?.copy(id = doc.id) } catch (err: Exception) { null }
-                    }.sortedByDescending { it.timestamp }
+                    }
+                    .filter { !it.isRead }
+                    .sortedByDescending { it.timestamp }
                     _notifications.value = userNotifs
                 }
             }
@@ -1049,7 +1082,8 @@ object RozgarRepository {
         title: String,
         message: String,
         relatedJobId: String = "",
-        relatedApplicationId: String = ""
+        relatedApplicationId: String = "",
+        relatedThreadId: String = ""
     ) {
         val notifId = "notif_${UUID.randomUUID()}"
         val notif = Notification(
@@ -1060,6 +1094,7 @@ object RozgarRepository {
             message = message,
             relatedJobId = relatedJobId,
             relatedApplicationId = relatedApplicationId,
+            relatedThreadId = relatedThreadId,
             timestamp = System.currentTimeMillis(),
             isRead = false
         )
@@ -1073,6 +1108,8 @@ object RozgarRepository {
     }
 
     fun markNotificationRead(id: String) {
+        if (id.isBlank()) return
+        _notifications.value = _notifications.value.filter { it.id != id }
         db.collection("notifications").document(id).update("isRead", true)
             .addOnFailureListener { Log.e("Firebase", "Mark notification read failed", it) }
     }
@@ -1236,7 +1273,9 @@ object RozgarRepository {
                     type = NotificationType.NEW_MESSAGE.name,
                     title = "New Message from ${sender.name}",
                     message = text,
-                    relatedJobId = thread.jobId
+                    relatedJobId = thread.jobId,
+                    relatedApplicationId = thread.applicationId,
+                    relatedThreadId = threadId
                 )
             }
 

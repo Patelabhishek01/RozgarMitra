@@ -44,6 +44,7 @@ fun LabourHomeScreen(
     onSettingsClick: () -> Unit,
     onProfessionsClick: () -> Unit,
     onApplicationsClick: () -> Unit,
+    onCompleteProfileClick: () -> Unit = {},
     onLogoutClick: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(0) }
@@ -145,6 +146,7 @@ fun LabourHomeScreen(
                     onSettingsClick = onSettingsClick,
                     onProfessionsClick = onProfessionsClick,
                     onApplicationsClick = onApplicationsClick,
+                    onCompleteProfileClick = onCompleteProfileClick,
                     onLogoutClick = onLogoutClick
                 )
             }
@@ -152,39 +154,37 @@ fun LabourHomeScreen(
     }
 
     if (showNotifDialog) {
-        AlertDialog(
-            onDismissRequest = { showNotifDialog = false },
-            containerColor = DarkSurface,
-            title = { Text("Notifications", fontWeight = FontWeight.Bold, color = TextPrimary) },
-            text = {
-                if (notifications.isEmpty()) {
-                    Text("No new notifications.", color = TextSecondary)
-                } else {
-                    LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        items(notifications) { notif ->
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(containerColor = DarkBackground),
-                                border = BorderStroke(1.dp, BorderStrokeColor)
-                            ) {
-                                Column(modifier = Modifier.padding(12.dp)) {
-                                    Text(notif.title, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary)
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(notif.message, fontSize = 12.sp, color = TextSecondary)
-                                }
-                            }
-                            RozgarRepository.markNotificationRead(notif.id)
+        com.rozgarmitra.app.presentation.components.NotificationsDialog(
+            notifications = notifications,
+            onDismiss = { showNotifDialog = false },
+            onNotificationClick = { notif ->
+                RozgarRepository.markNotificationRead(notif.id)
+                when (notif.type) {
+                    com.rozgarmitra.app.data.NotificationType.NEW_MESSAGE.name -> {
+                        if (notif.relatedThreadId.isNotBlank()) {
+                            onChatThreadClick(notif.relatedThreadId)
+                        } else {
+                            selectedTab = 2
                         }
                     }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showNotifDialog = false }) {
-                    Text("Dismiss", fontWeight = FontWeight.Bold, color = PrimaryIndigo)
+                    com.rozgarmitra.app.data.NotificationType.APPLICATION_ACCEPTED.name,
+                    com.rozgarmitra.app.data.NotificationType.APPLICATION_REJECTED.name -> {
+                        if (notif.relatedJobId.isNotBlank()) {
+                            onJobClick(notif.relatedJobId)
+                        } else {
+                            onApplicationsClick()
+                        }
+                    }
+                    else -> {
+                        if (notif.relatedJobId.isNotBlank()) {
+                            onJobClick(notif.relatedJobId)
+                        }
+                    }
                 }
             }
         )
     }
+
 }
 
 // --- SUB TABS FOR HOME (FEED & APPLICATIONS) ---
@@ -203,8 +203,9 @@ fun LabourHomeFeedTab(onJobClick: (String) -> Unit) {
 
     val displayLocation = userLocationData?.addressName?.ifBlank { "Location Available" } ?: "Select Location"
 
+    val isLocationAvailable = userLocationData != null && (userLocationData?.latitude != 0.0 || userLocationData?.longitude != 0.0)
     val filteredJobs = jobs.filter { job ->
-        searchRadiusKm == 0.0 || job.distanceKm == 0.0 || job.distanceKm <= searchRadiusKm
+        searchRadiusKm == 0.0 || !isLocationAvailable || job.distanceKm <= searchRadiusKm
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -317,7 +318,14 @@ fun LabourHomeFeedTab(onJobClick: (String) -> Unit) {
             }
         }
     }
+
+    if (showLocationDialog) {
+        com.rozgarmitra.app.presentation.components.LocationSelectionDialog(
+            onDismiss = { showLocationDialog = false }
+        )
+    }
 }
+
 
 @Composable
 private fun CustomIcon(imageVector: ImageVector, contentDescription: String?, size: Int, tint: Color) {
@@ -596,6 +604,7 @@ fun LabourProfileTab(
     onSettingsClick: () -> Unit,
     onProfessionsClick: () -> Unit,
     onApplicationsClick: () -> Unit,
+    onCompleteProfileClick: () -> Unit = {},
     onLogoutClick: () -> Unit
 ) {
     val currentUser by RozgarRepository.currentUser.collectAsStateWithLifecycle()
@@ -655,7 +664,10 @@ fun LabourProfileTab(
                     color = WarningRose.copy(alpha = 0.12f),
                     border = BorderStroke(1.dp, WarningRose.copy(alpha = 0.4f)),
                     shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                        .clickable { onCompleteProfileClick() }
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp),
@@ -667,6 +679,7 @@ fun LabourProfileTab(
                             Text("Complete Your Profile", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 15.sp)
                             Text("Add your skills and experience to get hired faster", fontSize = 12.sp, color = TextSecondary)
                         }
+                        Icon(Icons.Filled.ArrowForward, contentDescription = null, tint = WarningRose)
                     }
                 }
             }

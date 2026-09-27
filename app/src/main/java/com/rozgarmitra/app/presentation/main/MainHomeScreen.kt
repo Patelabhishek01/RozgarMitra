@@ -154,6 +154,19 @@ fun MainHomeScreen(
             }
         }
     }
+
+    if (showNotifDialog) {
+        com.rozgarmitra.app.presentation.components.NotificationsDialog(
+            notifications = notifications,
+            onDismiss = { showNotifDialog = false },
+            onNotificationClick = { notif ->
+                RozgarRepository.markNotificationRead(notif.id)
+                if (notif.relatedJobId.isNotBlank()) {
+                    onNavigateToJobDetails(notif.relatedJobId)
+                }
+            }
+        )
+    }
 }
 
 @Composable

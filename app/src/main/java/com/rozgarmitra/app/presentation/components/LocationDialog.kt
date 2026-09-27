@@ -1,7 +1,12 @@
 package com.rozgarmitra.app.presentation.components
 
 import android.Manifest
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.LocationManager
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -10,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -41,10 +47,12 @@ fun LocationSelectionDialog(
     var selectedRadius by remember { mutableStateOf(currentRadius) }
     var isLocating by remember { mutableStateOf(false) }
     var locationError by remember { mutableStateOf<String?>(null) }
+    var isSettingsRequired by remember { mutableStateOf(false) }
 
     fun fetchGpsLocation() {
         isLocating = true
         locationError = null
+        isSettingsRequired = false
         scope.launch {
             val locData = LocationHelper.getCurrentLocation(context)
             isLocating = false
@@ -52,7 +60,15 @@ fun LocationSelectionDialog(
                 RozgarRepository.updateUserLocation(locData)
                 manualLocationText = locData.addressName
             } else {
-                locationError = "Could not detect location. Make sure GPS is enabled."
+                val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+                val isGpsOn = locationManager?.isProviderEnabled(LocationManager.GPS_PROVIDER) == true ||
+                        locationManager?.isProviderEnabled(LocationManager.NETWORK_PROVIDER) == true
+                if (!isGpsOn) {
+                    locationError = "Location (GPS) is disabled on your device. Please turn on Location in settings."
+                    isSettingsRequired = true
+                } else {
+                    locationError = "Could not detect GPS location. Make sure GPS signal is available and try again."
+                }
             }
         }
     }
@@ -65,7 +81,8 @@ fun LocationSelectionDialog(
         if (granted) {
             fetchGpsLocation()
         } else {
-            locationError = "Location permission denied. You can enter location manually below."
+            locationError = "Location permission denied. You can enter location manually below or enable permissions in App Settings."
+            isSettingsRequired = true
         }
     }
 
@@ -124,6 +141,27 @@ fun LocationSelectionDialog(
                 if (locationError != null) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(locationError!!, color = WarningRose, fontSize = 12.sp)
+                    if (isSettingsRequired) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        TextButton(
+                            onClick = {
+                                try {
+                                    val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                                    context.startActivity(intent)
+                                } catch (e: Exception) {
+                                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                        data = Uri.fromParts("package", context.packageName, null)
+                                    }
+                                    context.startActivity(intent)
+                                }
+                            },
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Icon(Icons.Filled.Settings, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Open Location Settings", color = AccentCyan, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -194,8 +232,8 @@ fun LocationSelectionDialog(
                     if (manualLocationText.isNotBlank()) {
                         val currentLoc = userLocation
                         val updatedLoc = LocationData(
-                            latitude = currentLoc?.latitude ?: 12.9716, // Default or previous
-                            longitude = currentLoc?.longitude ?: 77.5946,
+                            latitude = currentLoc?.latitude ?: 0.0,
+                            longitude = currentLoc?.longitude ?: 0.0,
                             addressName = manualLocationText.trim()
                         )
                         RozgarRepository.updateUserLocation(updatedLoc)

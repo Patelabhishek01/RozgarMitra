@@ -120,30 +120,20 @@ fun AppNavGraph() {
                 onSendOtpSuccess = { phone ->
                     navController.navigate(Screen.Otp.createRoute(phone))
                 },
-                onLoginSuccess = { profileCompleted ->
+                onLoginSuccess = { _ ->
                     val user = RozgarRepository.currentUser.value
-                    if (profileCompleted) {
-                        val route = if (user?.role == Role.LABOUR) Screen.WorkerHome.route else Screen.OwnerHome.route
+                    if (user != null) {
+                        val route = if (user.role == Role.LABOUR) Screen.WorkerHome.route else Screen.OwnerHome.route
                         navController.navigate(route) {
                             popUpTo(Screen.Login.route) { inclusive = true }
                         }
                     } else {
-                        // User exists but profile not finished. 
-                        // If they have a role, send to Details. If not, send to Register.
-                        if (user?.role != null) {
-                            val route = if (user.role == Role.LABOUR) Screen.LabourDetails.route else Screen.OwnerDetails.route
-                            navController.navigate(route) {
-                                popUpTo(Screen.Login.route) { inclusive = true }
-                            }
-                        } else {
-                            navController.navigate(Screen.Register.createRoute(user?.phone?.ifBlank { "user" } ?: "user")) {
-                                popUpTo(Screen.Login.route) { inclusive = true }
-                            }
+                        navController.navigate(Screen.Register.createRoute("user")) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
                         }
                     }
                 },
                 onNavigateToRegister = { id, pass ->
-                    // Pass identifier and password if available
                     navController.navigate(Screen.Register.createRoute(id))
                 },
                 onLanguageSelectClick = {
@@ -159,17 +149,11 @@ fun AppNavGraph() {
             val phone = backStackEntry.arguments?.getString("phone") ?: ""
             OtpScreen(
                 phone = phone,
-                onVerificationSuccess = { profileCompleted ->
-                    if (profileCompleted) {
-                        val role = RozgarRepository.currentUser.value?.role
-                        val route = if (role == Role.LABOUR) Screen.WorkerHome.route else Screen.OwnerHome.route
-                        navController.navigate(route) {
-                            popUpTo(Screen.Login.route) { inclusive = true }
-                        }
-                    } else {
-                        navController.navigate(Screen.Register.createRoute(phone)) {
-                            popUpTo(Screen.Login.route) { inclusive = true }
-                        }
+                onVerificationSuccess = { _ ->
+                    val role = RozgarRepository.currentUser.value?.role
+                    val route = if (role == Role.LABOUR) Screen.WorkerHome.route else Screen.OwnerHome.route
+                    navController.navigate(route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 },
                 onBackClick = {
@@ -186,10 +170,14 @@ fun AppNavGraph() {
             RegisterScreen(
                 identifier = identifier,
                 onLabourRegistered = {
-                    navController.navigate(Screen.LabourDetails.route)
+                    navController.navigate(Screen.WorkerHome.route) {
+                        popUpTo(Screen.Register.route) { inclusive = true }
+                    }
                 },
                 onOwnerRegistered = {
-                    navController.navigate(Screen.OwnerDetails.route)
+                    navController.navigate(Screen.OwnerHome.route) {
+                        popUpTo(Screen.Register.route) { inclusive = true }
+                    }
                 }
             )
         }
@@ -225,6 +213,7 @@ fun AppNavGraph() {
                 onSettingsClick = { navController.navigate(Screen.Settings.route) },
                 onProfessionsClick = { navController.navigate(Screen.MyProfessions.route) },
                 onApplicationsClick = { navController.navigate(Screen.MyApplications.route) },
+                onCompleteProfileClick = { navController.navigate(Screen.LabourDetails.route) },
                 onLogoutClick = {
                     RozgarRepository.logout()
                     navController.navigate(Screen.MainHome.route) {
@@ -246,14 +235,44 @@ fun AppNavGraph() {
                     navController.navigate(Screen.Chat.createRoute(threadId))
                 },
                 onSettingsClick = { navController.navigate(Screen.Settings.route) },
+                onCompleteProfileClick = { navController.navigate(Screen.OwnerDetails.route) },
                 onLogoutClick = {
                     RozgarRepository.logout()
                     navController.navigate(Screen.MainHome.route) {
                         popUpTo(Screen.OwnerHome.route) { inclusive = true }
                     }
-                }
+                },
+                onActiveJobsClick = { navController.navigate(Screen.OwnerActiveJobs.route) },
+                onApplicationsClick = { navController.navigate(Screen.OwnerApplications.route) },
+                onWorkersHiredClick = { navController.navigate(Screen.OwnerHiredWorkers.route) }
             )
         }
+
+        composable(Screen.OwnerActiveJobs.route) {
+            OwnerActiveJobsScreen(
+                onBackClick = { navController.popBackStack() },
+                onJobClick = { jobId -> navController.navigate(Screen.JobDetails.createRoute(jobId)) },
+                onManageApplicantsClick = { jobId -> navController.navigate(Screen.Applicants.createRoute(jobId)) },
+                onNavigateToPost = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.OwnerApplications.route) {
+            OwnerApplicationsScreen(
+                onBackClick = { navController.popBackStack() },
+                onWorkerClick = { workerId -> navController.navigate(Screen.WorkerProfileView.createRoute(workerId)) },
+                onNavigateToChat = { threadId -> navController.navigate(Screen.Chat.createRoute(threadId)) }
+            )
+        }
+
+        composable(Screen.OwnerHiredWorkers.route) {
+            OwnerHiredWorkersScreen(
+                onBackClick = { navController.popBackStack() },
+                onWorkerClick = { workerId -> navController.navigate(Screen.WorkerProfileView.createRoute(workerId)) },
+                onNavigateToChat = { threadId -> navController.navigate(Screen.Chat.createRoute(threadId)) }
+            )
+        }
+
 
         composable(
             route = Screen.JobDetails.route,

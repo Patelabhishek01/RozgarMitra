@@ -1,10 +1,13 @@
 package com.rozgarmitra.app.data
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
 import android.location.Address
 import android.location.Geocoder
 import android.location.Location
+import androidx.core.content.ContextCompat
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
@@ -24,13 +27,37 @@ object LocationHelper {
     @SuppressLint("MissingPermission")
     suspend fun getCurrentLocation(context: Context): LocationData? = withContext(Dispatchers.IO) {
         try {
+            val hasFine = ContextCompat.checkSelfPermission(
+                context, Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+            val hasCoarse = ContextCompat.checkSelfPermission(
+                context, Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+            if (!hasFine && !hasCoarse) {
+                return@withContext null
+            }
+
             val fusedClient = LocationServices.getFusedLocationProviderClient(context)
             val cts = CancellationTokenSource()
-            
-            val location: Location? = try {
-                fusedClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cts.token).await()
+
+            // Choose appropriate priority based on granted permission
+            val priority = if (hasFine) {
+                Priority.PRIORITY_HIGH_ACCURACY
+            } else {
+                Priority.PRIORITY_BALANCED_POWER_ACCURACY
+            }
+
+            var location: Location? = try {
+                fusedClient.getCurrentLocation(priority, cts.token).await()
             } catch (e: Exception) {
-                try {
+                null
+            }
+
+            // Fallback to lastLocation if fresh location request returned null
+            if (location == null) {
+                location = try {
                     fusedClient.lastLocation.await()
                 } catch (ex: Exception) {
                     null
@@ -54,6 +81,7 @@ object LocationHelper {
     }
 
     fun getAddressFromCoordinates(context: Context, lat: Double, lng: Double): String {
+        if (lat == 0.0 && lng == 0.0) return "Location Not Available"
         return try {
             val geocoder = Geocoder(context, Locale.getDefault())
             @Suppress("DEPRECATION")
@@ -72,6 +100,21 @@ object LocationHelper {
             }
         } catch (e: Exception) {
             "${String.format(Locale.US, "%.4f", lat)}, ${String.format(Locale.US, "%.4f", lng)}"
+        }
+    }
+
+    fun getCoordinatesFromAddress(context: Context, locationName: String): Pair<Double, Double>? {
+        if (locationName.isBlank()) return null
+        return try {
+            val geocoder = Geocoder(context, Locale.getDefault())
+            @Suppress("DEPRECATION")
+            val addresses: List<Address>? = geocoder.getFromLocationName(locationName, 1)
+            if (!addresses.isNullOrEmpty()) {
+                val addr = addresses[0]
+                Pair(addr.latitude, addr.longitude)
+            } else null
+        } catch (e: Exception) {
+            null
         }
     }
 
