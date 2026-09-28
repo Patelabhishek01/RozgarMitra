@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Base application theme with unified white splash window background -->
-    <style name="Theme.RozgarMitra" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">#FFFFFF</item>
-        <item name="android:statusBarColor">#FFFFFF</item>
-        <item name="android:navigationBarColor">#FFFFFF</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowLightNavigationBar">true</item>
-        <item name="android:windowSplashScreenBackground" tools:targetApi="31">#FFFFFF</item>
-        <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="31">@drawable/ic_logo_symbol</item>
+    <!-- Base application theme aligned to DarkBackground #0F172A to eliminate startup flash -->
+    <style name="Theme.RozgarMitra" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#0F172A</item>
+        <item name="android:statusBarColor">#0F172A</item>
+        <item name="android:navigationBarColor">#0F172A</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        
+        <!-- Android 12+ Splash API properties -->
+        <item name="windowSplashScreenBackground" tools:targetApi="31">#0F172A</item>
+        <item name="windowSplashScreenAnimatedIcon" tools:targetApi="31">@drawable/ic_logo_symbol</item>
+        <item name="postSplashScreenTheme" tools:targetApi="31">@style/Theme.RozgarMitra</item>
     </style>
 </resources>
