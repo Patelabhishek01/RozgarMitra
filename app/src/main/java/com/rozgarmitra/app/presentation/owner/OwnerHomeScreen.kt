@@ -48,6 +48,7 @@ fun OwnerHomeScreen(
     onManageApplicantsClick: (String) -> Unit,
     onChatThreadClick: (String) -> Unit,
     onSettingsClick: () -> Unit,
+    onHelpCenterClick: () -> Unit = {},
     onCompleteProfileClick: () -> Unit = {},
     onLogoutClick: () -> Unit,
     onActiveJobsClick: () -> Unit = {},
@@ -160,6 +161,7 @@ fun OwnerHomeScreen(
                 2 -> OwnerChatsTab(onChatThreadClick = onChatThreadClick)
                 3 -> OwnerProfileTab(
                     onSettingsClick = onSettingsClick,
+                    onHelpCenterClick = onHelpCenterClick,
                     onCompleteProfileClick = onCompleteProfileClick,
                     onLogoutClick = onLogoutClick
                 )
@@ -1225,11 +1227,17 @@ fun OwnerChatsTab(onChatThreadClick: (String) -> Unit) {
 @Composable
 fun OwnerProfileTab(
     onSettingsClick: () -> Unit,
+    onHelpCenterClick: () -> Unit = {},
     onCompleteProfileClick: () -> Unit = {},
     onLogoutClick: () -> Unit
 ) {
     val currentUser by RozgarRepository.currentUser.collectAsStateWithLifecycle()
     val isOffline by RozgarRepository.isOffline.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
+
+    var showEditNameDialog by remember { mutableStateOf(false) }
+    var showBusinessInfoDialog by remember { mutableStateOf(false) }
+    var showVerificationDialog by remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -1258,7 +1266,19 @@ fun OwnerProfileTab(
                     
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Text(currentUser?.name ?: "Employer", fontWeight = FontWeight.Bold, fontSize = 22.sp, color = TextPrimary)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(currentUser?.name ?: "Employer", fontWeight = FontWeight.Bold, fontSize = 22.sp, color = TextPrimary)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        IconButton(
+                            onClick = { showEditNameDialog = true },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(Icons.Filled.Edit, contentDescription = "Edit Name", tint = PrimaryBlue, modifier = Modifier.size(16.dp))
+                        }
+                    }
                     Text(currentUser?.phone ?: currentUser?.id ?: "", color = TextSecondary, fontSize = 14.sp)
                     
                     Surface(
@@ -1311,26 +1331,44 @@ fun OwnerProfileTab(
                 ProfileMenuItem(
                     icon = Icons.Filled.Business,
                     title = "My Company",
-                    subtitle = currentUser?.ownerProfile?.companyName?.ifBlank { "Not Specified" } ?: "Not Specified",
-                    onClick = { /* TODO */ }
+                    subtitle = currentUser?.ownerProfile?.companyName?.ifBlank { "Tap to specify company" } ?: "Tap to specify company",
+                    onClick = { showBusinessInfoDialog = true }
                 )
                 ProfileMenuItem(
                     icon = Icons.Filled.LocationOn,
                     title = "Work Site Address",
-                    subtitle = currentUser?.ownerProfile?.address ?: "Not Specified",
-                    onClick = { /* TODO */ }
+                    subtitle = currentUser?.ownerProfile?.address?.ifBlank { "Tap to specify address" } ?: "Tap to specify address",
+                    onClick = { showBusinessInfoDialog = true }
                 )
             }
         }
 
         item {
+            val isVer = currentUser?.isVerified == true
+            val isPen = currentUser?.verificationStatus == "PENDING"
             ProfileSection(title = "Verification") {
                 ProfileMenuItem(
                     icon = Icons.Filled.VerifiedUser,
-                    title = if (currentUser?.isVerified == true) "Business Verified" else "Verify Business",
-                    subtitle = if (currentUser?.isVerified == true) "Badge active" else "Submit trade license",
-                    titleColor = if (currentUser?.isVerified == true) SuccessGreen else TextPrimary,
-                    onClick = { /* TODO */ }
+                    title = when {
+                        isVer -> "Business Verified"
+                        isPen -> "Verification Pending"
+                        else -> "Verify Business"
+                    },
+                    subtitle = when {
+                        isVer -> "Badge active"
+                        isPen -> "Trade license under review"
+                        else -> "Submit trade license for badge"
+                    },
+                    titleColor = when {
+                        isVer -> SuccessGreen
+                        isPen -> AccentCyan
+                        else -> TextPrimary
+                    },
+                    onClick = {
+                        if (!isVer && !isPen) {
+                            showVerificationDialog = true
+                        }
+                    }
                 )
             }
         }
@@ -1346,17 +1384,18 @@ fun OwnerProfileTab(
                 ProfileMenuItem(
                     icon = Icons.Filled.Help,
                     title = "Help Center",
-                    onClick = { /* TODO */ }
+                    subtitle = "FAQ and contact support",
+                    onClick = onHelpCenterClick
                 )
                 ProfileMenuItem(
                     icon = Icons.Filled.BugReport,
                     title = "Offline Mode",
-                    subtitle = "Simulate offline state",
+                    subtitle = if (isOffline) "Offline active (Local cache)" else "Online active",
+                    titleColor = if (isOffline) WarningRose else TextPrimary,
                     onClick = { RozgarRepository.toggleOffline(!isOffline) }
                 )
             }
         }
-
         item {
             Spacer(modifier = Modifier.height(24.dp))
             Box(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -1377,6 +1416,175 @@ fun OwnerProfileTab(
             }
             Spacer(modifier = Modifier.height(40.dp))
         }
+    }
+
+    if (showEditNameDialog) {
+        var nameInput by remember { mutableStateOf(currentUser?.name ?: "") }
+        var isSaving by remember { mutableStateOf(false) }
+
+        AlertDialog(
+            containerColor = DarkSurfaceElevated,
+            onDismissRequest = { if (!isSaving) showEditNameDialog = false },
+            title = { Text("Edit Profile Name", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    Text("Update your display name visible to workers.", fontSize = 13.sp, color = TextSecondary)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = nameInput,
+                        onValueChange = { nameInput = it },
+                        label = { Text("Full Name", color = TextSecondary) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryBlue,
+                            unfocusedBorderColor = BorderStrokeColor,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (nameInput.isNotBlank()) {
+                            isSaving = true
+                            scope.launch {
+                                RozgarRepository.updateProfileName(nameInput.trim()).collectLatest {
+                                    isSaving = false
+                                    showEditNameDialog = false
+                                }
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
+                ) {
+                    Text(if (isSaving) "Saving..." else "Save", color = TextPrimary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditNameDialog = false }) {
+                    Text("Cancel", color = TextSecondary)
+                }
+            }
+        )
+    }
+
+    if (showBusinessInfoDialog) {
+        var companyInput by remember { mutableStateOf(currentUser?.ownerProfile?.companyName ?: "") }
+        var addressInput by remember { mutableStateOf(currentUser?.ownerProfile?.address ?: "") }
+        var isSaving by remember { mutableStateOf(false) }
+
+        AlertDialog(
+            containerColor = DarkSurfaceElevated,
+            onDismissRequest = { if (!isSaving) showBusinessInfoDialog = false },
+            title = { Text("Business Information", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = companyInput,
+                        onValueChange = { companyInput = it },
+                        label = { Text("Company / Organization Name", color = TextSecondary) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryBlue,
+                            unfocusedBorderColor = BorderStrokeColor,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = addressInput,
+                        onValueChange = { addressInput = it },
+                        label = { Text("Work Site / Office Address", color = TextSecondary) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryBlue,
+                            unfocusedBorderColor = BorderStrokeColor,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        isSaving = true
+                        scope.launch {
+                            RozgarRepository.updateOwnerBusinessInfo(companyInput.trim(), addressInput.trim()).collectLatest {
+                                isSaving = false
+                                showBusinessInfoDialog = false
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
+                ) {
+                    Text(if (isSaving) "Saving..." else "Save", color = TextPrimary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showBusinessInfoDialog = false }) {
+                    Text("Cancel", color = TextSecondary)
+                }
+            }
+        )
+    }
+
+    if (showVerificationDialog) {
+        var selectedDocType by remember { mutableStateOf("GSTIN Registration") }
+        var isSubmitting by remember { mutableStateOf(false) }
+
+        AlertDialog(
+            containerColor = DarkSurfaceElevated,
+            onDismissRequest = { if (!isSubmitting) showVerificationDialog = false },
+            title = { Text("Request Business Verification", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    Text("Select business document type to submit for verification review.", fontSize = 13.sp, color = TextSecondary)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    listOf("GSTIN Registration", "Trade License", "MSME Registration", "Owner Aadhaar").forEach { doc ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { selectedDocType = doc }
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = selectedDocType == doc,
+                                onClick = { selectedDocType = doc },
+                                colors = RadioButtonDefaults.colors(selectedColor = PrimaryBlue)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(doc, color = TextPrimary)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        isSubmitting = true
+                        scope.launch {
+                            RozgarRepository.submitVerificationRequest(selectedDocType).collectLatest {
+                                isSubmitting = false
+                                showVerificationDialog = false
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
+                ) {
+                    Text(if (isSubmitting) "Submitting..." else "Submit Request", color = TextPrimary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showVerificationDialog = false }) {
+                    Text("Cancel", color = TextSecondary)
+                }
+            }
+        )
     }
 }
 

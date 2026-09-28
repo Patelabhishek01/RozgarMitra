@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
@@ -15,12 +16,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rozgarmitra.app.data.RozgarRepository
+import com.rozgarmitra.app.presentation.components.LoadingOverlay
 import com.rozgarmitra.app.presentation.components.PrimaryLargeButton
 import com.rozgarmitra.app.ui.theme.*
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,11 +33,19 @@ fun MyProfessionsScreen(
     onBackClick: () -> Unit
 ) {
     val currentUser by RozgarRepository.currentUser.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
     val allProfessions = listOf("Mason", "Painter", "Electrician", "Plumber", "Carpenter", "Construction", "Driver", "Cleaner", "Helper")
     
     var selectedProfessions by remember(currentUser) { 
         mutableStateOf(currentUser?.labourProfile?.skills?.toSet() ?: emptySet()) 
     }
+    var experienceText by remember(currentUser) {
+        mutableStateOf(currentUser?.labourProfile?.experience ?: "")
+    }
+    var expectedWageText by remember(currentUser) {
+        mutableStateOf(currentUser?.labourProfile?.expectedWage?.takeIf { it > 0 }?.toString() ?: "")
+    }
+    var isSaving by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = DarkBackground,
@@ -59,38 +72,104 @@ fun MyProfessionsScreen(
             ) {
                 PrimaryLargeButton(
                     text = "Save Changes",
-                    onClick = { onBackClick() }
+                    onClick = {
+                        isSaving = true
+                        val wageInt = expectedWageText.toIntOrNull() ?: 0
+                        scope.launch {
+                            RozgarRepository.updateLabourProfessions(
+                                skills = selectedProfessions.toList(),
+                                experience = experienceText,
+                                wage = wageInt
+                            ).collectLatest { res ->
+                                isSaving = false
+                                if (res.isSuccess) {
+                                    onBackClick()
+                                }
+                            }
+                        }
+                    }
                 )
             }
         }
     ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(DarkBackground)
-                .padding(paddingValues),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            item {
-                Text(
-                    "Select categories you are skilled in. This helps us show you relevant work.",
-                    fontSize = 14.sp,
-                    color = TextSecondary,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
+        Box(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(DarkBackground)
+                    .padding(paddingValues),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                item {
+                    Text(
+                        "Work Experience & Expected Daily Wage",
+                        fontWeight = FontWeight.Bold,
+                        color = AccentCyan,
+                        fontSize = 14.sp
+                    )
+                }
+
+                item {
+                    OutlinedTextField(
+                        value = experienceText,
+                        onValueChange = { experienceText = it },
+                        label = { Text("Experience (e.g. 3 years)", color = TextSecondary) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryBlue,
+                            unfocusedBorderColor = BorderStrokeColor,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                item {
+                    OutlinedTextField(
+                        value = expectedWageText,
+                        onValueChange = { expectedWageText = it },
+                        label = { Text("Expected Wage (₹ / day)", color = TextSecondary) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryBlue,
+                            unfocusedBorderColor = BorderStrokeColor,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Select Skilled Professions",
+                        fontWeight = FontWeight.Bold,
+                        color = AccentCyan,
+                        fontSize = 14.sp
+                    )
+                    Text(
+                        "Select categories you are skilled in to get relevant job alerts.",
+                        fontSize = 12.sp,
+                        color = TextSecondary,
+                        modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
+                    )
+                }
+                
+                items(allProfessions) { prof ->
+                    val isSelected = selectedProfessions.contains(prof)
+                    ProfessionItem(
+                        label = prof,
+                        isSelected = isSelected,
+                        onToggle = {
+                            selectedProfessions = if (isSelected) selectedProfessions - prof else selectedProfessions + prof
+                        }
+                    )
+                }
             }
-            
-            items(allProfessions) { prof ->
-                val isSelected = selectedProfessions.contains(prof)
-                ProfessionItem(
-                    label = prof,
-                    isSelected = isSelected,
-                    onToggle = {
-                        selectedProfessions = if (isSelected) selectedProfessions - prof else selectedProfessions + prof
-                    }
-                )
-            }
+
+            LoadingOverlay(isLoading = isSaving, text = "Saving Professions...")
         }
     }
 }
@@ -120,4 +199,3 @@ fun ProfessionItem(label: String, isSelected: Boolean, onToggle: () -> Unit) {
         }
     }
 }
-

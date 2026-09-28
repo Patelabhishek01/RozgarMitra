@@ -51,6 +51,8 @@ data class User(
     val language: String = "English",
     val theme: ThemeMode = ThemeMode.SYSTEM,
     val isVerified: Boolean = false,
+    val verificationStatus: String = "NOT_SUBMITTED", // NOT_SUBMITTED, PENDING, VERIFIED, REJECTED
+    val notificationsEnabled: Boolean = true,
     val profileCompleted: Boolean = false,
     val labourProfile: LabourProfile? = null,
     val ownerProfile: OwnerProfile? = null,

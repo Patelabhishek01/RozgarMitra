@@ -528,7 +528,7 @@ object RozgarRepository {
             val authResult = auth.createUserWithEmailAndPassword(email, password).await()
             val firebaseUser = authResult.user
             if (firebaseUser != null) {
-                val user = User(firebaseUser.uid, name, email, role, language, ThemeMode.SYSTEM, false, false)
+                val user = User(id = firebaseUser.uid, name = name, phone = email, role = role, language = language, theme = ThemeMode.SYSTEM, isVerified = false, profileCompleted = false)
                 db.collection("users").document(user.id).set(user).await()
                 _currentUser.value = user
                 observeUserApplications(user.id)
@@ -580,7 +580,7 @@ object RozgarRepository {
 
     fun register(name: String, phone: String, role: Role, language: String): Flow<Result<User>> = flow {
         val uid = auth.currentUser?.uid ?: return@flow emit(Result.failure(Exception("Not Authenticated")))
-        val user = User(uid, name, phone, role, language, ThemeMode.SYSTEM, false, false)
+        val user = User(id = uid, name = name, phone = phone, role = role, language = language, theme = ThemeMode.SYSTEM, isVerified = false, profileCompleted = false)
         try {
             db.collection("users").document(uid).set(user).await()
             _currentUser.value = user
@@ -614,6 +614,65 @@ object RozgarRepository {
     }
 
     // --- Profiles ---
+
+    fun updateProfileName(name: String): Flow<Result<Boolean>> = flow {
+        val current = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
+        val updated = current.copy(name = name)
+        try {
+            db.collection("users").document(current.id).set(mapOf("name" to name), SetOptions.merge()).await()
+            _currentUser.value = updated
+            emit(Result.success(true))
+        } catch (e: Exception) { emit(Result.failure(e)) }
+    }
+
+    fun updateLabourProfessions(skills: List<String>, experience: String = "", wage: Int = 0): Flow<Result<Boolean>> = flow {
+        val current = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
+        val existingProfile = current.labourProfile ?: LabourProfile()
+        val updatedProfile = existingProfile.copy(
+            skills = skills,
+            experience = experience.ifBlank { existingProfile.experience },
+            expectedWage = if (wage > 0) wage else existingProfile.expectedWage
+        )
+        val updatedUser = current.copy(labourProfile = updatedProfile)
+        try {
+            db.collection("users").document(current.id).set(mapOf("labourProfile" to updatedProfile), SetOptions.merge()).await()
+            _currentUser.value = updatedUser
+            emit(Result.success(true))
+        } catch (e: Exception) { emit(Result.failure(e)) }
+    }
+
+    fun updateOwnerBusinessInfo(companyName: String, address: String): Flow<Result<Boolean>> = flow {
+        val current = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
+        val existingProfile = current.ownerProfile ?: OwnerProfile()
+        val updatedProfile = existingProfile.copy(
+            companyName = companyName,
+            address = address
+        )
+        val updatedUser = current.copy(ownerProfile = updatedProfile)
+        try {
+            db.collection("users").document(current.id).set(mapOf("ownerProfile" to updatedProfile), SetOptions.merge()).await()
+            _currentUser.value = updatedUser
+            emit(Result.success(true))
+        } catch (e: Exception) { emit(Result.failure(e)) }
+    }
+
+    fun setNotificationsEnabled(enabled: Boolean): Flow<Result<Boolean>> = flow {
+        val current = _currentUser.value
+        preferenceManager?.setNotificationsEnabled(enabled)
+        if (current != null) {
+            val updatedUser = current.copy(notificationsEnabled = enabled)
+            try {
+                db.collection("users").document(current.id).set(mapOf("notificationsEnabled" to enabled), SetOptions.merge()).await()
+                _currentUser.value = updatedUser
+                emit(Result.success(true))
+            } catch (e: Exception) {
+                _currentUser.value = updatedUser
+                emit(Result.success(true))
+            }
+        } else {
+            emit(Result.success(true))
+        }
+    }
 
     fun completeLabourProfile(skills: List<String>, experience: String, wage: Int): Flow<Result<Boolean>> = flow {
         val current = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
@@ -667,21 +726,36 @@ object RozgarRepository {
         if (user.role == Role.LABOUR) {
             val profile = user.labourProfile ?: LabourProfile()
             val updatedProfile = profile.copy(isAvailable = available)
-            val updateMap = mapOf("labourProfile" to updatedProfile)
+            val updatedUser = user.copy(labourProfile = updatedProfile)
 
             db.collection("users").document(user.id)
-                .set(updateMap, SetOptions.merge())
-                .addOnSuccessListener { Log.d("Firebase", "Availability saved: $available") }
+                .set(mapOf("labourProfile" to updatedProfile), SetOptions.merge())
+                .addOnSuccessListener {
+                    _currentUser.value = updatedUser
+                    Log.d("Firebase", "Availability saved: $available")
+                }
         }
     }
 
-    fun uploadIdDocument(type: String): Flow<Result<Boolean>> = flow {
-        delay(1000)
-        _currentUser.value?.let { user ->
-            db.collection("users").document(user.id).update("isVerified", true)
-        }
-        emit(Result.success(true))
+    fun submitVerificationRequest(docType: String): Flow<Result<Boolean>> = flow {
+        val user = _currentUser.value ?: return@flow emit(Result.failure(Exception("Not logged in")))
+        val updatedUser = user.copy(verificationStatus = "PENDING", isVerified = false)
+        try {
+            db.collection("users").document(user.id).set(
+                mapOf(
+                    "verificationStatus" to "PENDING",
+                    "verificationDocType" to docType,
+                    "verificationRequestedAt" to System.currentTimeMillis(),
+                    "isVerified" to false
+                ),
+                SetOptions.merge()
+            ).await()
+            _currentUser.value = updatedUser
+            emit(Result.success(true))
+        } catch (e: Exception) { emit(Result.failure(e)) }
     }
+
+    fun uploadIdDocument(type: String): Flow<Result<Boolean>> = submitVerificationRequest(type)
 
     // --- Jobs ---
 

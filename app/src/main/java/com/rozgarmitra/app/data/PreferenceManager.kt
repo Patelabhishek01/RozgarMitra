@@ -31,6 +31,14 @@ class PreferenceManager(context: Context) {
         return try { ThemeMode.valueOf(name) } catch (e: Exception) { null }
     }
 
+    fun setNotificationsEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean("notifications_enabled", enabled).apply()
+    }
+
+    fun getNotificationsEnabled(): Boolean {
+        return prefs.getBoolean("notifications_enabled", true)
+    }
+
     fun clear() {
         prefs.edit().clear().apply()
     }

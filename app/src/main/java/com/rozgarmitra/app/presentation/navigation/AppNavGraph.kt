@@ -17,6 +17,7 @@ import com.rozgarmitra.app.presentation.main.MainHomeScreen
 import com.rozgarmitra.app.presentation.owner.*
 import com.rozgarmitra.app.presentation.profile.MyApplicationsScreen
 import com.rozgarmitra.app.presentation.profile.MyProfessionsScreen
+import com.rozgarmitra.app.presentation.settings.HelpSupportScreen
 import com.rozgarmitra.app.presentation.settings.SettingsScreen
 import com.rozgarmitra.app.presentation.splash.SplashScreen
 import com.rozgarmitra.app.presentation.worker.*
@@ -100,8 +101,13 @@ fun AppNavGraph() {
             SettingsScreen(
                 onBackClick = { navController.popBackStack() },
                 onNavigateToLanguage = { navController.navigate(Screen.LanguageSelect.route) },
-                onNavigateToProfessions = { navController.navigate(Screen.MyProfessions.route) }
+                onNavigateToProfessions = { navController.navigate(Screen.MyProfessions.route) },
+                onNavigateToHelpSupport = { navController.navigate(Screen.HelpSupport.route) }
             )
+        }
+
+        composable(Screen.HelpSupport.route) {
+            HelpSupportScreen(onBackClick = { navController.popBackStack() })
         }
 
         composable(Screen.MyProfessions.route) {
@@ -213,6 +219,7 @@ fun AppNavGraph() {
                 onSettingsClick = { navController.navigate(Screen.Settings.route) },
                 onProfessionsClick = { navController.navigate(Screen.MyProfessions.route) },
                 onApplicationsClick = { navController.navigate(Screen.MyApplications.route) },
+                onHelpSupportClick = { navController.navigate(Screen.HelpSupport.route) },
                 onCompleteProfileClick = { navController.navigate(Screen.LabourDetails.route) },
                 onLogoutClick = {
                     RozgarRepository.logout()
@@ -235,6 +242,7 @@ fun AppNavGraph() {
                     navController.navigate(Screen.Chat.createRoute(threadId))
                 },
                 onSettingsClick = { navController.navigate(Screen.Settings.route) },
+                onHelpCenterClick = { navController.navigate(Screen.HelpSupport.route) },
                 onCompleteProfileClick = { navController.navigate(Screen.OwnerDetails.route) },
                 onLogoutClick = {
                     RozgarRepository.logout()

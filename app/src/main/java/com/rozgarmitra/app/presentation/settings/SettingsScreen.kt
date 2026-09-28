@@ -10,25 +10,34 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.rozgarmitra.app.data.Role
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.data.ThemeMode
 import com.rozgarmitra.app.ui.theme.*
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onBackClick: () -> Unit,
     onNavigateToLanguage: () -> Unit,
-    onNavigateToProfessions: () -> Unit
+    onNavigateToProfessions: () -> Unit,
+    onNavigateToHelpSupport: () -> Unit = {}
 ) {
+    val currentUser by RozgarRepository.currentUser.collectAsStateWithLifecycle()
     val themeMode by RozgarRepository.themeMode.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
+
     var showThemeDialog by remember { mutableStateOf(false) }
+    var showEditNameDialog by remember { mutableStateOf(false) }
+    var showNotificationDialog by remember { mutableStateOf(false) }
+    var showAboutDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = DarkBackground,
@@ -57,18 +66,28 @@ fun SettingsScreen(
             item { SettingsSectionHeader("Account") }
             item {
                 SettingsItem(
-                    icon = Icons.Filled.Person,
-                    title = "My Professions",
-                    subtitle = "Manage your work categories",
-                    onClick = onNavigateToProfessions
+                    icon = Icons.Filled.Edit,
+                    title = "Edit Profile Name",
+                    subtitle = currentUser?.name?.ifBlank { "Set your display name" } ?: "Set your display name",
+                    onClick = { showEditNameDialog = true }
                 )
+            }
+            if (currentUser?.role == Role.LABOUR) {
+                item {
+                    SettingsItem(
+                        icon = Icons.Filled.Person,
+                        title = "My Professions",
+                        subtitle = "Manage your work categories & wage",
+                        onClick = onNavigateToProfessions
+                    )
+                }
             }
             item {
                 SettingsItem(
                     icon = Icons.Filled.Lock,
-                    title = "Login & Security",
-                    subtitle = "Phone number, verification status",
-                    onClick = { /* TODO */ }
+                    title = "Account Details",
+                    subtitle = "Role: ${currentUser?.role?.name ?: "Guest"} • ${currentUser?.phone?.ifBlank { currentUser?.id } ?: "Logged in"}",
+                    onClick = { showEditNameDialog = true }
                 )
             }
 
@@ -77,7 +96,7 @@ fun SettingsScreen(
                 SettingsItem(
                     icon = Icons.Filled.Translate,
                     title = "Language",
-                    subtitle = "Select your preferred language",
+                    subtitle = "Current: ${currentUser?.language ?: "English"}",
                     onClick = onNavigateToLanguage
                 )
             }
@@ -85,7 +104,7 @@ fun SettingsScreen(
                 SettingsItem(
                     icon = Icons.Filled.Palette,
                     title = "Appearance",
-                    subtitle = "Light, Dark, or System",
+                    subtitle = "Mode: ${themeMode.name}",
                     onClick = { showThemeDialog = true }
                 )
             }
@@ -93,24 +112,26 @@ fun SettingsScreen(
                 SettingsItem(
                     icon = Icons.Filled.Notifications,
                     title = "Notifications",
-                    subtitle = "Manage alerts and updates",
-                    onClick = { /* TODO */ }
+                    subtitle = if (currentUser?.notificationsEnabled == false) "Disabled" else "Enabled",
+                    onClick = { showNotificationDialog = true }
                 )
             }
 
-            item { SettingsSectionHeader("Support") }
+            item { SettingsSectionHeader("Support & Info") }
             item {
                 SettingsItem(
                     icon = Icons.Filled.Help,
                     title = "Help & FAQ",
-                    onClick = { /* TODO */ }
+                    subtitle = "Guides and common questions",
+                    onClick = onNavigateToHelpSupport
                 )
             }
             item {
                 SettingsItem(
                     icon = Icons.Filled.Email,
                     title = "Contact Support",
-                    onClick = { /* TODO */ }
+                    subtitle = "Email helpline and phone support",
+                    onClick = onNavigateToHelpSupport
                 )
             }
 
@@ -119,17 +140,99 @@ fun SettingsScreen(
                 SettingsItem(
                     icon = Icons.Filled.Info,
                     title = "About RozgarMitra",
-                    onClick = { /* TODO */ }
-                )
-            }
-            item {
-                SettingsItem(
-                    icon = Icons.Filled.Description,
-                    title = "Terms & Conditions",
-                    onClick = { /* TODO */ }
+                    subtitle = "Version 1.0",
+                    onClick = { showAboutDialog = true }
                 )
             }
         }
+    }
+
+    if (showEditNameDialog) {
+        var nameInput by remember { mutableStateOf(currentUser?.name ?: "") }
+        var isSaving by remember { mutableStateOf(false) }
+
+        AlertDialog(
+            containerColor = DarkSurfaceElevated,
+            onDismissRequest = { if (!isSaving) showEditNameDialog = false },
+            title = { Text("Edit Profile Name", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    Text("Enter your display name. This will be visible to other users.", fontSize = 13.sp, color = TextSecondary)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = nameInput,
+                        onValueChange = { nameInput = it },
+                        label = { Text("Full Name", color = TextSecondary) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryBlue,
+                            unfocusedBorderColor = BorderStrokeColor,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (nameInput.isNotBlank()) {
+                            isSaving = true
+                            scope.launch {
+                                RozgarRepository.updateProfileName(nameInput.trim()).collectLatest {
+                                    isSaving = false
+                                    showEditNameDialog = false
+                                }
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
+                ) {
+                    Text(if (isSaving) "Saving..." else "Save", color = TextPrimary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditNameDialog = false }) {
+                    Text("Cancel", color = TextSecondary)
+                }
+            }
+        )
+    }
+
+    if (showNotificationDialog) {
+        var enabledState by remember { mutableStateOf(currentUser?.notificationsEnabled != false) }
+
+        AlertDialog(
+            containerColor = DarkSurfaceElevated,
+            onDismissRequest = { showNotificationDialog = false },
+            title = { Text("In-App Notification Settings", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            text = {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("In-App Notifications", fontWeight = FontWeight.Bold, color = TextPrimary)
+                        Text("Receive application updates & chat alerts", fontSize = 12.sp, color = TextSecondary)
+                    }
+                    Switch(
+                        checked = enabledState,
+                        onCheckedChange = {
+                            enabledState = it
+                            scope.launch {
+                                RozgarRepository.setNotificationsEnabled(it).collectLatest {}
+                            }
+                        }
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showNotificationDialog = false }) {
+                    Text("Done", color = AccentCyan)
+                }
+            }
+        )
     }
 
     if (showThemeDialog) {
@@ -139,6 +242,30 @@ fun SettingsScreen(
             onSelect = { mode ->
                 RozgarRepository.setTheme(mode)
                 showThemeDialog = false
+            }
+        )
+    }
+
+    if (showAboutDialog) {
+        AlertDialog(
+            containerColor = DarkSurfaceElevated,
+            onDismissRequest = { showAboutDialog = false },
+            title = { Text("RozgarMitra", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    Text("Version 1.0 (Direct Release)", color = AccentCyan, fontSize = 13.sp)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Connecting local daily wage workers with project owners efficiently.",
+                        color = TextSecondary,
+                        fontSize = 13.sp
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showAboutDialog = false }) {
+                    Text("OK", color = PrimaryBlue)
+                }
             }
         )
     }
@@ -227,4 +354,3 @@ fun ThemeOption(
         Text(label, color = TextPrimary)
     }
 }
-

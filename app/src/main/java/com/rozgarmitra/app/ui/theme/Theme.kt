@@ -57,21 +57,22 @@ private val PremiumLightColorScheme = lightColorScheme(
 
 @Composable
 fun RozgarMitraTheme(
-    darkTheme: Boolean = true, // Default to sleek tech dark UI
-    dynamicColor: Boolean = false, // Disable wallpaper override to enforce brand theme
+    darkTheme: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = PremiumDarkColorScheme
+    val colorScheme = if (darkTheme) PremiumDarkColorScheme else PremiumLightColorScheme
     val view = LocalView.current
     
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = DarkBackground.toArgb()
-            window.navigationBarColor = DarkBackground.toArgb()
+            val bgColor = if (darkTheme) DarkBackground else Color(0xFF0F172A)
+            window.statusBarColor = bgColor.toArgb()
+            window.navigationBarColor = bgColor.toArgb()
             val insetsController = WindowCompat.getInsetsController(window, view)
-            insetsController.isAppearanceLightStatusBars = false
-            insetsController.isAppearanceLightNavigationBars = false
+            insetsController.isAppearanceLightStatusBars = !darkTheme
+            insetsController.isAppearanceLightNavigationBars = !darkTheme
         }
     }
 
