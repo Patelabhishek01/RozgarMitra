@@ -929,6 +929,11 @@ object RozgarRepository {
             return@flow emit(Result.failure(Exception("Unauthorized: Only job owner can reject applicants")))
         }
 
+        if (app.status == ApplicationStatus.REJECTED) {
+            emit(Result.success(true))
+            return@flow
+        }
+
         try {
             db.collection("applications").document(applicationId).update("status", ApplicationStatus.REJECTED.name).await()
 
