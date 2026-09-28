@@ -10,7 +10,7 @@ val PrimaryContainer = Color(0xFF1E1B4B)   // Subdued Indigo Tint
 val SecondaryPurple = Color(0xFF8B5CF6)     // Electric Purple
 val SecondaryTeal = Color(0xFF06B6D4)       // Neon Teal
 
-val DarkBackground = Color(0xFF0B0F17)      // Deepest Charcoal
+val DarkBackground = Color(0xFF0F172A)      // Dark Navy Slate Background
 val DarkSurface = Color(0xFF1E293B)         // Slate Card Surface
 val DarkSurfaceVariant = Color(0xFF111827)  // Secondary Surface
 val BorderStrokeColor = Color(0xFF334155)   // Subtle Crisp Border

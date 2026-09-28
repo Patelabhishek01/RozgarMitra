@@ -35,19 +35,20 @@ fun SplashScreen(
 
     LaunchedEffect(Unit) {
         startAnimation = true
-        delay(2400) // Single unified ~2.4s total splash display
+        delay(2500) // ~2.5s total custom splash display timing
         onSplashFinished(isLanguageSelected)
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBackground),
+            .background(Color(0xFF0F172A)), // Matching dark navy window background
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(horizontal = 24.dp)
         ) {
             AnimatedVisibility(
                 visible = startAnimation,
@@ -60,11 +61,11 @@ fun SplashScreen(
                     // Circular Logo Symbol Box
                     Box(
                         modifier = Modifier
-                            .size(120.dp)
+                            .size(130.dp)
                             .clip(CircleShape)
                             .background(Color.White)
-                            .border(2.dp, PrimaryBlue.copy(alpha = 0.4f), CircleShape)
-                            .padding(12.dp),
+                            .border(2.dp, Color(0xFF38BDF8).copy(alpha = 0.5f), CircleShape)
+                            .padding(14.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
@@ -75,36 +76,68 @@ fun SplashScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(28.dp))
 
-                    // Branding Text
+                    // RozgarMitra wordmark
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Rozgar",
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.Black,
+                            color = Color(0xFF38BDF8), // Cyan / Sky Blue
+                            letterSpacing = 1.sp,
+                            fontSize = 34.sp
+                        )
+                        Text(
+                            text = "Mitra",
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.Black,
+                            color = Color(0xFF34D399), // Emerald Green
+                            letterSpacing = 1.sp,
+                            fontSize = 34.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // JOBS • WORKERS • OPPORTUNITIES
                     Text(
-                        text = "RozgarMitra",
-                        style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.Black,
-                        color = TextPrimary,
-                        letterSpacing = 2.sp
+                        text = "JOBS  •  WORKERS  •  OPPORTUNITIES",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF94A3B8), // Crisp slate grey
+                        letterSpacing = 1.5.sp,
+                        fontSize = 12.sp
                     )
-                    
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // "Bridging Hands, Building Future"
                     Text(
                         text = "Bridging Hands, Building Future",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = AccentCyan,
-                        modifier = Modifier.padding(top = 4.dp)
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFFE2E8F0), // Soft off-white high contrast
+                        letterSpacing = 0.5.sp,
+                        fontSize = 15.sp
                     )
                 }
             }
         }
-        
-        // Bottom Tagline
+
+        // Bottom Tagline: "Made for Bharat 🇮🇳"
         Text(
             text = "Made for Bharat 🇮🇳",
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
-            color = TextSecondary,
+            color = Color(0xFF94A3B8),
+            fontSize = 14.sp,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp)
+                .padding(bottom = 36.dp)
         )
     }
 }
+
