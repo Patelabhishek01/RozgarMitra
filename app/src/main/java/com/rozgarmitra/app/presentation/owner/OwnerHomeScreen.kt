@@ -517,6 +517,7 @@ fun OwnerPostJobTab(
     var isLoading by remember { mutableStateOf(false) }
     var postError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     // Form states
     var category by remember { mutableStateOf("") }
@@ -683,7 +684,6 @@ fun OwnerPostJobTab(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text("Work Location", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
-                        val context = LocalContext.current
                         TextButton(
                             onClick = {
                                 isLocatingLocation = true
@@ -995,36 +995,45 @@ fun OwnerPostJobTab(
                         if (step < 5) {
                             step++
                         } else {
-                            // Publish job flow
-                            isLoading = true
-                            postError = null
-                            val perks = mutableListOf<String>()
-                            if (perkFood) perks.add("Food Provided")
-                            if (perkAccommodation) perks.add("Accommodation Provided")
-                            if (perkTransport) perks.add("Transport Provided")
-
-                            val flow = RozgarRepository.postJob(
-                                title = title,
-                                category = category,
-                                description = description,
-                                location = location,
-                                latitude = latitude,
-                                longitude = longitude,
-                                date = date,
-                                startTime = startTime,
-                                duration = "$durationDays Days",
-                                numberOfWorkersRequired = workersRequired,
-                                wage = wage.toIntOrNull() ?: 0,
-                                wageType = wageType,
-                                days = durationDays,
-                                hours = hoursPerDay,
-                                perks = perks,
-                                difficulty = difficulty,
-                                skills = skillsRequired.split(",").map { it.trim() }.filter { it.isNotBlank() },
-                                urgent = isUrgent
-                            )
                             scope.launch {
-                                flow.collect { res ->
+                                isLoading = true
+                                postError = null
+                                var jobLat = latitude
+                                var jobLng = longitude
+                                if (jobLat == 0.0 && jobLng == 0.0 && location.isNotBlank()) {
+                                    val coords = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                        LocationHelper.getCoordinatesFromAddress(context, location.trim())
+                                    }
+                                    if (coords != null) {
+                                        jobLat = coords.first
+                                        jobLng = coords.second
+                                    }
+                                }
+                                val perks = mutableListOf<String>()
+                                if (perkFood) perks.add("Food Provided")
+                                if (perkAccommodation) perks.add("Accommodation Provided")
+                                if (perkTransport) perks.add("Transport Provided")
+
+                                RozgarRepository.postJob(
+                                    title = title,
+                                    category = category,
+                                    description = description,
+                                    location = location,
+                                    latitude = jobLat,
+                                    longitude = jobLng,
+                                    date = date,
+                                    startTime = startTime,
+                                    duration = "$durationDays Days",
+                                    numberOfWorkersRequired = workersRequired,
+                                    wage = wage.toIntOrNull() ?: 0,
+                                    wageType = wageType,
+                                    days = durationDays,
+                                    hours = hoursPerDay,
+                                    perks = perks,
+                                    difficulty = difficulty,
+                                    skills = skillsRequired.split(",").map { it.trim() }.filter { it.isNotBlank() },
+                                    urgent = isUrgent
+                                ).collect { res ->
                                     isLoading = false
                                     res.fold(
                                         onSuccess = {

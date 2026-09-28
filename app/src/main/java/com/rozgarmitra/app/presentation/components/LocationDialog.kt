@@ -30,7 +30,9 @@ import com.rozgarmitra.app.data.LocationData
 import com.rozgarmitra.app.data.LocationHelper
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.ui.theme.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -230,13 +232,20 @@ fun LocationSelectionDialog(
                 onClick = {
                     RozgarRepository.setSearchRadius(selectedRadius)
                     if (manualLocationText.isNotBlank()) {
-                        val currentLoc = userLocation
-                        val updatedLoc = LocationData(
-                            latitude = currentLoc?.latitude ?: 0.0,
-                            longitude = currentLoc?.longitude ?: 0.0,
-                            addressName = manualLocationText.trim()
-                        )
-                        RozgarRepository.updateUserLocation(updatedLoc)
+                        scope.launch(Dispatchers.IO) {
+                            val coords = LocationHelper.getCoordinatesFromAddress(context, manualLocationText.trim())
+                            val lat = coords?.first ?: (userLocation?.latitude ?: 0.0)
+                            val lng = coords?.second ?: (userLocation?.longitude ?: 0.0)
+                            val updatedLoc = LocationData(
+                                latitude = lat,
+                                longitude = lng,
+                                addressName = manualLocationText.trim()
+                            )
+                            withContext(Dispatchers.Main) {
+                                RozgarRepository.updateUserLocation(updatedLoc)
+                                RozgarRepository.recalculateJobDistances()
+                            }
+                        }
                     }
                     onDismiss()
                 },

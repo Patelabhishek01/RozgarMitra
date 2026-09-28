@@ -212,11 +212,32 @@ fun LabourHomeFeedTab(onJobClick: (String) -> Unit) {
 
     var showLocationDialog by remember { mutableStateOf(false) }
 
+    val context = androidx.compose.ui.platform.LocalContext.current
     val displayLocation = userLocationData?.addressName?.ifBlank { "Location Available" } ?: "Select Location"
-
     val isLocationAvailable = userLocationData != null && (userLocationData?.latitude != 0.0 || userLocationData?.longitude != 0.0)
+
+    LaunchedEffect(Unit) {
+        if (userLocationData == null) {
+            val finePerm = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION)
+            val coarsePerm = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION)
+            if (finePerm == android.content.pm.PackageManager.PERMISSION_GRANTED || coarsePerm == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                val locData = LocationHelper.getCurrentLocation(context)
+                if (locData != null) {
+                    RozgarRepository.updateUserLocation(locData)
+                    RozgarRepository.recalculateJobDistances()
+                }
+            }
+        }
+    }
+
     val filteredJobs = jobs.filter { job ->
-        searchRadiusKm == 0.0 || !isLocationAvailable || job.distanceKm <= searchRadiusKm
+        if (searchRadiusKm == 0.0) {
+            true
+        } else if (!isLocationAvailable) {
+            true
+        } else {
+            job.distanceKm > 0.0 && job.distanceKm <= searchRadiusKm
+        }
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
