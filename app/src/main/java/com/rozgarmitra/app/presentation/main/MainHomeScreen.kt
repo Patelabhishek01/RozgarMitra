@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -52,6 +53,7 @@ fun MainHomeScreen(
 
     val isOffline by RozgarRepository.isOffline.collectAsStateWithLifecycle()
     val notifications by RozgarRepository.notifications.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
     
     var showNotifDialog by remember { mutableStateOf(false) }
 
@@ -164,7 +166,12 @@ fun MainHomeScreen(
                     if (notif.relatedJobId.isNotBlank()) {
                         onNavigateToJobDetails(notif.relatedJobId)
                     }
-                    RozgarRepository.markNotificationRead(notif.id)
+                    scope.launch {
+                        val res = RozgarRepository.markNotificationRead(notif.id)
+                        if (res.isFailure) {
+                            android.util.Log.e("MainHomeScreen", "Failed to mark notification read in Firestore: ${notif.id}", res.exceptionOrNull())
+                        }
+                    }
                 } catch (e: Exception) {
                     android.util.Log.e("MainHomeScreen", "Failed to navigate for notification: ${notif.id}", e)
                 }

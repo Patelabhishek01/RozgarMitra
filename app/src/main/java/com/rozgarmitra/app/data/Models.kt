@@ -1,5 +1,7 @@
 package com.rozgarmitra.app.data
 
+import com.google.firebase.firestore.PropertyName
+
 enum class Role {
     LABOUR, OWNER
 }
@@ -154,6 +156,7 @@ data class Notification(
     val relatedApplicationId: String = "",
     val relatedThreadId: String = "",
     val timestamp: Long = System.currentTimeMillis(),
+    @get:PropertyName("isRead") @field:PropertyName("isRead")
     val isRead: Boolean = false
 )
 

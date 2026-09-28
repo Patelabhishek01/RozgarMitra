@@ -363,7 +363,17 @@ object RozgarRepository {
                 }
                 if (snapshots != null) {
                     val userNotifs = snapshots.documents.mapNotNull { doc ->
-                        try { doc.toObject(Notification::class.java)?.copy(id = doc.id) } catch (err: Exception) { null }
+                        try {
+                            val notif = doc.toObject(Notification::class.java)
+                            val isReadBool = doc.getBoolean("isRead")
+                                ?: doc.getBoolean("read")
+                                ?: notif?.isRead
+                                ?: false
+                            notif?.copy(id = doc.id, isRead = isReadBool)
+                        } catch (err: Exception) {
+                            Log.e("Firebase", "Error parsing notification ${doc.id}", err)
+                            null
+                        }
                     }
                     .filter { it.recipientUserId == uid && !it.isRead }
                     .sortedByDescending { it.timestamp }
@@ -1086,19 +1096,19 @@ object RozgarRepository {
         relatedThreadId: String = ""
     ) {
         val notifId = "notif_${UUID.randomUUID()}"
-        val notif = Notification(
-            id = notifId,
-            recipientUserId = recipientUserId,
-            type = type,
-            title = title,
-            message = message,
-            relatedJobId = relatedJobId,
-            relatedApplicationId = relatedApplicationId,
-            relatedThreadId = relatedThreadId,
-            timestamp = System.currentTimeMillis(),
-            isRead = false
+        val notifMap = hashMapOf<String, Any>(
+            "id" to notifId,
+            "recipientUserId" to recipientUserId,
+            "type" to type,
+            "title" to title,
+            "message" to message,
+            "relatedJobId" to relatedJobId,
+            "relatedApplicationId" to relatedApplicationId,
+            "relatedThreadId" to relatedThreadId,
+            "timestamp" to System.currentTimeMillis(),
+            "isRead" to false
         )
-        db.collection("notifications").document(notifId).set(notif)
+        db.collection("notifications").document(notifId).set(notifMap)
             .addOnFailureListener { Log.e("Firebase", "Send notification failed", it) }
     }
 
@@ -1107,11 +1117,18 @@ object RozgarRepository {
         sendNotificationToUser(user.id, NotificationType.JOB_STATUS_CHANGED.name, title, msg)
     }
 
-    fun markNotificationRead(id: String) {
-        if (id.isBlank()) return
-        _notifications.value = _notifications.value.filter { it.id != id }
-        db.collection("notifications").document(id).update("isRead", true)
-            .addOnFailureListener { Log.e("Firebase", "Mark notification read failed", it) }
+    suspend fun markNotificationRead(id: String): Result<Unit> {
+        if (id.isBlank()) return Result.failure(IllegalArgumentException("Notification ID cannot be blank"))
+        return try {
+            db.collection("notifications").document(id)
+                .update("isRead", true)
+                .await()
+            _notifications.value = _notifications.value.filter { it.id != id }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("Firebase", "Failed to mark notification $id as read in Firestore", e)
+            Result.failure(e)
+        }
     }
 
     // --- Chat & Conversations ---

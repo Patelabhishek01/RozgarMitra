@@ -15,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 
 import androidx.compose.runtime.*
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,6 +49,7 @@ fun LabourHomeScreen(
     onLogoutClick: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(0) }
+    val scope = rememberCoroutineScope()
     
     val currentUser by RozgarRepository.currentUser.collectAsStateWithLifecycle()
     val isOffline by RozgarRepository.isOffline.collectAsStateWithLifecycle()
@@ -181,7 +183,12 @@ fun LabourHomeScreen(
                             }
                         }
                     }
-                    RozgarRepository.markNotificationRead(notif.id)
+                    scope.launch {
+                        val res = RozgarRepository.markNotificationRead(notif.id)
+                        if (res.isFailure) {
+                            android.util.Log.e("LabourHomeScreen", "Failed to mark notification read in Firestore: ${notif.id}", res.exceptionOrNull())
+                        }
+                    }
                 } catch (e: Exception) {
                     android.util.Log.e("LabourHomeScreen", "Failed to navigate for notification: ${notif.id}", e)
                 }
