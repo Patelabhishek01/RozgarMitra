@@ -1,5 +1,6 @@
 package com.rozgarmitra.app.presentation.splash
 
+import android.app.Activity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -16,11 +17,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
 import com.rozgarmitra.app.R
 import com.rozgarmitra.app.data.RozgarRepository
 import kotlinx.coroutines.delay
@@ -31,10 +35,23 @@ fun SplashScreen(
 ) {
     var startAnimation by remember { mutableStateOf(false) }
     val isLanguageSelected by RozgarRepository.isLanguageSelected.collectAsState()
+    val view = LocalView.current
+
+    // Keep status bar and navigation bar clean white with dark icons during splash to prevent any flash
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            window.statusBarColor = android.graphics.Color.WHITE
+            window.navigationBarColor = android.graphics.Color.WHITE
+            val insetsController = WindowCompat.getInsetsController(window, view)
+            insetsController.isAppearanceLightStatusBars = true
+            insetsController.isAppearanceLightNavigationBars = true
+        }
+    }
 
     LaunchedEffect(Unit) {
         startAnimation = true
-        delay(2000)
+        delay(2500) // Single unified ~2.5s splash duration
         onSplashFinished(isLanguageSelected)
     }
 
@@ -50,9 +67,9 @@ fun SplashScreen(
         ) {
             AnimatedVisibility(
                 visible = startAnimation,
-                enter = fadeIn(animationSpec = tween(800)) + scaleIn(
-                    initialScale = 0.85f,
-                    animationSpec = tween(800)
+                enter = fadeIn(animationSpec = tween(600)) + scaleIn(
+                    initialScale = 0.90f,
+                    animationSpec = tween(600)
                 )
             ) {
                 Column(
@@ -71,7 +88,7 @@ fun SplashScreen(
                             contentScale = ContentScale.Fit,
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(16.dp)
+                                .padding(12.dp)
                         )
                     }
 
