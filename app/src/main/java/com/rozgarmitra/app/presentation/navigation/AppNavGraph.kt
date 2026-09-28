@@ -51,8 +51,17 @@ fun AppNavGraph() {
         composable(Screen.LanguageSelect.route) {
             LanguageSelectScreen(
                 onLanguageSelected = {
-                    navController.navigate(Screen.MainHome.route) {
-                        popUpTo(Screen.LanguageSelect.route) { inclusive = true }
+                    if (navController.previousBackStackEntry != null) {
+                        navController.popBackStack()
+                    } else {
+                        val destination = when {
+                            currentUser != null && currentUser.role == Role.LABOUR -> Screen.WorkerHome.route
+                            currentUser != null && currentUser.role == Role.OWNER -> Screen.OwnerHome.route
+                            else -> Screen.MainHome.route
+                        }
+                        navController.navigate(destination) {
+                            popUpTo(Screen.LanguageSelect.route) { inclusive = true }
+                        }
                     }
                 }
             )
@@ -371,9 +380,7 @@ fun AppNavGraph() {
                     navController.popBackStack()
                 },
                 onSubmitSuccess = {
-                    navController.navigate(Screen.OwnerHome.route) {
-                        popUpTo(Screen.Ratings.route) { inclusive = true }
-                    }
+                    navController.popBackStack()
                 }
             )
         }

@@ -19,7 +19,7 @@ import java.util.Locale
 data class LocationData(
     val latitude: Double,
     val longitude: Double,
-    val addressName: String
+    val addressName: String,
 )
 
 object LocationHelper {
@@ -51,7 +51,7 @@ object LocationHelper {
 
             var location: Location? = try {
                 fusedClient.getCurrentLocation(priority, cts.token).await()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 null
             }
 
@@ -59,7 +59,7 @@ object LocationHelper {
             if (location == null) {
                 location = try {
                     fusedClient.lastLocation.await()
-                } catch (ex: Exception) {
+                } catch (_: Exception) {
                     null
                 }
             }
@@ -74,14 +74,13 @@ object LocationHelper {
             } else {
                 null
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
+        } catch (_: Exception) {
             null
         }
     }
 
     fun getAddressFromCoordinates(context: Context, lat: Double, lng: Double): String {
-        if (lat == 0.0 && lng == 0.0) return "Location Not Available"
+        if ((lat == 0.0) && (lng == 0.0)) return "Location Not Available"
         return try {
             val geocoder = Geocoder(context, Locale.getDefault())
             @Suppress("DEPRECATION")

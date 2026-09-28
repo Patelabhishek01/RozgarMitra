@@ -37,7 +37,7 @@ import kotlinx.coroutines.withContext
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun LocationSelectionDialog(
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -46,8 +46,8 @@ fun LocationSelectionDialog(
     val currentRadius by RozgarRepository.searchRadiusKm.collectAsState()
     
     var manualLocationText by remember { mutableStateOf(userLocation?.addressName ?: "") }
-    var selectedRadius by remember { mutableStateOf(currentRadius) }
-    var isLocating by remember { mutableStateOf(false) }
+    var selectedRadius by remember { mutableDoubleStateOf(currentRadius) }
+    var isLocating by remember { mutableStateOf(value = false) }
     var locationError by remember { mutableStateOf<String?>(null) }
     var isSettingsRequired by remember { mutableStateOf(false) }
 
@@ -63,8 +63,8 @@ fun LocationSelectionDialog(
                 manualLocationText = locData.addressName
             } else {
                 val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
-                val isGpsOn = locationManager?.isProviderEnabled(LocationManager.GPS_PROVIDER) == true ||
-                        locationManager?.isProviderEnabled(LocationManager.NETWORK_PROVIDER) == true
+                val isGpsOn = (locationManager?.isProviderEnabled(LocationManager.GPS_PROVIDER) == true) ||
+                        (locationManager?.isProviderEnabled(LocationManager.NETWORK_PROVIDER) == true)
                 if (!isGpsOn) {
                     locationError = "Location (GPS) is disabled on your device. Please turn on Location in settings."
                     isSettingsRequired = true
@@ -150,7 +150,7 @@ fun LocationSelectionDialog(
                                 try {
                                     val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
                                     context.startActivity(intent)
-                                } catch (e: Exception) {
+                                } catch (_: Exception) {
                                     val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                                         data = Uri.fromParts("package", context.packageName, null)
                                     }

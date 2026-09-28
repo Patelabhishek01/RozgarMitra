@@ -28,6 +28,9 @@ import com.rozgarmitra.app.presentation.components.OfflineBanner
 import com.rozgarmitra.app.presentation.components.SearchTab
 import com.rozgarmitra.app.ui.theme.*
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.runtime.saveable.rememberSaveable
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainHomeScreen(
@@ -40,7 +43,10 @@ fun MainHomeScreen(
     onNavigateToWorkerHome: () -> Unit,
     onNavigateToOwnerHome: () -> Unit
 ) {
-    var selectedTab by remember { mutableStateOf(0) }
+    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+    BackHandler(enabled = selectedTab != 0) {
+        selectedTab = 0
+    }
     val currentUser by RozgarRepository.currentUser.collectAsStateWithLifecycle()
     
     // Auto-redirect if logged in

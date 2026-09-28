@@ -13,6 +13,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.activity.compose.BackHandler
+import androidx.compose.runtime.saveable.rememberSaveable
 
 import androidx.compose.runtime.*
 import kotlinx.coroutines.launch
@@ -49,7 +51,10 @@ fun LabourHomeScreen(
     onCompleteProfileClick: () -> Unit = {},
     onLogoutClick: () -> Unit
 ) {
-    var selectedTab by remember { mutableStateOf(0) }
+    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+    BackHandler(enabled = selectedTab != 0) {
+        selectedTab = 0
+    }
     val scope = rememberCoroutineScope()
     
     val currentUser by RozgarRepository.currentUser.collectAsStateWithLifecycle()

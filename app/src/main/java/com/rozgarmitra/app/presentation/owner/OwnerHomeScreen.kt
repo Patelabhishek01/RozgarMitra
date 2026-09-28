@@ -37,6 +37,8 @@ import com.rozgarmitra.app.presentation.components.ProfileMenuItem
 import com.rozgarmitra.app.presentation.components.ProfileSection
 import com.rozgarmitra.app.presentation.components.VerifiedBadge
 import com.rozgarmitra.app.presentation.worker.tradesList
+import androidx.activity.compose.BackHandler
+import androidx.compose.runtime.saveable.rememberSaveable
 import com.rozgarmitra.app.ui.theme.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -55,7 +57,10 @@ fun OwnerHomeScreen(
     onApplicationsClick: () -> Unit = {},
     onWorkersHiredClick: () -> Unit = {}
 ) {
-    var selectedTab by remember { mutableStateOf(0) }
+    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+    BackHandler(enabled = selectedTab != 0) {
+        selectedTab = 0
+    }
     val scope = rememberCoroutineScope()
     
     val currentUser by RozgarRepository.currentUser.collectAsStateWithLifecycle()
