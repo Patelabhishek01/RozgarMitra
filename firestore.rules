@@ -33,7 +33,7 @@ service cloud.firestore {
     }
 
     // --- JOBS COLLECTION ---
-    // READ: Public / Unauthenticated users are allowed to browse active jobs
+    // READ: Public / Unauthenticated users allowed to browse jobs
     // CREATE: Authenticated OWNER users (must specify ownerId == auth.uid)
     // UPDATE / DELETE: Authenticated Owner only for their own posted job, ownerId immutable
     match /jobs/{jobId} {
@@ -49,14 +49,32 @@ service cloud.firestore {
     }
 
     // --- USERS COLLECTION ---
-    // User Privacy: Each user can only read/write their own document
+    // User Privacy: User can only read/write their own document
+    // Protection: id, role, isVerified cannot be spoofed by client. verificationStatus can only transition to PENDING.
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      allow create: if request.auth != null && request.auth.uid == userId &&
+        request.resource.data.id == userId &&
+        (request.resource.data.role == "LABOUR" || request.resource.data.role == "OWNER") &&
+        request.resource.data.get("isVerified", false) == false &&
+        (request.resource.data.get("verificationStatus", "") == "" || request.resource.data.get("verificationStatus", "") == "PENDING");
+
+      allow update: if request.auth != null && request.auth.uid == userId &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.role == resource.data.role &&
+        request.resource.data.get("isVerified", false) == resource.data.get("isVerified", false) &&
+        (
+          request.resource.data.get("verificationStatus", "") == resource.data.get("verificationStatus", "") ||
+          (resource.data.get("verificationStatus", "") != "VERIFIED" && request.resource.data.get("verificationStatus", "") == "PENDING")
+        );
+
+      allow delete: if false;
     }
 
     // --- APPLICATIONS COLLECTION ---
-    // READ: Worker (labourId) or Owner (ownerId) related to the application
-    // CREATE: Authenticated worker creating application for themselves with status APPLIED
+    // READ: Worker (labourId) or Owner (ownerId) related to application
+    // CREATE: Authenticated worker creating application for themselves with status APPLIED, validated against job ownerId
     // UPDATE: Owner can update status / chatApproved; Worker can update non-critical fields but cannot alter status to ACCEPTED/REJECTED/COMPLETED or set chatApproved
     // Immutability: ownerId, labourId, jobId, appliedAt cannot be changed
     match /applications/{applicationId} {
@@ -66,7 +84,9 @@ service cloud.firestore {
       allow create: if request.auth != null && 
         request.resource.data.labourId == request.auth.uid &&
         request.resource.data.status == "APPLIED" &&
-        (!("chatApproved" in request.resource.data) || request.resource.data.chatApproved == false);
+        (!("chatApproved" in request.resource.data) || request.resource.data.chatApproved == false) &&
+        exists(/databases/$(database)/documents/jobs/$(request.resource.data.jobId)) &&
+        request.resource.data.ownerId == get(/databases/$(database)/documents/jobs/$(request.resource.data.jobId)).data.ownerId;
         
       allow update: if request.auth != null &&
         request.resource.data.ownerId == resource.data.ownerId &&
@@ -89,29 +109,47 @@ service cloud.firestore {
     }
 
     // --- NOTIFICATIONS COLLECTION ---
-    // Users can read/write their own notifications
+    // Recipient-private read, update, and delete; sender can create to recipient
     match /notifications/{notificationId} {
-      allow read, write: if request.auth != null && 
-        (resource == null || resource.data.recipientUserId == request.auth.uid || request.resource.data.recipientUserId == request.auth.uid);
+      allow read: if request.auth != null && 
+        resource.data.recipientUserId == request.auth.uid;
+
+      allow create: if request.auth != null && 
+        request.resource.data.recipientUserId != "" &&
+        request.resource.data.recipientUserId != request.auth.uid;
+
+      allow update: if request.auth != null && 
+        resource.data.recipientUserId == request.auth.uid &&
+        request.resource.data.recipientUserId == resource.data.recipientUserId &&
+        request.resource.data.id == resource.data.id;
+
+      allow delete: if request.auth != null && 
+        resource.data.recipientUserId == request.auth.uid;
     }
 
     // --- CONVERSATIONS COLLECTION ---
     // Only authorized participants (Owner & Worker) of a valid application can read/create/update conversation
+    // Immutability: ownerId, workerId, jobId, applicationId, participants cannot be altered after creation
     match /conversations/{threadId} {
       allow read: if request.auth != null && 
         (resource.data.ownerId == request.auth.uid || resource.data.workerId == request.auth.uid || request.auth.uid in resource.data.participants) &&
         isValidApplicationChat(resource.data);
+
       allow create: if request.auth != null && 
         (request.resource.data.ownerId == request.auth.uid || request.resource.data.workerId == request.auth.uid || request.auth.uid in request.resource.data.participants) &&
         request.resource.data.participants.hasAll([request.resource.data.ownerId, request.resource.data.workerId]) &&
+        request.resource.data.participants.size() == 2 &&
         isValidApplicationChat(request.resource.data);
+
       allow update: if request.auth != null && 
         (resource.data.ownerId == request.auth.uid || resource.data.workerId == request.auth.uid || request.auth.uid in resource.data.participants) &&
         request.resource.data.ownerId == resource.data.ownerId &&
         request.resource.data.workerId == resource.data.workerId &&
         request.resource.data.jobId == resource.data.jobId &&
         request.resource.data.applicationId == resource.data.applicationId &&
+        request.resource.data.participants == resource.data.participants &&
         isValidApplicationChat(resource.data);
+
       allow delete: if false;
     }
 
@@ -120,21 +158,29 @@ service cloud.firestore {
     match /messages/{messageId} {
       allow read: if request.auth != null && 
         isThreadParticipant(resource.data.threadId);
+
       allow create: if request.auth != null && 
         request.resource.data.senderId == request.auth.uid &&
         isThreadParticipant(request.resource.data.threadId);
+
       allow update, delete: if false;
     }
 
     // --- RATINGS COLLECTION ---
-    // Anyone can read ratings; create restricted to reviewerId == auth.uid & job status COMPLETED & deterministic ID
+    // Anyone can read ratings; create restricted to reviewerId == auth.uid & job status COMPLETED & deterministic ID & participant relationship
     match /ratings/{ratingId} {
       allow read: if true;
+
       allow create: if request.auth != null && 
         request.resource.data.reviewerId == request.auth.uid &&
         ratingId == "rating_" + request.resource.data.jobId + "_" + request.auth.uid &&
         exists(/databases/$(database)/documents/jobs/$(request.resource.data.jobId)) &&
-        get(/databases/$(database)/documents/jobs/$(request.resource.data.jobId)).data.status == "COMPLETED";
+        get(/databases/$(database)/documents/jobs/$(request.resource.data.jobId)).data.status == "COMPLETED" &&
+        (
+          get(/databases/$(database)/documents/jobs/$(request.resource.data.jobId)).data.ownerId == request.auth.uid ||
+          get(/databases/$(database)/documents/jobs/$(request.resource.data.jobId)).data.ownerId == request.resource.data.targetId
+        );
+
       allow update, delete: if false;
     }
   }
