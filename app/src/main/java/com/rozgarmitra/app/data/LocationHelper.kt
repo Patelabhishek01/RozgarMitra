@@ -88,12 +88,14 @@ object LocationHelper {
             val addresses: List<Address>? = geocoder.getFromLocation(lat, lng, 1)
             if (!addresses.isNullOrEmpty()) {
                 val addr = addresses[0]
-                val locality = addr.locality ?: addr.subLocality ?: addr.subAdminArea ?: addr.adminArea
-                val feature = addr.featureName ?: addr.thoroughfare
+                val city = addr.locality ?: addr.subLocality ?: addr.subAdminArea
+                val state = addr.adminArea
+                val fullLine = addr.getAddressLine(0)
                 when {
-                    !locality.isNullOrBlank() && !feature.isNullOrBlank() && feature != locality -> "$feature, $locality"
-                    !locality.isNullOrBlank() -> locality
-                    else -> addr.getAddressLine(0) ?: "${String.format(Locale.US, "%.4f", lat)}, ${String.format(Locale.US, "%.4f", lng)}"
+                    !city.isNullOrBlank() && !state.isNullOrBlank() && city != state -> "$city, $state"
+                    !city.isNullOrBlank() -> city
+                    !fullLine.isNullOrBlank() -> fullLine
+                    else -> "${String.format(Locale.US, "%.4f", lat)}, ${String.format(Locale.US, "%.4f", lng)}"
                 }
             } else {
                 "${String.format(Locale.US, "%.4f", lat)}, ${String.format(Locale.US, "%.4f", lng)}"
