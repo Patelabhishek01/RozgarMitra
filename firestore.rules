@@ -109,22 +109,48 @@ service cloud.firestore {
     }
 
     // --- NOTIFICATIONS COLLECTION ---
-    // Recipient-private read, update, and delete; sender can create to recipient
+    // Recipient-private read, update, and delete; create strictly validated against domain relationships
     match /notifications/{notificationId} {
-      allow read: if request.auth != null && 
+      allow read, update, delete: if request.auth != null && 
         resource.data.recipientUserId == request.auth.uid;
 
-      allow create: if request.auth != null && 
-        request.resource.data.recipientUserId != "" &&
-        request.resource.data.recipientUserId != request.auth.uid;
-
-      allow update: if request.auth != null && 
-        resource.data.recipientUserId == request.auth.uid &&
-        request.resource.data.recipientUserId == resource.data.recipientUserId &&
-        request.resource.data.id == resource.data.id;
-
-      allow delete: if request.auth != null && 
-        resource.data.recipientUserId == request.auth.uid;
+      allow create: if request.auth != null && (
+        // Self-notification
+        request.resource.data.recipientUserId == request.auth.uid ||
+        (
+          request.resource.data.recipientUserId != request.auth.uid &&
+          (
+            // 1. Worker applying for job notifies job owner
+            (
+              request.resource.data.type == "APPLICATION_SUBMITTED" &&
+              exists(/databases/$(database)/documents/jobs/$(request.resource.data.relatedJobId)) &&
+              get(/databases/$(database)/documents/jobs/$(request.resource.data.relatedJobId)).data.ownerId == request.resource.data.recipientUserId
+            ) ||
+            // 2. Owner accepting/rejecting application or approving chat notifies applicant
+            (
+              (request.resource.data.type == "APPLICATION_ACCEPTED" || 
+               request.resource.data.type == "APPLICATION_REJECTED" || 
+               request.resource.data.type == "CHAT_APPROVED") &&
+              exists(/databases/$(database)/documents/applications/$(request.resource.data.relatedApplicationId)) &&
+              get(/databases/$(database)/documents/applications/$(request.resource.data.relatedApplicationId)).data.ownerId == request.auth.uid &&
+              get(/databases/$(database)/documents/applications/$(request.resource.data.relatedApplicationId)).data.labourId == request.resource.data.recipientUserId
+            ) ||
+            // 3. Participant sending a chat message notifies thread recipient
+            (
+              request.resource.data.type == "NEW_MESSAGE" &&
+              exists(/databases/$(database)/documents/conversations/$(request.resource.data.relatedThreadId)) &&
+              request.auth.uid in get(/databases/$(database)/documents/conversations/$(request.resource.data.relatedThreadId)).data.participants &&
+              request.resource.data.recipientUserId in get(/databases/$(database)/documents/conversations/$(request.resource.data.relatedThreadId)).data.participants
+            ) ||
+            // 4. Job status change notification from owner
+            (
+              request.resource.data.type == "JOB_STATUS_CHANGED" &&
+              exists(/databases/$(database)/documents/jobs/$(request.resource.data.relatedJobId)) &&
+              get(/databases/$(database)/documents/jobs/$(request.resource.data.relatedJobId)).data.ownerId == request.auth.uid
+            )
+          )
+        )
+      );
     }
 
     // --- CONVERSATIONS COLLECTION ---
@@ -167,7 +193,7 @@ service cloud.firestore {
     }
 
     // --- RATINGS COLLECTION ---
-    // Anyone can read ratings; create restricted to reviewerId == auth.uid & job status COMPLETED & deterministic ID & participant relationship
+    // Anyone can read ratings; create restricted to reviewerId == auth.uid & job status COMPLETED & deterministic ID & verified owner/worker relationship
     match /ratings/{ratingId} {
       allow read: if true;
 
@@ -177,8 +203,16 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/jobs/$(request.resource.data.jobId)) &&
         get(/databases/$(database)/documents/jobs/$(request.resource.data.jobId)).data.status == "COMPLETED" &&
         (
-          get(/databases/$(database)/documents/jobs/$(request.resource.data.jobId)).data.ownerId == request.auth.uid ||
-          get(/databases/$(database)/documents/jobs/$(request.resource.data.jobId)).data.ownerId == request.resource.data.targetId
+          // Reviewer is Job Owner rating the target worker
+          (
+            get(/databases/$(database)/documents/jobs/$(request.resource.data.jobId)).data.ownerId == request.auth.uid &&
+            request.resource.data.targetId != request.auth.uid
+          ) ||
+          // Reviewer is Worker rating the job owner
+          (
+            get(/databases/$(database)/documents/jobs/$(request.resource.data.jobId)).data.ownerId == request.resource.data.targetId &&
+            request.resource.data.reviewerId != request.resource.data.targetId
+          )
         );
 
       allow update, delete: if false;
