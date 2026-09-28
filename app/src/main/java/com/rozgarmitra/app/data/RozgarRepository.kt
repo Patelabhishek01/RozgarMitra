@@ -369,10 +369,33 @@ object RozgarRepository {
                                 ?: doc.getBoolean("read")
                                 ?: notif?.isRead
                                 ?: false
-                            notif?.copy(id = doc.id, isRead = isReadBool)
+                            notif?.copy(id = doc.id, isRead = isReadBool) ?: Notification(
+                                id = doc.id,
+                                recipientUserId = doc.getString("recipientUserId") ?: "",
+                                type = doc.getString("type") ?: NotificationType.JOB_APPLICATION.name,
+                                title = doc.getString("title") ?: "",
+                                message = doc.getString("message") ?: "",
+                                relatedJobId = doc.getString("relatedJobId") ?: "",
+                                relatedApplicationId = doc.getString("relatedApplicationId") ?: "",
+                                relatedThreadId = doc.getString("relatedThreadId") ?: "",
+                                timestamp = doc.getLong("timestamp") ?: System.currentTimeMillis(),
+                                isRead = isReadBool
+                            )
                         } catch (err: Exception) {
                             Log.e("Firebase", "Error parsing notification ${doc.id}", err)
-                            null
+                            val isReadBool = doc.getBoolean("isRead") ?: doc.getBoolean("read") ?: false
+                            Notification(
+                                id = doc.id,
+                                recipientUserId = doc.getString("recipientUserId") ?: "",
+                                type = doc.getString("type") ?: NotificationType.JOB_APPLICATION.name,
+                                title = doc.getString("title") ?: "",
+                                message = doc.getString("message") ?: "",
+                                relatedJobId = doc.getString("relatedJobId") ?: "",
+                                relatedApplicationId = doc.getString("relatedApplicationId") ?: "",
+                                relatedThreadId = doc.getString("relatedThreadId") ?: "",
+                                timestamp = doc.getLong("timestamp") ?: System.currentTimeMillis(),
+                                isRead = isReadBool
+                            )
                         }
                     }
                     .filter { it.recipientUserId == uid && !it.isRead }
@@ -1261,7 +1284,13 @@ object RozgarRepository {
             return@flow emit(Result.failure(Exception("Unauthorized: You are not a participant of this chat")))
         }
 
-        val receiverId = thread.participants.firstOrNull { it != sender.id } ?: ""
+        val receiverId = if (sender.id == thread.ownerId) {
+            thread.workerId.ifBlank { thread.participants.firstOrNull { it != sender.id } ?: "" }
+        } else if (sender.id == thread.workerId) {
+            thread.ownerId.ifBlank { thread.participants.firstOrNull { it != sender.id } ?: "" }
+        } else {
+            thread.participants.firstOrNull { it != sender.id } ?: ""
+        }
 
         val msgId = "msg_${UUID.randomUUID()}"
         val msg = ChatMessage(
