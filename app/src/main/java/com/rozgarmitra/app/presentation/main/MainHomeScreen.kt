@@ -23,9 +23,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rozgarmitra.app.data.Role
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.data.User
-import com.rozgarmitra.app.presentation.components.HomeFeedTab
-import com.rozgarmitra.app.presentation.components.OfflineBanner
-import com.rozgarmitra.app.presentation.components.SearchTab
+import com.rozgarmitra.app.presentation.components.*
 import com.rozgarmitra.app.ui.theme.*
 
 import androidx.activity.compose.BackHandler
@@ -71,45 +69,47 @@ fun MainHomeScreen(
             }
         },
         bottomBar = {
-            Surface(
-                color = DarkSurface,
-                border = BorderStroke(1.dp, BorderStrokeColor)
-            ) {
-                NavigationBar(
-                    tonalElevation = 0.dp,
-                    containerColor = DarkSurface
-                ) {
-                    val tabs = listOf(
-                        Triple("Home", Icons.Filled.Home, 0),
-                        Triple("Search", Icons.Filled.Search, 1),
-                        Triple("Chats", Icons.Filled.Chat, 2),
-                        Triple("Profile", Icons.Filled.Person, 3)
-                    )
-                    
-                    tabs.forEach { (label, icon, index) ->
-                        NavigationBarItem(
-                            selected = selectedTab == index,
-                            onClick = {
-                                if (index >= 2 && currentUser == null) {
-                                    RozgarRepository.setPendingAction { selectedTab = index }
-                                    onNavigateToLogin()
-                                } else {
-                                    selectedTab = index
-                                }
-                            },
-                            icon = { Icon(icon, contentDescription = label) },
-                            label = { Text(label, fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Medium, fontSize = 12.sp) },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = PrimaryIndigo,
-                                selectedTextColor = PrimaryIndigo,
-                                unselectedIconColor = TextSecondary,
-                                unselectedTextColor = TextSecondary,
-                                indicatorColor = PrimaryIndigo.copy(alpha = 0.15f)
-                            )
-                        )
+            val navItems = listOf(
+                RozgarNavItem(
+                    label = "Home",
+                    icon = Icons.Filled.Home,
+                    selected = selectedTab == 0,
+                    onClick = { selectedTab = 0 }
+                ),
+                RozgarNavItem(
+                    label = "Search",
+                    icon = Icons.Filled.Search,
+                    selected = selectedTab == 1,
+                    onClick = { selectedTab = 1 }
+                ),
+                RozgarNavItem(
+                    label = "Chats",
+                    icon = Icons.Filled.Chat,
+                    selected = selectedTab == 2,
+                    onClick = {
+                        if (currentUser == null) {
+                            RozgarRepository.setPendingAction { selectedTab = 2 }
+                            onNavigateToLogin()
+                        } else {
+                            selectedTab = 2
+                        }
                     }
-                }
-            }
+                ),
+                RozgarNavItem(
+                    label = "Profile",
+                    icon = Icons.Filled.Person,
+                    selected = selectedTab == 3,
+                    onClick = {
+                        if (currentUser == null) {
+                            RozgarRepository.setPendingAction { selectedTab = 3 }
+                            onNavigateToLogin()
+                        } else {
+                            selectedTab = 3
+                        }
+                    }
+                )
+            )
+            RozgarBottomNavBar(items = navItems)
         }
     ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues).fillMaxSize().background(DarkBackground)) {

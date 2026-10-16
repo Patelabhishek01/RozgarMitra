@@ -221,12 +221,14 @@ fun ProfileSection(title: String, content: @Composable ColumnScope.() -> Unit) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileMenuItem(
     icon: ImageVector, 
     title: String, 
     subtitle: String? = null,
     titleColor: Color = TextPrimary,
+    badgeCount: Int = 0,
     onClick: () -> Unit
 ) {
     Row(
@@ -257,6 +259,90 @@ fun ProfileMenuItem(
                 Text(subtitle, fontSize = 12.sp, color = TextSecondary)
             }
         }
+        if (badgeCount > 0) {
+            Badge(
+                containerColor = PrimaryIndigo,
+                modifier = Modifier.padding(end = 8.dp)
+            ) {
+                Text(badgeCount.toString(), color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            }
+        }
         Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = TextMuted, modifier = Modifier.size(20.dp))
     }
 }
+
+data class RozgarNavItem(
+    val label: String,
+    val icon: ImageVector,
+    val selected: Boolean,
+    val badgeCount: Int = 0,
+    val onClick: () -> Unit
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RozgarBottomNavBar(
+    items: List<RozgarNavItem>,
+    modifier: Modifier = Modifier,
+    windowInsets: WindowInsets = NavigationBarDefaults.windowInsets
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = DarkSurface,
+        border = BorderStroke(1.dp, BorderStrokeColor)
+    ) {
+        NavigationBar(
+            tonalElevation = 0.dp,
+            containerColor = DarkSurface,
+            windowInsets = windowInsets
+        ) {
+            items.forEach { item ->
+                NavigationBarItem(
+                    selected = item.selected,
+                    onClick = item.onClick,
+                    icon = {
+                        if (item.badgeCount > 0) {
+                            BadgedBox(
+                                badge = {
+                                    Badge(containerColor = PrimaryIndigo) {
+                                        Text(
+                                            text = item.badgeCount.toString(),
+                                            color = Color.White
+                                        )
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = item.icon,
+                                    contentDescription = item.label,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                        } else {
+                            Icon(
+                                imageVector = item.icon,
+                                contentDescription = item.label,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    },
+                    label = {
+                        Text(
+                            text = item.label,
+                            fontWeight = if (item.selected) FontWeight.Bold else FontWeight.Medium,
+                            fontSize = 12.sp
+                        )
+                    },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = Color.White,
+                        selectedTextColor = Color.White,
+                        unselectedIconColor = TextSecondary,
+                        unselectedTextColor = TextSecondary,
+                        indicatorColor = PrimaryIndigo
+                    )
+                )
+            }
+        }
+    }
+}
+

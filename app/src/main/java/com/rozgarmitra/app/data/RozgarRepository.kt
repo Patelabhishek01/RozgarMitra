@@ -148,25 +148,28 @@ object RozgarRepository {
         val theme = preferenceManager?.getTheme() ?: ThemeMode.SYSTEM
         _themeMode.value = theme
 
-        // Always observe jobs for public and logged in users
-        observeJobs()
+        // Move heavy Firebase/Firestore initialization off the main UI startup critical path
+        scope.launch(Dispatchers.IO) {
+            // Always observe jobs for public and logged in users
+            observeJobs()
 
-        // Auth state listener ensures real-time updates when user switches accounts or logs out
-        auth.addAuthStateListener { firebaseAuth ->
-            val firebaseUser = firebaseAuth.currentUser
-            if (firebaseUser != null) {
-                fetchUserProfile(firebaseUser.uid)
-            } else {
-                userListener?.remove()
-                userListener = null
-                applicationsListener?.remove()
-                applicationsListener = null
-                notificationsListener?.remove()
-                notificationsListener = null
-                conversationsListener?.remove()
-                conversationsListener = null
-                _currentUser.value = null
-                observeJobs()
+            // Auth state listener ensures real-time updates when user switches accounts or logs out
+            auth.addAuthStateListener { firebaseAuth ->
+                val firebaseUser = firebaseAuth.currentUser
+                if (firebaseUser != null) {
+                    fetchUserProfile(firebaseUser.uid)
+                } else {
+                    userListener?.remove()
+                    userListener = null
+                    applicationsListener?.remove()
+                    applicationsListener = null
+                    notificationsListener?.remove()
+                    notificationsListener = null
+                    conversationsListener?.remove()
+                    conversationsListener = null
+                    _currentUser.value = null
+                    observeJobs()
+                }
             }
         }
     }
@@ -1219,11 +1222,20 @@ object RozgarRepository {
         sendNotificationToUser(user.id, NotificationType.JOB_STATUS_CHANGED.name, title, msg)
     }
 
+    fun isApplicationNotification(notif: Notification): Boolean {
+        if (notif.type == NotificationType.NEW_MESSAGE.name) return false
+        return notif.relatedApplicationId.isNotBlank() ||
+               notif.type == NotificationType.APPLICATION_ACCEPTED.name ||
+               notif.type == NotificationType.APPLICATION_REJECTED.name ||
+               notif.type == NotificationType.JOB_APPLICATION.name ||
+               notif.relatedThreadId.isBlank()
+    }
+
     suspend fun markNotificationRead(id: String): Result<Unit> {
         if (id.isBlank()) return Result.failure(IllegalArgumentException("Notification ID cannot be blank"))
         return try {
             db.collection("notifications").document(id)
-                .update("isRead", true)
+                .update(mapOf<String, Any>("isRead" to true, "read" to true))
                 .await()
             _notifications.value = _notifications.value.filter { it.id != id }
             Result.success(Unit)

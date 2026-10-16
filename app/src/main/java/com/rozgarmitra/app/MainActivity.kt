@@ -19,9 +19,10 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         
-        RozgarRepository.initialize(this)
-
         setContent {
+            androidx.compose.runtime.LaunchedEffect(Unit) {
+                RozgarRepository.initialize(applicationContext)
+            }
             MainContent()
         }
     }

@@ -31,11 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rozgarmitra.app.data.*
-import com.rozgarmitra.app.presentation.components.OfflineBanner
-import com.rozgarmitra.app.presentation.components.PrimaryLargeButton
-import com.rozgarmitra.app.presentation.components.ProfileMenuItem
-import com.rozgarmitra.app.presentation.components.ProfileSection
-import com.rozgarmitra.app.presentation.components.VerifiedBadge
+import com.rozgarmitra.app.presentation.components.*
 import com.rozgarmitra.app.presentation.worker.tradesList
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -112,38 +108,33 @@ fun OwnerHomeScreen(
             }
         },
         bottomBar = {
-            Surface(
-                color = DarkSurface,
-                border = BorderStroke(1.dp, BorderStrokeColor)
-            ) {
-                NavigationBar(
-                    tonalElevation = 0.dp,
-                    containerColor = DarkSurface,
-                    modifier = Modifier.height(72.dp)
-                ) {
-                    val items = listOf(
-                        Triple("Home", Icons.Filled.Home, 0),
-                        Triple("Post Job", Icons.Filled.AddCircle, 1),
-                        Triple("Chats", Icons.Filled.Chat, 2),
-                        Triple("Profile", Icons.Filled.Person, 3)
-                    )
-                    items.forEach { (label, icon, index) ->
-                        NavigationBarItem(
-                            selected = selectedTab == index,
-                            onClick = { selectedTab = index },
-                            icon = { Icon(icon, contentDescription = label, modifier = Modifier.size(22.dp)) },
-                            label = { Text(label, fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Medium, fontSize = 12.sp) },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = PrimaryIndigo,
-                                selectedTextColor = PrimaryIndigo,
-                                unselectedIconColor = TextSecondary,
-                                unselectedTextColor = TextSecondary,
-                                indicatorColor = PrimaryIndigo.copy(alpha = 0.15f)
-                            )
-                        )
-                    }
-                }
-            }
+            val navItems = listOf(
+                RozgarNavItem(
+                    label = "Home",
+                    icon = Icons.Filled.Home,
+                    selected = selectedTab == 0,
+                    onClick = { selectedTab = 0 }
+                ),
+                RozgarNavItem(
+                    label = "Post Job",
+                    icon = Icons.Filled.AddCircle,
+                    selected = selectedTab == 1,
+                    onClick = { selectedTab = 1 }
+                ),
+                RozgarNavItem(
+                    label = "Chats",
+                    icon = Icons.Filled.Chat,
+                    selected = selectedTab == 2,
+                    onClick = { selectedTab = 2 }
+                ),
+                RozgarNavItem(
+                    label = "Profile",
+                    icon = Icons.Filled.Person,
+                    selected = selectedTab == 3,
+                    onClick = { selectedTab = 3 }
+                )
+            )
+            RozgarBottomNavBar(items = navItems)
         }
     ) { paddingValues ->
         Box(

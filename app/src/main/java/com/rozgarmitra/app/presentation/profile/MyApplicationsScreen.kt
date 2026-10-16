@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -19,8 +20,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rozgarmitra.app.data.ApplicationStatus
+import com.rozgarmitra.app.data.NotificationType
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.ui.theme.*
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,6 +33,8 @@ fun MyApplicationsScreen(
 ) {
     val applications by RozgarRepository.applications.collectAsStateWithLifecycle()
     val currentUser by RozgarRepository.currentUser.collectAsStateWithLifecycle()
+    val notifications by RozgarRepository.notifications.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
     
     val myApps = applications.filter { it.labourId == currentUser?.id }
 
@@ -74,11 +79,30 @@ fun MyApplicationsScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(myApps) { app ->
+                items(myApps, key = { it.id }) { app ->
+                    val appNotifs = notifications.filter { notif ->
+                        !notif.isRead && (
+                            notif.relatedApplicationId == app.id ||
+                            (notif.relatedJobId == app.jobId && notif.type != NotificationType.NEW_MESSAGE.name)
+                        )
+                    }
                     ApplicationCard(
                         title = app.jobTitle,
                         status = app.status,
-                        onClick = { onJobClick(app.jobId) }
+                        hasUnreadNotification = appNotifs.isNotEmpty(),
+                        onClick = {
+                            if (appNotifs.isNotEmpty()) {
+                                scope.launch {
+                                    appNotifs.forEach { notif ->
+                                        val res = RozgarRepository.markNotificationRead(notif.id)
+                                        if (res.isFailure) {
+                                            android.util.Log.e("MyApplicationsScreen", "Failed to mark notification read: ${notif.id}", res.exceptionOrNull())
+                                        }
+                                    }
+                                }
+                            }
+                            onJobClick(app.jobId)
+                        }
                     )
                 }
             }
@@ -88,7 +112,12 @@ fun MyApplicationsScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ApplicationCard(title: String, status: ApplicationStatus, onClick: () -> Unit) {
+fun ApplicationCard(
+    title: String, 
+    status: ApplicationStatus, 
+    hasUnreadNotification: Boolean = false,
+    onClick: () -> Unit
+) {
     val statusColor = when (status) {
         ApplicationStatus.APPLIED -> PrimaryBlue
         ApplicationStatus.ACCEPTED -> SuccessGreen
@@ -101,7 +130,7 @@ fun ApplicationCard(title: String, status: ApplicationStatus, onClick: () -> Uni
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = DarkSurface),
-        border = BorderStroke(1.dp, BorderStrokeColor),
+        border = BorderStroke(1.dp, if (hasUnreadNotification) PrimaryIndigo else BorderStrokeColor),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -110,7 +139,17 @@ fun ApplicationCard(title: String, status: ApplicationStatus, onClick: () -> Uni
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+                    if (hasUnreadNotification) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Surface(
+                            shape = CircleShape,
+                            color = PrimaryIndigo,
+                            modifier = Modifier.size(8.dp)
+                        ) {}
+                    }
+                }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text("Tap to view job details", fontSize = 12.sp, color = TextSecondary)
             }

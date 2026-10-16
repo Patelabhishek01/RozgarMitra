@@ -29,12 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rozgarmitra.app.data.*
-import com.rozgarmitra.app.presentation.components.JobFeedCard
-import com.rozgarmitra.app.presentation.components.OfflineBanner
-import com.rozgarmitra.app.presentation.components.PrimaryLargeButton
-import com.rozgarmitra.app.presentation.components.ProfileMenuItem
-import com.rozgarmitra.app.presentation.components.ProfileSection
-import com.rozgarmitra.app.presentation.components.VerifiedBadge
+import com.rozgarmitra.app.presentation.components.*
 import com.rozgarmitra.app.ui.theme.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -61,6 +56,7 @@ fun LabourHomeScreen(
     val isOffline by RozgarRepository.isOffline.collectAsStateWithLifecycle()
     val notifications by RozgarRepository.notifications.collectAsStateWithLifecycle()
     val unreadNotifs = notifications.count { !it.isRead }
+    val unreadAppNotifs = notifications.count { !it.isRead && RozgarRepository.isApplicationNotification(it) }
     
     var showNotifDialog by remember { mutableStateOf(false) }
 
@@ -106,38 +102,34 @@ fun LabourHomeScreen(
             }
         },
         bottomBar = {
-            Surface(
-                color = DarkSurface,
-                border = BorderStroke(1.dp, BorderStrokeColor)
-            ) {
-                NavigationBar(
-                    tonalElevation = 0.dp,
-                    containerColor = DarkSurface,
-                    modifier = Modifier.height(72.dp)
-                ) {
-                    val items = listOf(
-                        Triple("Home", Icons.Filled.Home, 0),
-                        Triple("Search", Icons.Filled.Search, 1),
-                        Triple("Chats", Icons.Filled.Chat, 2),
-                        Triple("Profile", Icons.Filled.Person, 3)
-                    )
-                    items.forEach { (label, icon, index) ->
-                        NavigationBarItem(
-                            selected = selectedTab == index,
-                            onClick = { selectedTab = index },
-                            icon = { Icon(icon, contentDescription = label, modifier = Modifier.size(22.dp)) },
-                            label = { Text(label, fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Medium, fontSize = 12.sp) },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = PrimaryIndigo,
-                                selectedTextColor = PrimaryIndigo,
-                                unselectedIconColor = TextSecondary,
-                                unselectedTextColor = TextSecondary,
-                                indicatorColor = PrimaryIndigo.copy(alpha = 0.15f)
-                            )
-                        )
-                    }
-                }
-            }
+            val navItems = listOf(
+                RozgarNavItem(
+                    label = "Home",
+                    icon = Icons.Filled.Home,
+                    selected = selectedTab == 0,
+                    onClick = { selectedTab = 0 }
+                ),
+                RozgarNavItem(
+                    label = "Search",
+                    icon = Icons.Filled.Search,
+                    selected = selectedTab == 1,
+                    onClick = { selectedTab = 1 }
+                ),
+                RozgarNavItem(
+                    label = "Chats",
+                    icon = Icons.Filled.Chat,
+                    selected = selectedTab == 2,
+                    onClick = { selectedTab = 2 }
+                ),
+                RozgarNavItem(
+                    label = "Profile",
+                    icon = Icons.Filled.Person,
+                    selected = selectedTab == 3,
+                    badgeCount = unreadAppNotifs,
+                    onClick = { selectedTab = 3 }
+                )
+            )
+            RozgarBottomNavBar(items = navItems)
         }
     ) { paddingValues ->
         Box(
@@ -177,7 +169,8 @@ fun LabourHomeScreen(
                             }
                         }
                         com.rozgarmitra.app.data.NotificationType.APPLICATION_ACCEPTED.name,
-                        com.rozgarmitra.app.data.NotificationType.APPLICATION_REJECTED.name -> {
+                        com.rozgarmitra.app.data.NotificationType.APPLICATION_REJECTED.name,
+                        com.rozgarmitra.app.data.NotificationType.JOB_APPLICATION.name -> {
                             if (notif.relatedJobId.isNotBlank()) {
                                 onJobClick(notif.relatedJobId)
                             } else {
@@ -187,6 +180,8 @@ fun LabourHomeScreen(
                         else -> {
                             if (notif.relatedJobId.isNotBlank()) {
                                 onJobClick(notif.relatedJobId)
+                            } else if (notif.relatedApplicationId.isNotBlank()) {
+                                onApplicationsClick()
                             }
                         }
                     }
@@ -214,8 +209,11 @@ fun LabourHomeFeedTab(onJobClick: (String) -> Unit) {
     
     val jobs by RozgarRepository.jobs.collectAsStateWithLifecycle()
     val applications by RozgarRepository.applications.collectAsStateWithLifecycle()
+    val notifications by RozgarRepository.notifications.collectAsStateWithLifecycle()
     val userLocationData by RozgarRepository.userLocationData.collectAsStateWithLifecycle()
     val searchRadiusKm by RozgarRepository.searchRadiusKm.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
+    val unreadAppNotifs = notifications.count { !it.isRead && RozgarRepository.isApplicationNotification(it) }
 
     var showLocationDialog by remember { mutableStateOf(false) }
 
@@ -270,9 +268,8 @@ fun LabourHomeFeedTab(onJobClick: (String) -> Unit) {
                 onClick = { subTabState = 1 },
                 text = { 
                     BadgedBox(badge = {
-                        val pending = applications.count { it.status == ApplicationStatus.APPLIED }
-                        if (pending > 0) {
-                            Badge(containerColor = PrimaryIndigo) { Text(pending.toString(), color = Color.White) }
+                        if (unreadAppNotifs > 0) {
+                            Badge(containerColor = PrimaryIndigo) { Text(unreadAppNotifs.toString(), color = Color.White) }
                         }
                     }) {
                         Text("My Applications", fontWeight = FontWeight.Bold, color = if (subTabState == 1) PrimaryIndigo else TextSecondary)
@@ -351,7 +348,29 @@ fun LabourHomeFeedTab(onJobClick: (String) -> Unit) {
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(applications.asReversed(), key = { it.id }) { app ->
-                        ApplicationStatusCard(app = app, onJobClick = onJobClick)
+                        val appNotifs = notifications.filter { notif ->
+                            !notif.isRead && (
+                                notif.relatedApplicationId == app.id ||
+                                (notif.relatedJobId == app.jobId && notif.type != NotificationType.NEW_MESSAGE.name)
+                            )
+                        }
+                        ApplicationStatusCard(
+                            app = app,
+                            hasUnreadNotification = appNotifs.isNotEmpty(),
+                            onJobClick = { jobId ->
+                                if (appNotifs.isNotEmpty()) {
+                                    scope.launch {
+                                        appNotifs.forEach { notif ->
+                                            val res = RozgarRepository.markNotificationRead(notif.id)
+                                            if (res.isFailure) {
+                                                android.util.Log.e("LabourHomeFeedTab", "Failed to mark notification read: ${notif.id}", res.exceptionOrNull())
+                                            }
+                                        }
+                                    }
+                                }
+                                onJobClick(jobId)
+                            }
+                        )
                     }
                 }
             }
@@ -373,7 +392,11 @@ private fun CustomIcon(imageVector: ImageVector, contentDescription: String?, si
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ApplicationStatusCard(app: JobApplication, onJobClick: (String) -> Unit) {
+fun ApplicationStatusCard(
+    app: JobApplication, 
+    hasUnreadNotification: Boolean = false,
+    onJobClick: (String) -> Unit
+) {
     val (statusText, badgeColor) = when (app.status) {
         ApplicationStatus.APPLIED -> "Applied (ओटीपी भेजा)" to Color(0xFFF59E0B) // Amber
         ApplicationStatus.ACCEPTED -> "Hired / Approved (काम मिला)" to SuccessGreen
@@ -386,7 +409,7 @@ fun ApplicationStatusCard(app: JobApplication, onJobClick: (String) -> Unit) {
         onClick = { onJobClick(app.jobId) },
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = DarkSurface),
-        border = BorderStroke(1.dp, BorderStrokeColor),
+        border = BorderStroke(1.dp, if (hasUnreadNotification) PrimaryIndigo else BorderStrokeColor),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
@@ -395,7 +418,17 @@ fun ApplicationStatusCard(app: JobApplication, onJobClick: (String) -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(app.jobTitle, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                    Text(app.jobTitle, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    if (hasUnreadNotification) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Surface(
+                            shape = CircleShape,
+                            color = PrimaryIndigo,
+                            modifier = Modifier.size(8.dp)
+                        ) {}
+                    }
+                }
                 Spacer(modifier = Modifier.width(8.dp))
                 Surface(
                     color = badgeColor.copy(alpha = 0.15f),
@@ -638,6 +671,7 @@ fun LabourChatsTab(onChatThreadClick: (String) -> Unit) {
 
 // --- PROFILE & SETTINGS TAB ---
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LabourProfileTab(
     onSettingsClick: () -> Unit,
@@ -649,6 +683,8 @@ fun LabourProfileTab(
 ) {
     val currentUser by RozgarRepository.currentUser.collectAsStateWithLifecycle()
     val isOffline by RozgarRepository.isOffline.collectAsStateWithLifecycle()
+    val notifications by RozgarRepository.notifications.collectAsStateWithLifecycle()
+    val unreadAppNotifs = notifications.count { !it.isRead && RozgarRepository.isApplicationNotification(it) }
     val scope = rememberCoroutineScope()
 
     var showEditNameDialog by remember { mutableStateOf(false) }
@@ -753,6 +789,7 @@ fun LabourProfileTab(
                     icon = Icons.Filled.ListAlt,
                     title = "My Applications",
                     subtitle = "Check status of jobs you applied for",
+                    badgeCount = unreadAppNotifs,
                     onClick = onApplicationsClick
                 )
             }
