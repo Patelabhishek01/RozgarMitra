@@ -35,6 +35,11 @@ import com.rozgarmitra.app.presentation.components.*
 import com.rozgarmitra.app.presentation.worker.tradesList
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.res.stringResource
+import com.rozgarmitra.app.R
+import com.rozgarmitra.app.presentation.common.getJobStatusDisplayName
+import com.rozgarmitra.app.presentation.common.getTradeDisplayName
+import com.rozgarmitra.app.presentation.common.getWageTypeDisplayName
 import com.rozgarmitra.app.ui.theme.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -82,7 +87,7 @@ fun OwnerHomeScreen(
                                 shape = CircleShape
                             ) {
                                 Text(
-                                    "EMPLOYER / OWNER", 
+                                    stringResource(R.string.employer_badge), 
                                     fontSize = 9.sp, 
                                     fontWeight = FontWeight.Bold, 
                                     color = AccentCyan,
@@ -100,7 +105,7 @@ fun OwnerHomeScreen(
                                     }
                                 }
                             ) {
-                                Icon(Icons.Filled.Notifications, contentDescription = "Notifications", tint = TextPrimary, modifier = Modifier.size(24.dp))
+                                Icon(Icons.Filled.Notifications, contentDescription = stringResource(R.string.notifications_title), tint = TextPrimary, modifier = Modifier.size(24.dp))
                             }
                         }
                     }
@@ -110,25 +115,25 @@ fun OwnerHomeScreen(
         bottomBar = {
             val navItems = listOf(
                 RozgarNavItem(
-                    label = "Home",
+                    label = stringResource(R.string.nav_home),
                     icon = Icons.Filled.Home,
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 }
                 ),
                 RozgarNavItem(
-                    label = "Post Job",
+                    label = stringResource(R.string.nav_post_job),
                     icon = Icons.Filled.AddCircle,
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 }
                 ),
                 RozgarNavItem(
-                    label = "Chats",
+                    label = stringResource(R.string.nav_chats),
                     icon = Icons.Filled.Chat,
                     selected = selectedTab == 2,
                     onClick = { selectedTab = 2 }
                 ),
                 RozgarNavItem(
-                    label = "Profile",
+                    label = stringResource(R.string.nav_profile),
                     icon = Icons.Filled.Person,
                     selected = selectedTab == 3,
                     onClick = { selectedTab = 3 }
@@ -249,9 +254,9 @@ fun OwnerDashboardTab(
     ) {
         item {
             Column {
-                Text("🙏 Namaste, $ownerDisplayName", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = TextPrimary)
+                Text(stringResource(R.string.greeting_namaste_user, ownerDisplayName), fontWeight = FontWeight.Bold, fontSize = 20.sp, color = TextPrimary)
                 Spacer(modifier = Modifier.height(2.dp))
-                Text("Manage your job postings and applicants", fontSize = 13.sp, color = TextSecondary)
+                Text(stringResource(R.string.owner_dashboard_subtitle), fontSize = 13.sp, color = TextSecondary)
             }
         }
 
@@ -272,8 +277,8 @@ fun OwnerDashboardTab(
                         Icon(Icons.Filled.Warning, contentDescription = null, tint = WarningRose)
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Complete Your Profile", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 15.sp)
-                            Text("Specify your work site address and company details", fontSize = 12.sp, color = TextSecondary)
+                            Text(stringResource(R.string.complete_profile_title), fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 15.sp)
+                            Text(stringResource(R.string.complete_profile_desc), fontSize = 12.sp, color = TextSecondary)
                         }
                         Icon(Icons.Filled.ArrowForward, contentDescription = null, tint = WarningRose)
                     }
@@ -296,7 +301,7 @@ fun OwnerDashboardTab(
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
-                        Text("Active Jobs", fontSize = 11.sp, color = TextSecondary, fontWeight = FontWeight.Medium)
+                        Text(stringResource(R.string.metric_active_jobs), fontSize = 11.sp, color = TextSecondary, fontWeight = FontWeight.Medium)
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(activeJobsCount.toString(), fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = PrimaryIndigo)
                     }
@@ -312,7 +317,7 @@ fun OwnerDashboardTab(
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("Applications", fontSize = 11.sp, color = TextSecondary, fontWeight = FontWeight.Medium)
+                            Text(stringResource(R.string.metric_applications), fontSize = 11.sp, color = TextSecondary, fontWeight = FontWeight.Medium)
                             if (applicantsWaitingCount > 0) {
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Box(modifier = Modifier.size(6.dp).background(WarningRose, CircleShape))
@@ -332,7 +337,7 @@ fun OwnerDashboardTab(
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
-                        Text("Workers Hired", fontSize = 11.sp, color = TextSecondary, fontWeight = FontWeight.Medium)
+                        Text(stringResource(R.string.metric_workers_hired), fontSize = 11.sp, color = TextSecondary, fontWeight = FontWeight.Medium)
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(totalWorkersHired.toString(), fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = SuccessGreen)
                     }
@@ -359,7 +364,7 @@ fun OwnerDashboardTab(
                 ) {
                     Icon(Icons.Filled.Add, contentDescription = null, tint = PrimaryIndigo, modifier = Modifier.size(24.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("+ Post a New Job Now", color = PrimaryIndigo, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(stringResource(R.string.btn_post_new_job_now), color = PrimaryIndigo, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             }
         }
@@ -367,7 +372,7 @@ fun OwnerDashboardTab(
         // Recent Worker Responses Section
         if (ownerApps.isNotEmpty()) {
             item {
-                Text("Recent Worker Responses", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary, modifier = Modifier.padding(top = 4.dp))
+                Text(stringResource(R.string.recent_worker_responses), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary, modifier = Modifier.padding(top = 4.dp))
             }
 
             items(ownerApps.take(3)) { app ->
@@ -385,7 +390,7 @@ fun OwnerDashboardTab(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(app.labourName, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
                             Spacer(modifier = Modifier.height(2.dp))
-                            Text("Responded to: ${app.jobTitle}", fontSize = 12.sp, color = TextSecondary)
+                            Text(stringResource(R.string.status_applied) + ": ${app.jobTitle}", fontSize = 12.sp, color = TextSecondary)
                         }
 
                         Button(
@@ -394,7 +399,7 @@ fun OwnerDashboardTab(
                             colors = ButtonDefaults.buttonColors(containerColor = PrimaryIndigo),
                             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
                         ) {
-                            Text("View", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(stringResource(R.string.tap_to_view_details).substringBefore(" "), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         }
                     }
                 }
@@ -402,7 +407,7 @@ fun OwnerDashboardTab(
         }
 
         item {
-            Text("My Posted Jobs", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary, modifier = Modifier.padding(top = 8.dp))
+            Text(stringResource(R.string.owner_dashboard_title), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary, modifier = Modifier.padding(top = 8.dp))
         }
 
         if (ownerJobs.isEmpty()) {
@@ -413,7 +418,7 @@ fun OwnerDashboardTab(
                         .height(140.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("No job posts yet. Click above to create one.", color = TextSecondary)
+                    Text(stringResource(R.string.no_active_postings), color = TextSecondary)
                 }
             }
         } else {
@@ -421,12 +426,13 @@ fun OwnerDashboardTab(
                 val jobApps = ownerApps.filter { it.jobId == job.id }
                 val newAppsCount = jobApps.count { it.status == ApplicationStatus.APPLIED }
 
-                val (badgeText, badgeColor) = when (job.status) {
-                    JobStatus.ACTIVE -> "ACTIVE" to SuccessGreen
-                    JobStatus.FILLED -> "FILLED" to PrimaryIndigo
-                    JobStatus.COMPLETED -> "COMPLETED" to TextSecondary
-                    JobStatus.CLOSED -> "CLOSED" to WarningRose
-                    JobStatus.DRAFT -> "DRAFT" to Color(0xFFF59E0B)
+                val badgeText = getJobStatusDisplayName(job.status)
+                val badgeColor = when (job.status) {
+                    JobStatus.ACTIVE -> SuccessGreen
+                    JobStatus.FILLED -> PrimaryIndigo
+                    JobStatus.COMPLETED -> TextSecondary
+                    JobStatus.CLOSED -> WarningRose
+                    JobStatus.DRAFT -> Color(0xFFF59E0B)
                 }
 
                 Card(
@@ -444,9 +450,9 @@ fun OwnerDashboardTab(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(job.title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
                                 Spacer(modifier = Modifier.height(4.dp))
-                                Text("₹${job.wage}/${job.wageType} • 📍 ${job.location}", fontSize = 13.sp, color = TextSecondary)
+                                Text("₹${job.wage}/${getWageTypeDisplayName(job.wageType)} • 📍 ${job.location}", fontSize = 13.sp, color = TextSecondary)
                                 Spacer(modifier = Modifier.height(4.dp))
-                                Text("👷 Workers: ${job.acceptedWorkersCount} / ${job.numberOfWorkersRequired} hired", fontSize = 12.sp, color = PrimaryIndigo, fontWeight = FontWeight.Medium)
+                                Text("👷 " + stringResource(R.string.workers_needed_count, job.numberOfWorkersRequired, job.acceptedWorkersCount), fontSize = 12.sp, color = PrimaryIndigo, fontWeight = FontWeight.Medium)
                             }
 
                             Surface(
@@ -472,7 +478,7 @@ fun OwnerDashboardTab(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             TextButton(onClick = { onJobClick(job.id) }) {
-                                Text("View Details", color = PrimaryIndigo, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.job_details_title), color = PrimaryIndigo, fontWeight = FontWeight.Bold)
                             }
 
                             Button(
@@ -481,7 +487,7 @@ fun OwnerDashboardTab(
                                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryIndigo)
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text("Applications (${jobApps.size})", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                    Text(stringResource(R.string.metric_applications) + " (${jobApps.size})", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                                     if (newAppsCount > 0) {
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Surface(
@@ -561,7 +567,7 @@ fun OwnerPostJobTab(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Step $step of 5", fontWeight = FontWeight.Bold, color = PrimaryIndigo, fontSize = 14.sp)
+                Text(stringResource(R.string.step_indicator, step), fontWeight = FontWeight.Bold, color = PrimaryIndigo, fontSize = 14.sp)
                 LinearProgressIndicator(
                     progress = step / 5.0f,
                     color = PrimaryIndigo,
@@ -578,7 +584,7 @@ fun OwnerPostJobTab(
             when (step) {
                 1 -> {
                     // Step 1: Select Category
-                    Text("1. Basic Information / कार्य की श्रेणी", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+                    Text(stringResource(R.string.step_1_title), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
                     Spacer(modifier = Modifier.height(12.dp))
 
                     LazyVerticalGrid(
@@ -587,13 +593,13 @@ fun OwnerPostJobTab(
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                         modifier = Modifier.height(350.dp)
                     ) {
-                        val tradesWithOther = tradesList.map { it.substringBefore(" (") } + "Other (अन्य)"
+                        val tradesWithOther = tradesList.map { it.substringBefore(" (") } + "Other"
 
                         items(tradesWithOther) { trade ->
                             val isSelected = category == trade
                             Card(
                                 onClick = {
-                                    if (trade == "Other (अन्य)") {
+                                    if (trade == "Other") {
                                         isSuggestingOther = true
                                     } else {
                                         category = trade
@@ -621,7 +627,7 @@ fun OwnerPostJobTab(
                                         trade.contains("Driver") -> Icons.Filled.DirectionsCar
                                         trade.contains("Cleaner") -> Icons.Filled.CleaningServices
                                         trade.contains("Construction") -> Icons.Filled.Build
-                                        trade == "Other (अन्य)" -> Icons.Filled.Add
+                                        trade == "Other" -> Icons.Filled.Add
                                         else -> Icons.Filled.Work
                                     }
 
@@ -632,8 +638,9 @@ fun OwnerPostJobTab(
                                         tint = if (isSelected) PrimaryIndigo else TextSecondary
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
+                                    val tradeLabel = if (trade == "Other") stringResource(R.string.trade_other) else getTradeDisplayName(trade)
                                     Text(
-                                        trade,
+                                        tradeLabel,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 12.sp,
                                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -646,15 +653,15 @@ fun OwnerPostJobTab(
                 }
                 2 -> {
                     // Step 2: Work Details
-                    Text("2. Work Details / स्थान और समय", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+                    Text(stringResource(R.string.step_2_title), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Text("Job Title", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
+                    Text(stringResource(R.string.job_title_label), fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
                     Spacer(modifier = Modifier.height(4.dp))
                     OutlinedTextField(
                         value = title,
                         onValueChange = { title = it },
-                        placeholder = { Text("e.g. Need 3 construction helpers", color = TextMuted) },
+                        placeholder = { Text(stringResource(R.string.job_title_placeholder), color = TextMuted) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = TextFieldDefaults.outlinedTextFieldColors(containerColor = DarkSurface, focusedBorderColor = PrimaryIndigo, unfocusedBorderColor = BorderStrokeColor, focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary)
@@ -662,12 +669,12 @@ fun OwnerPostJobTab(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Text("Job Description", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
+                    Text(stringResource(R.string.job_desc_label), fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
                     Spacer(modifier = Modifier.height(4.dp))
                     OutlinedTextField(
                         value = description,
                         onValueChange = { description = it },
-                        placeholder = { Text("Describe the work responsibilities...", color = TextMuted) },
+                        placeholder = { Text(stringResource(R.string.job_desc_placeholder), color = TextMuted) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         maxLines = 3,
@@ -681,7 +688,7 @@ fun OwnerPostJobTab(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Work Location", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
+                        Text(stringResource(R.string.work_location_label), fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
                         TextButton(
                             onClick = {
                                 isLocatingLocation = true
@@ -699,14 +706,14 @@ fun OwnerPostJobTab(
                         ) {
                             Icon(Icons.Filled.MyLocation, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(if (isLocatingLocation) "Detecting..." else "Use GPS Location", color = AccentCyan, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text(if (isLocatingLocation) stringResource(R.string.detecting_location) else stringResource(R.string.use_gps_location), color = AccentCyan, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                     Spacer(modifier = Modifier.height(4.dp))
                     OutlinedTextField(
                         value = location,
                         onValueChange = { location = it },
-                        placeholder = { Text("e.g. HSR Layout, Bengaluru or shop address", color = TextMuted) },
+                        placeholder = { Text(stringResource(R.string.work_location_placeholder), color = TextMuted) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         leadingIcon = { Icon(Icons.Filled.LocationOn, contentDescription = null, tint = AccentCyan) },
@@ -718,12 +725,12 @@ fun OwnerPostJobTab(
                     // Date & Time
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Start Date", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
+                            Text(stringResource(R.string.start_date_label), fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
                             Spacer(modifier = Modifier.height(4.dp))
                             OutlinedTextField(
                                 value = date,
                                 onValueChange = { date = it },
-                                placeholder = { Text("Today", color = TextMuted) },
+                                placeholder = { Text(stringResource(R.string.today), color = TextMuted) },
                                 shape = RoundedCornerShape(12.dp),
                                 singleLine = true,
                                 colors = TextFieldDefaults.outlinedTextFieldColors(containerColor = DarkSurface, focusedBorderColor = PrimaryIndigo, unfocusedBorderColor = BorderStrokeColor, focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary)
@@ -731,7 +738,7 @@ fun OwnerPostJobTab(
                         }
 
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Start Time", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
+                            Text(stringResource(R.string.start_time_label), fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
                             Spacer(modifier = Modifier.height(4.dp))
                             OutlinedTextField(
                                 value = startTime,
@@ -749,7 +756,7 @@ fun OwnerPostJobTab(
                     // Workers required & duration
                     Row(modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Workers Needed", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
+                            Text(stringResource(R.string.workers_needed_label), fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
                             Spacer(modifier = Modifier.height(4.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 IconButton(onClick = { if (workersRequired > 1) workersRequired-- }) {
@@ -762,7 +769,7 @@ fun OwnerPostJobTab(
                             }
                         }
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Duration (Days)", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
+                            Text(stringResource(R.string.duration_days_label), fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
                             Spacer(modifier = Modifier.height(4.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 IconButton(onClick = { if (durationDays > 1) durationDays-- }) {
@@ -778,10 +785,10 @@ fun OwnerPostJobTab(
                 }
                 3 -> {
                     // Step 3: Payment
-                    Text("3. Payment & Perks / मजदूरी", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+                    Text(stringResource(R.string.step_3_title), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Text("Wage Amount (₹)", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
+                    Text(stringResource(R.string.wage_amount_label), fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         OutlinedTextField(
@@ -803,7 +810,7 @@ fun OwnerPostJobTab(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Text("Wage Type", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
+                    Text(stringResource(R.string.wage_type_label), fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         listOf("per day", "per hour", "fixed").forEach { type ->
@@ -811,7 +818,7 @@ fun OwnerPostJobTab(
                             FilterChip(
                                 selected = isSelected,
                                 onClick = { wageType = type },
-                                label = { Text(type.replaceFirstChar { it.uppercase() }) },
+                                label = { Text(getWageTypeDisplayName(type)) },
                                 shape = CircleShape,
                                 modifier = Modifier.weight(1f),
                                 colors = FilterChipDefaults.filterChipColors(selectedContainerColor = PrimaryIndigo, selectedLabelColor = Color.White, containerColor = DarkSurface, labelColor = TextSecondary),
@@ -822,14 +829,14 @@ fun OwnerPostJobTab(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    Text("Included Perks (Optional)", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
+                    Text(stringResource(R.string.included_perks_label), fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         FilterChip(
                             selected = perkFood,
                             onClick = { perkFood = !perkFood },
-                            label = { Text("Food") },
+                            label = { Text(stringResource(R.string.perk_food)) },
                             shape = CircleShape,
                             modifier = Modifier.weight(1f),
                             colors = FilterChipDefaults.filterChipColors(selectedContainerColor = PrimaryIndigo, selectedLabelColor = Color.White, containerColor = DarkSurface, labelColor = TextSecondary),
@@ -838,7 +845,7 @@ fun OwnerPostJobTab(
                         FilterChip(
                             selected = perkAccommodation,
                             onClick = { perkAccommodation = !perkAccommodation },
-                            label = { Text("Shelter") },
+                            label = { Text(stringResource(R.string.perk_shelter)) },
                             shape = CircleShape,
                             modifier = Modifier.weight(1f),
                             colors = FilterChipDefaults.filterChipColors(selectedContainerColor = PrimaryIndigo, selectedLabelColor = Color.White, containerColor = DarkSurface, labelColor = TextSecondary),
@@ -847,7 +854,7 @@ fun OwnerPostJobTab(
                         FilterChip(
                             selected = perkTransport,
                             onClick = { perkTransport = !perkTransport },
-                            label = { Text("Transport") },
+                            label = { Text(stringResource(R.string.perk_transport)) },
                             shape = CircleShape,
                             modifier = Modifier.weight(1f),
                             colors = FilterChipDefaults.filterChipColors(selectedContainerColor = PrimaryIndigo, selectedLabelColor = Color.White, containerColor = DarkSurface, labelColor = TextSecondary),
@@ -857,15 +864,15 @@ fun OwnerPostJobTab(
                 }
                 4 -> {
                     // Step 4: Requirements & Urgent Flag
-                    Text("4. Skills & Requirements", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+                    Text(stringResource(R.string.step_4_title), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Text("Skills Required (Comma separated)", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
+                    Text(stringResource(R.string.skills_required_label), fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
                     Spacer(modifier = Modifier.height(4.dp))
                     OutlinedTextField(
                         value = skillsRequired,
                         onValueChange = { skillsRequired = it },
-                        placeholder = { Text("e.g. bricklaying, cement mixing, loading", color = TextMuted) },
+                        placeholder = { Text(stringResource(R.string.skills_required_placeholder), color = TextMuted) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = TextFieldDefaults.outlinedTextFieldColors(containerColor = DarkSurface, focusedBorderColor = PrimaryIndigo, unfocusedBorderColor = BorderStrokeColor, focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary)
@@ -873,7 +880,7 @@ fun OwnerPostJobTab(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    Text("Difficulty Level", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
+                    Text(stringResource(R.string.difficulty_level_label), fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextSecondary)
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Row(
@@ -882,6 +889,11 @@ fun OwnerPostJobTab(
                     ) {
                         listOf("Easy", "Medium", "Hard").forEach { lvl ->
                             val isSelected = difficulty == lvl
+                            val lvlLabel = when (lvl) {
+                                "Easy" -> stringResource(R.string.difficulty_easy)
+                                "Medium" -> stringResource(R.string.difficulty_medium)
+                                else -> stringResource(R.string.difficulty_hard)
+                            }
                             OutlinedButton(
                                 onClick = { difficulty = lvl },
                                 modifier = Modifier.weight(1f),
@@ -891,7 +903,7 @@ fun OwnerPostJobTab(
                                     containerColor = if (isSelected) PrimaryIndigo.copy(alpha = 0.15f) else Color.Transparent
                                 )
                             ) {
-                                Text(lvl, color = if (isSelected) PrimaryIndigo else TextSecondary, fontWeight = FontWeight.Bold)
+                                Text(lvlLabel, color = if (isSelected) PrimaryIndigo else TextSecondary, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -906,14 +918,14 @@ fun OwnerPostJobTab(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Column {
-                            Text("Mark as Urgent Hiring", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary)
-                            Text("Urgent jobs are highlighted to workers", fontSize = 12.sp, color = TextSecondary)
+                            Text(stringResource(R.string.mark_urgent_hiring), fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary)
+                            Text(stringResource(R.string.urgent_hiring_desc), fontSize = 12.sp, color = TextSecondary)
                         }
                     }
                 }
                 5 -> {
                     // Step 5: Review & Publish
-                    Text("5. Review & Publish Job", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+                    Text(stringResource(R.string.step_5_title), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Card(
@@ -936,27 +948,27 @@ fun OwnerPostJobTab(
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
                                     Text(title.ifBlank { "Untitled Job" }, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
-                                    Text(category, fontSize = 13.sp, color = PrimaryIndigo, fontWeight = FontWeight.SemiBold)
+                                    Text(getTradeDisplayName(category), fontSize = 13.sp, color = PrimaryIndigo, fontWeight = FontWeight.SemiBold)
                                 }
                             }
 
                             Divider(modifier = Modifier.padding(vertical = 14.dp), color = BorderStrokeColor.copy(alpha = 0.6f))
 
-                            PreviewRow(Icons.Filled.LocationOn, "Location", location)
-                            PreviewRow(Icons.Filled.CalendarMonth, "Date & Time", "$date • $startTime")
-                            PreviewRow(Icons.Filled.Group, "Workers Needed", "$workersRequired workers required")
-                            PreviewRow(Icons.Filled.Payments, "Wage", "₹$wage / $wageType", valueColor = SuccessGreen)
+                            PreviewRow(Icons.Filled.LocationOn, stringResource(R.string.preview_location), location)
+                            PreviewRow(Icons.Filled.CalendarMonth, stringResource(R.string.preview_date_time), "$date • $startTime")
+                            PreviewRow(Icons.Filled.Group, stringResource(R.string.workers_needed_label), "$workersRequired")
+                            PreviewRow(Icons.Filled.Payments, stringResource(R.string.preview_wage), "₹$wage / " + getWageTypeDisplayName(wageType), valueColor = SuccessGreen)
 
                             val perksList = mutableListOf<String>()
-                            if (perkFood) perksList.add("Food")
-                            if (perkAccommodation) perksList.add("Shelter")
-                            if (perkTransport) perksList.add("Transport")
-                            PreviewRow(Icons.Filled.Star, "Perks", perksList.joinToString(", ").ifBlank { "None" })
+                            if (perkFood) perksList.add(stringResource(R.string.perk_food))
+                            if (perkAccommodation) perksList.add(stringResource(R.string.perk_shelter))
+                            if (perkTransport) perksList.add(stringResource(R.string.perk_transport))
+                            PreviewRow(Icons.Filled.Star, stringResource(R.string.preview_perks), perksList.joinToString(", ").ifBlank { "None" })
 
                             if (isUrgent) {
                                 Spacer(modifier = Modifier.height(10.dp))
                                 Surface(color = WarningRose.copy(alpha = 0.15f), border = BorderStroke(1.dp, WarningRose.copy(alpha = 0.3f)), shape = CircleShape) {
-                                    Text("⚡ URGENT HIRING ACTIVE", color = WarningRose, fontWeight = FontWeight.Bold, fontSize = 11.sp, modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp))
+                                    Text(stringResource(R.string.urgent_hiring_active), color = WarningRose, fontWeight = FontWeight.Bold, fontSize = 11.sp, modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp))
                                 }
                             }
                         }
@@ -983,7 +995,7 @@ fun OwnerPostJobTab(
                             .weight(1f)
                             .height(48.dp)
                     ) {
-                        Text("Back", color = TextSecondary, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.btn_previous), color = TextSecondary, fontWeight = FontWeight.Bold)
                     }
                     Spacer(modifier = Modifier.width(14.dp))
                 }
@@ -1057,13 +1069,13 @@ fun OwnerPostJobTab(
                         else -> true
                     }
                 ) {
-                    Text(if (step == 5) "Publish Job" else "Next Step", fontWeight = FontWeight.Bold, color = Color.White)
+                    Text(if (step == 5) stringResource(R.string.btn_publish_job) else stringResource(R.string.btn_next), fontWeight = FontWeight.Bold, color = Color.White)
                 }
             }
         }
     }
 
-    com.rozgarmitra.app.presentation.components.LoadingOverlay(isLoading = isLoading, text = "Publishing Job...")
+    com.rozgarmitra.app.presentation.components.LoadingOverlay(isLoading = isLoading, text = stringResource(R.string.publishing_job))
 
     if (isSuggestingOther) {
         AlertDialog(
@@ -1156,7 +1168,7 @@ fun OwnerChatsTab(onChatThreadClick: (String) -> Unit) {
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                Text("No active chats with workers yet.", color = TextSecondary, fontWeight = FontWeight.Medium)
+                Text(stringResource(R.string.no_active_chats_yet), color = TextSecondary, fontWeight = FontWeight.Medium)
             }
         }
     } else {
@@ -1284,7 +1296,7 @@ fun OwnerProfileTab(
                         modifier = Modifier.padding(top = 10.dp)
                     ) {
                         Text(
-                            "JOB POSTER / OWNER", 
+                            stringResource(R.string.employer_badge), 
                             color = AccentCyan, 
                             fontSize = 10.sp, 
                             fontWeight = FontWeight.Bold,
@@ -1313,8 +1325,8 @@ fun OwnerProfileTab(
                         Icon(Icons.Filled.Warning, contentDescription = null, tint = WarningRose)
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Complete Your Profile", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 15.sp)
-                            Text("Specify your work site address and company details", fontSize = 12.sp, color = TextSecondary)
+                            Text(stringResource(R.string.complete_profile_title), fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 15.sp)
+                            Text(stringResource(R.string.complete_profile_desc), fontSize = 12.sp, color = TextSecondary)
                         }
                         Icon(Icons.Filled.ArrowForward, contentDescription = null, tint = WarningRose)
                     }
@@ -1323,7 +1335,7 @@ fun OwnerProfileTab(
         }
 
         item {
-            ProfileSection(title = "Business Information") {
+            ProfileSection(title = stringResource(R.string.business_details)) {
                 ProfileMenuItem(
                     icon = Icons.Filled.Business,
                     title = "My Company",
@@ -1347,13 +1359,13 @@ fun OwnerProfileTab(
                     icon = Icons.Filled.VerifiedUser,
                     title = when {
                         isVer -> "Business Verified"
-                        isPen -> "Verification Pending"
+                        isPen -> stringResource(R.string.verification_pending)
                         else -> "Verify Business"
                     },
                     subtitle = when {
-                        isVer -> "Badge active"
-                        isPen -> "Trade license under review"
-                        else -> "Submit trade license for badge"
+                        isVer -> stringResource(R.string.badge_granted)
+                        isPen -> stringResource(R.string.under_review)
+                        else -> stringResource(R.string.submit_id_verification)
                     },
                     titleColor = when {
                         isVer -> SuccessGreen
@@ -1370,23 +1382,23 @@ fun OwnerProfileTab(
         }
 
         item {
-            ProfileSection(title = "Settings & Support") {
+            ProfileSection(title = stringResource(R.string.section_settings_support)) {
                 ProfileMenuItem(
                     icon = Icons.Filled.Settings,
-                    title = "Settings",
-                    subtitle = "Language, Appearance, Notifications",
+                    title = stringResource(R.string.menu_settings),
+                    subtitle = stringResource(R.string.menu_settings_subtitle),
                     onClick = onSettingsClick
                 )
                 ProfileMenuItem(
                     icon = Icons.Filled.Help,
-                    title = "Help Center",
-                    subtitle = "FAQ and contact support",
+                    title = stringResource(R.string.menu_help_support),
+                    subtitle = stringResource(R.string.menu_help_support_subtitle),
                     onClick = onHelpCenterClick
                 )
                 ProfileMenuItem(
                     icon = Icons.Filled.BugReport,
-                    title = "Offline Mode",
-                    subtitle = if (isOffline) "Offline active (Local cache)" else "Online active",
+                    title = stringResource(R.string.menu_offline_mode),
+                    subtitle = if (isOffline) stringResource(R.string.offline_active) else stringResource(R.string.online_active),
                     titleColor = if (isOffline) WarningRose else TextPrimary,
                     onClick = { RozgarRepository.toggleOffline(!isOffline) }
                 )
@@ -1407,7 +1419,7 @@ fun OwnerProfileTab(
                 ) {
                     Icon(Icons.Filled.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Logout Account", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.action_logout_account), fontWeight = FontWeight.Bold)
                 }
             }
             Spacer(modifier = Modifier.height(40.dp))
@@ -1421,15 +1433,15 @@ fun OwnerProfileTab(
         AlertDialog(
             containerColor = DarkSurfaceElevated,
             onDismissRequest = { if (!isSaving) showEditNameDialog = false },
-            title = { Text("Edit Profile Name", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.edit_profile_name), color = TextPrimary, fontWeight = FontWeight.Bold) },
             text = {
                 Column {
-                    Text("Update your display name visible to workers.", fontSize = 13.sp, color = TextSecondary)
+                    Text(stringResource(R.string.set_display_name), fontSize = 13.sp, color = TextSecondary)
                     Spacer(modifier = Modifier.height(12.dp))
                     OutlinedTextField(
                         value = nameInput,
                         onValueChange = { nameInput = it },
-                        label = { Text("Full Name", color = TextSecondary) },
+                        label = { Text(stringResource(R.string.full_name), color = TextSecondary) },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryBlue,
                             unfocusedBorderColor = BorderStrokeColor,
@@ -1455,12 +1467,12 @@ fun OwnerProfileTab(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
                 ) {
-                    Text(if (isSaving) "Saving..." else "Save", color = TextPrimary)
+                    Text(if (isSaving) stringResource(R.string.action_loading) else stringResource(R.string.action_save), color = TextPrimary)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showEditNameDialog = false }) {
-                    Text("Cancel", color = TextSecondary)
+                    Text(stringResource(R.string.action_cancel), color = TextSecondary)
                 }
             }
         )
@@ -1474,7 +1486,7 @@ fun OwnerProfileTab(
         AlertDialog(
             containerColor = DarkSurfaceElevated,
             onDismissRequest = { if (!isSaving) showBusinessInfoDialog = false },
-            title = { Text("Business Information", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.business_details), color = TextPrimary, fontWeight = FontWeight.Bold) },
             text = {
                 Column {
                     OutlinedTextField(
@@ -1493,7 +1505,7 @@ fun OwnerProfileTab(
                     OutlinedTextField(
                         value = addressInput,
                         onValueChange = { addressInput = it },
-                        label = { Text("Work Site / Office Address", color = TextSecondary) },
+                        label = { Text(stringResource(R.string.work_location_label), color = TextSecondary) },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryBlue,
                             unfocusedBorderColor = BorderStrokeColor,
@@ -1517,12 +1529,12 @@ fun OwnerProfileTab(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
                 ) {
-                    Text(if (isSaving) "Saving..." else "Save", color = TextPrimary)
+                    Text(if (isSaving) stringResource(R.string.action_loading) else stringResource(R.string.action_save), color = TextPrimary)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showBusinessInfoDialog = false }) {
-                    Text("Cancel", color = TextSecondary)
+                    Text(stringResource(R.string.action_cancel), color = TextSecondary)
                 }
             }
         )
@@ -1535,10 +1547,10 @@ fun OwnerProfileTab(
         AlertDialog(
             containerColor = DarkSurfaceElevated,
             onDismissRequest = { if (!isSubmitting) showVerificationDialog = false },
-            title = { Text("Request Business Verification", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.verify_aadhaar), color = TextPrimary, fontWeight = FontWeight.Bold) },
             text = {
                 Column {
-                    Text("Select business document type to submit for verification review.", fontSize = 13.sp, color = TextSecondary)
+                    Text(stringResource(R.string.submit_id_verification), fontSize = 13.sp, color = TextSecondary)
                     Spacer(modifier = Modifier.height(12.dp))
                     listOf("GSTIN Registration", "Trade License", "MSME Registration", "Owner Aadhaar").forEach { doc ->
                         Row(
@@ -1572,12 +1584,12 @@ fun OwnerProfileTab(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
                 ) {
-                    Text(if (isSubmitting) "Submitting..." else "Submit Request", color = TextPrimary)
+                    Text(if (isSubmitting) stringResource(R.string.action_loading) else stringResource(R.string.action_submit), color = TextPrimary)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showVerificationDialog = false }) {
-                    Text("Cancel", color = TextSecondary)
+                    Text(stringResource(R.string.action_cancel), color = TextSecondary)
                 }
             }
         )

@@ -21,6 +21,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.rozgarmitra.app.R
 import com.rozgarmitra.app.data.Role
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.presentation.components.LoadingOverlay
@@ -46,7 +48,8 @@ fun RegisterScreen(
     val needsPassword = isEmail && FirebaseAuth.getInstance().currentUser == null
     
     var selectedRole by remember { mutableStateOf<Role?>(null) }
-    var selectedLanguage by remember { mutableStateOf("English") }
+    val currentLangName by RozgarRepository.currentLanguageName.collectAsState()
+    var selectedLanguage by remember(currentLangName) { mutableStateOf(currentLangName) }
     var expandedLangDropdown by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -78,7 +81,7 @@ fun RegisterScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = DarkBackground),
-                title = { Text("Create Profile", fontWeight = FontWeight.Bold, color = TextPrimary) }
+                title = { Text(stringResource(R.string.create_profile_title), fontWeight = FontWeight.Bold, color = TextPrimary) }
             )
         }
     ) { paddingValues ->
@@ -97,13 +100,13 @@ fun RegisterScreen(
             ) {
                 Column {
                     Text(
-                        text = "Register with RozgarMitra",
+                        text = stringResource(R.string.register_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = PrimaryBlue
                     )
                     Text(
-                        text = "Enter details to create your secure account",
+                        text = stringResource(R.string.register_subtitle),
                         style = MaterialTheme.typography.bodyMedium,
                         color = TextSecondary,
                         modifier = Modifier.padding(bottom = 24.dp)
@@ -111,7 +114,7 @@ fun RegisterScreen(
 
                     // Full Name Input
                     Text(
-                        text = "Full Name / पूरा नाम",
+                        text = stringResource(R.string.full_name),
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
                         color = TextPrimary
@@ -123,7 +126,7 @@ fun RegisterScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(58.dp),
-                        placeholder = { Text("Enter your full name", color = TextSecondary.copy(alpha = 0.5f)) },
+                        placeholder = { Text(stringResource(R.string.enter_full_name), color = TextSecondary.copy(alpha = 0.5f)) },
                         singleLine = true,
                         colors = textFieldColors,
                         shape = RoundedCornerShape(12.dp)
@@ -133,7 +136,7 @@ fun RegisterScreen(
 
                     // Identifier Field
                     Text(
-                        text = if (isEmail) "Email Address" else "Mobile Number (Verified)",
+                        text = if (isEmail) stringResource(R.string.email_address) else stringResource(R.string.mobile_number),
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
                         color = TextSecondary
@@ -159,7 +162,7 @@ fun RegisterScreen(
                     if (needsPassword) {
                         Spacer(modifier = Modifier.height(20.dp))
                         Text(
-                            text = "Create Password",
+                            text = stringResource(R.string.password),
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp,
                             color = TextPrimary
@@ -169,7 +172,7 @@ fun RegisterScreen(
                             value = password,
                             onValueChange = { password = it },
                             modifier = Modifier.fillMaxWidth().height(58.dp),
-                            placeholder = { Text("Minimum 6 characters", color = TextSecondary.copy(alpha = 0.5f)) },
+                            placeholder = { Text(stringResource(R.string.password_hint), color = TextSecondary.copy(alpha = 0.5f)) },
                             visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                             colors = textFieldColors,
@@ -181,7 +184,7 @@ fun RegisterScreen(
 
                     // Role Card Selection
                     Text(
-                        text = "Choose Account Type / खाता प्रकार चुनें",
+                        text = stringResource(R.string.choose_account_type),
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
                         color = TextPrimary
@@ -223,7 +226,7 @@ fun RegisterScreen(
                                 )
                                 Spacer(modifier = Modifier.height(10.dp))
                                 Text(
-                                    text = "Labour\n(कामगार)",
+                                    text = stringResource(R.string.role_labour),
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -263,7 +266,7 @@ fun RegisterScreen(
                                 )
                                 Spacer(modifier = Modifier.height(10.dp))
                                 Text(
-                                    text = "Employer / Owner\n(मालिक)",
+                                    text = stringResource(R.string.role_owner),
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -277,7 +280,7 @@ fun RegisterScreen(
 
                     // Language Selector Dropdown
                     Text(
-                        text = "App Language",
+                        text = stringResource(R.string.app_language),
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
                         color = TextPrimary
@@ -327,6 +330,7 @@ fun RegisterScreen(
                                     text = { Text("${lang.nativeName} (${lang.englishName})", color = TextPrimary) },
                                     onClick = {
                                         selectedLanguage = lang.englishName
+                                        RozgarRepository.setLanguage(lang.englishName)
                                         expandedLangDropdown = false
                                     }
                                 )
@@ -338,7 +342,7 @@ fun RegisterScreen(
                 Spacer(modifier = Modifier.height(32.dp))
 
                 PrimaryLargeButton(
-                    text = "Register Profile",
+                    text = stringResource(R.string.create_account_btn),
                     onClick = {
                         val role = selectedRole ?: return@PrimaryLargeButton
                         isLoading = true
@@ -376,7 +380,7 @@ fun RegisterScreen(
                 )
             }
 
-            LoadingOverlay(isLoading = isLoading, text = "Registering Account...")
+            LoadingOverlay(isLoading = isLoading, text = stringResource(R.string.action_please_wait))
         }
     }
 }

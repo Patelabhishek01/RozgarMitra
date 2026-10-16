@@ -26,6 +26,9 @@ import com.rozgarmitra.app.data.User
 import com.rozgarmitra.app.presentation.components.*
 import com.rozgarmitra.app.ui.theme.*
 
+import androidx.compose.ui.res.stringResource
+import com.rozgarmitra.app.R
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.saveable.rememberSaveable
 
@@ -71,19 +74,19 @@ fun MainHomeScreen(
         bottomBar = {
             val navItems = listOf(
                 RozgarNavItem(
-                    label = "Home",
+                    label = stringResource(R.string.nav_home),
                     icon = Icons.Filled.Home,
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 }
                 ),
                 RozgarNavItem(
-                    label = "Search",
+                    label = stringResource(R.string.nav_search),
                     icon = Icons.Filled.Search,
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 }
                 ),
                 RozgarNavItem(
-                    label = "Chats",
+                    label = stringResource(R.string.nav_chats),
                     icon = Icons.Filled.Chat,
                     selected = selectedTab == 2,
                     onClick = {
@@ -96,7 +99,7 @@ fun MainHomeScreen(
                     }
                 ),
                 RozgarNavItem(
-                    label = "Profile",
+                    label = stringResource(R.string.nav_profile),
                     icon = Icons.Filled.Person,
                     selected = selectedTab == 3,
                     onClick = {
@@ -147,7 +150,7 @@ fun MainHomeScreen(
                                 }
                             }
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text("Your messages will appear here", color = TextSecondary, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.no_messages_yet), color = TextSecondary, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -201,18 +204,16 @@ fun ProfileTab(
         }
         
         item {
-            ProfileSection(title = "Account") {
-                ProfileMenuItem(icon = Icons.Filled.ListAlt, title = "My Applications", onClick = onApplicationsClick)
-                ProfileMenuItem(icon = Icons.Filled.Work, title = "My Professions", onClick = onProfessionsClick)
-                ProfileMenuItem(icon = Icons.Filled.Bookmark, title = "Saved Jobs", onClick = { /* TODO */ })
+            ProfileSection(title = stringResource(R.string.section_account)) {
+                ProfileMenuItem(icon = Icons.Filled.ListAlt, title = stringResource(R.string.menu_my_applications), onClick = onApplicationsClick)
+                ProfileMenuItem(icon = Icons.Filled.Work, title = stringResource(R.string.menu_my_professions), onClick = onProfessionsClick)
             }
         }
 
         item {
-            ProfileSection(title = "Preferences & Support") {
-                ProfileMenuItem(icon = Icons.Filled.Settings, title = "Settings", onClick = onSettingsClick)
-                ProfileMenuItem(icon = Icons.Filled.Help, title = "Help Center", onClick = { /* TODO */ })
-                ProfileMenuItem(icon = Icons.Filled.Share, title = "Invite Friends", onClick = { /* TODO */ })
+            ProfileSection(title = stringResource(R.string.section_settings_support)) {
+                ProfileMenuItem(icon = Icons.Filled.Settings, title = stringResource(R.string.menu_settings), onClick = onSettingsClick)
+                ProfileMenuItem(icon = Icons.Filled.Help, title = stringResource(R.string.menu_help_support), onClick = { /* TODO */ })
             }
         }
 
@@ -229,7 +230,7 @@ fun ProfileTab(
                     ) {
                         Icon(Icons.Filled.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Logout", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.action_logout), fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -282,13 +283,13 @@ fun ProfileHeader(user: User?, onLoginClick: () -> Unit) {
                         ) {
                             Icon(Icons.Filled.Verified, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Verified Profile", fontSize = 12.sp, color = AccentCyan, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.verified_badge), fontSize = 12.sp, color = AccentCyan, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
             } else {
-                Text("Namaste!", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                Text("Login to save jobs and apply", fontSize = 14.sp, color = TextSecondary)
+                Text(stringResource(R.string.greeting_namaste), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                Text(stringResource(R.string.enter_details_start), fontSize = 14.sp, color = TextSecondary)
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
                     onClick = onLoginClick,
@@ -296,7 +297,7 @@ fun ProfileHeader(user: User?, onLoginClick: () -> Unit) {
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryIndigo),
                     modifier = Modifier.fillMaxWidth(0.7f).height(44.dp)
                 ) {
-                    Text("Login / Register", fontWeight = FontWeight.Bold, color = Color.White)
+                    Text(stringResource(R.string.action_login), fontWeight = FontWeight.Bold, color = Color.White)
                 }
             }
         }

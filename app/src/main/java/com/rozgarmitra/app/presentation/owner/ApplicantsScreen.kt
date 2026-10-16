@@ -27,6 +27,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rozgarmitra.app.data.ApplicationStatus
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.presentation.components.LoadingOverlay
+import androidx.compose.ui.res.stringResource
+import com.rozgarmitra.app.R
+import com.rozgarmitra.app.presentation.components.getLocalizedApplicationStatus
 import com.rozgarmitra.app.ui.theme.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -54,10 +57,10 @@ fun ApplicantsScreen(
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkSurface),
-                title = { Text(job?.title?.take(20) ?: "Applicants", fontWeight = FontWeight.Bold, color = TextPrimary) },
+                title = { Text(job?.title?.take(20) ?: stringResource(R.string.applicants_title), fontWeight = FontWeight.Bold, color = TextPrimary) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary, modifier = Modifier.size(24.dp))
+                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back), tint = TextPrimary, modifier = Modifier.size(24.dp))
                     }
                 }
             )
@@ -75,7 +78,7 @@ fun ApplicantsScreen(
                     .padding(16.dp)
             ) {
                 Text(
-                    text = "Review Applicants (${jobApps.size})",
+                    text = stringResource(R.string.review_applicants, jobApps.size),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary,
@@ -93,7 +96,7 @@ fun ApplicantsScreen(
 
                 if (jobApps.isEmpty()) {
                     Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Text("No applicants yet for this job.", color = TextSecondary)
+                        Text(stringResource(R.string.no_applicants_yet), color = TextSecondary)
                     }
                 } else {
                     LazyColumn(
@@ -152,7 +155,7 @@ fun ApplicantsScreen(
                                                 shape = CircleShape
                                             ) {
                                                 Text(
-                                                    text = app.status.name,
+                                                    text = getLocalizedApplicationStatus(app.status),
                                                     color = bColor,
                                                     fontSize = 10.sp,
                                                     fontWeight = FontWeight.Bold,
@@ -198,9 +201,9 @@ fun ApplicantsScreen(
                                                 modifier = Modifier.weight(1f).height(40.dp),
                                                 contentPadding = PaddingValues(horizontal = 4.dp)
                                             ) {
-                                                Icon(Icons.Filled.Close, contentDescription = "Reject", modifier = Modifier.size(14.dp))
+                                                Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.btn_reject_worker), modifier = Modifier.size(14.dp))
                                                 Spacer(modifier = Modifier.width(4.dp))
-                                                Text("Reject", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                                Text(stringResource(R.string.btn_reject_worker), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                                             }
 
                                             if (app.chatApproved) {
@@ -208,7 +211,7 @@ fun ApplicantsScreen(
                                                     onClick = {
                                                         isActionLoading = true
                                                         scope.launch {
-                                                            RozgarRepository.getOrCreateConversation(
+                                                             RozgarRepository.getOrCreateConversation(
                                                                 jobId = app.jobId,
                                                                 applicationId = app.id,
                                                                 targetUserId = app.labourId
@@ -227,9 +230,9 @@ fun ApplicantsScreen(
                                                     modifier = Modifier.weight(1.2f).height(40.dp),
                                                     contentPadding = PaddingValues(horizontal = 4.dp)
                                                 ) {
-                                                    Icon(Icons.Filled.Email, contentDescription = "Chat Approved", modifier = Modifier.size(14.dp))
+                                                    Icon(Icons.Filled.Email, contentDescription = stringResource(R.string.chat_title), modifier = Modifier.size(14.dp))
                                                     Spacer(modifier = Modifier.width(4.dp))
-                                                    Text("Chat Approved ✓", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                                    Text("${stringResource(R.string.chat_title)} ✓", fontWeight = FontWeight.Bold, fontSize = 11.sp)
                                                 }
                                             } else {
                                                 OutlinedButton(
@@ -251,9 +254,9 @@ fun ApplicantsScreen(
                                                     modifier = Modifier.weight(1.2f).height(40.dp),
                                                     contentPadding = PaddingValues(horizontal = 4.dp)
                                                 ) {
-                                                    Icon(Icons.Filled.Email, contentDescription = "Approve Chat", modifier = Modifier.size(14.dp))
+                                                    Icon(Icons.Filled.Email, contentDescription = stringResource(R.string.chat_title), modifier = Modifier.size(14.dp))
                                                     Spacer(modifier = Modifier.width(4.dp))
-                                                    Text("Approve Chat", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                                    Text(stringResource(R.string.chat_title), fontWeight = FontWeight.Bold, fontSize = 11.sp)
                                                 }
                                             }
 
@@ -262,7 +265,7 @@ fun ApplicantsScreen(
                                                     isActionLoading = true
                                                     scope.launch {
                                                         RozgarRepository.acceptApplicant(app.id).collect { result ->
-                                                            isActionLoading = false
+                                                             isActionLoading = false
                                                             result.fold(
                                                                 onSuccess = {},
                                                                 onFailure = { err -> actionError = err.localizedMessage }
@@ -275,9 +278,9 @@ fun ApplicantsScreen(
                                                 modifier = Modifier.weight(1.1f).height(40.dp),
                                                 contentPadding = PaddingValues(horizontal = 4.dp)
                                             ) {
-                                                Icon(Icons.Filled.Check, contentDescription = "Hire", modifier = Modifier.size(14.dp))
+                                                Icon(Icons.Filled.Check, contentDescription = stringResource(R.string.btn_accept_worker), modifier = Modifier.size(14.dp))
                                                 Spacer(modifier = Modifier.width(4.dp))
-                                                Text("Hire Worker", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                                Text(stringResource(R.string.btn_accept_worker), fontWeight = FontWeight.Bold, fontSize = 11.sp)
                                             }
                                         }
                                     } else {
@@ -303,9 +306,9 @@ fun ApplicantsScreen(
                                                     shape = CircleShape,
                                                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryIndigo)
                                                 ) {
-                                                    Icon(Icons.Filled.Email, contentDescription = "Contact Worker", modifier = Modifier.size(16.dp))
+                                                    Icon(Icons.Filled.Email, contentDescription = stringResource(R.string.chat_with_worker), modifier = Modifier.size(16.dp))
                                                     Spacer(modifier = Modifier.width(6.dp))
-                                                    Text("Contact Worker", fontWeight = FontWeight.Bold)
+                                                    Text(stringResource(R.string.chat_with_worker), fontWeight = FontWeight.Bold)
                                                 }
                                             }
                                         }
@@ -317,7 +320,7 @@ fun ApplicantsScreen(
                 }
             }
 
-            LoadingOverlay(isLoading = isActionLoading, text = "Updating status...")
+            LoadingOverlay(isLoading = isActionLoading, text = stringResource(R.string.action_please_wait))
         }
     }
 }

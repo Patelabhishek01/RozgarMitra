@@ -20,6 +20,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.rozgarmitra.app.R
 import com.rozgarmitra.app.ui.theme.*
 
 data class FaqItem(
@@ -68,10 +70,10 @@ fun HelpSupportScreen(
                     titleContentColor = TextPrimary,
                     navigationIconContentColor = TextPrimary
                 ),
-                title = { Text("Help & Support", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.help_support_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary)
+                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back), tint = TextPrimary)
                     }
                 }
             )
@@ -87,7 +89,7 @@ fun HelpSupportScreen(
         ) {
             item {
                 Text(
-                    "Contact Support",
+                    stringResource(R.string.contact_support_title),
                     fontWeight = FontWeight.Bold,
                     color = AccentCyan,
                     fontSize = 14.sp
@@ -119,7 +121,7 @@ fun HelpSupportScreen(
                         ) {
                             Icon(Icons.Filled.Email, contentDescription = null, tint = PrimaryBlue, modifier = Modifier.size(32.dp))
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text("Email Us", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 14.sp)
+                            Text(stringResource(R.string.email_support), fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 14.sp)
                             Text("support@rozgarmitra.com", fontSize = 11.sp, color = TextSecondary)
                         }
                     }
@@ -143,7 +145,7 @@ fun HelpSupportScreen(
                         ) {
                             Icon(Icons.Filled.Phone, contentDescription = null, tint = SuccessGreen, modifier = Modifier.size(32.dp))
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text("Call Helpline", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 14.sp)
+                            Text(stringResource(R.string.call_support), fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 14.sp)
                             Text("1800-123-4567", fontSize = 11.sp, color = TextSecondary)
                         }
                     }
@@ -153,7 +155,7 @@ fun HelpSupportScreen(
             item {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    "Frequently Asked Questions",
+                    stringResource(R.string.faq_title),
                     fontWeight = FontWeight.Bold,
                     color = AccentCyan,
                     fontSize = 14.sp
@@ -217,7 +219,7 @@ fun HelpSupportScreen(
                         Icon(Icons.Filled.Info, contentDescription = null, tint = PrimaryIndigo)
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("About RozgarMitra", fontWeight = FontWeight.Bold, color = TextPrimary)
+                            Text(stringResource(R.string.app_name), fontWeight = FontWeight.Bold, color = TextPrimary)
                             Text("App version 1.0 • Terms & Privacy", fontSize = 12.sp, color = TextSecondary)
                         }
                         Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = TextSecondary)
@@ -231,13 +233,13 @@ fun HelpSupportScreen(
         AlertDialog(
             containerColor = DarkSurfaceElevated,
             onDismissRequest = { showAboutDialog = false },
-            title = { Text("About RozgarMitra", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.app_name), color = TextPrimary, fontWeight = FontWeight.Bold) },
             text = {
                 Column {
                     Text("RozgarMitra v1.0", fontWeight = FontWeight.Bold, color = PrimaryBlue)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "RozgarMitra connects local workers and employers seamlessly. Features include real-time job posting, radius filtering, direct messaging, application management, and rating system.",
+                        stringResource(R.string.connecting_hands),
                         color = TextSecondary,
                         fontSize = 13.sp
                     )
@@ -245,7 +247,7 @@ fun HelpSupportScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showAboutDialog = false }) {
-                    Text("Close", color = AccentCyan)
+                    Text(stringResource(R.string.action_close), color = AccentCyan)
                 }
             }
         )

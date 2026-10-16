@@ -15,6 +15,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.rozgarmitra.app.R
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.presentation.components.LoadingOverlay
 import com.rozgarmitra.app.presentation.components.PrimaryLargeButton
@@ -61,7 +63,7 @@ fun OwnerDetailsScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = DarkBackground),
-                title = { Text("Owner Profile Details", fontWeight = FontWeight.Bold, color = TextPrimary) },
+                title = { Text(stringResource(R.string.owner_profile_details), fontWeight = FontWeight.Bold, color = TextPrimary) },
                 actions = {
                     TextButton(
                         onClick = {
@@ -74,7 +76,7 @@ fun OwnerDetailsScreen(
                             }
                         }
                     ) {
-                        Text("Skip / छोड़ें", color = AccentCyan, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(stringResource(R.string.action_skip), color = AccentCyan, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     }
                 }
             )
@@ -95,17 +97,12 @@ fun OwnerDetailsScreen(
             ) {
                 Column {
                     Text(
-                        text = "Business Details / व्यावसायिक विवरण",
+                        text = stringResource(R.string.business_details),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = PrimaryBlue
                     )
-                    Text(
-                        text = "Specify your work site address and company name.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary,
-                        modifier = Modifier.padding(bottom = 24.dp)
-                    )
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     // Address Input
                     Row(
@@ -114,7 +111,7 @@ fun OwnerDetailsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Work Site Address / कार्य स्थल का पता",
+                            text = stringResource(R.string.work_location_label),
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp,
                             color = TextPrimary
@@ -133,7 +130,7 @@ fun OwnerDetailsScreen(
                         ) {
                             Icon(Icons.Filled.MyLocation, contentDescription = null, modifier = Modifier.size(16.dp), tint = AccentCyan)
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(if (isLocating) "Locating..." else "Use GPS", color = AccentCyan)
+                            Text(if (isLocating) stringResource(R.string.detecting_location) else stringResource(R.string.use_gps_location), color = AccentCyan)
                         }
                     }
                     
@@ -142,7 +139,7 @@ fun OwnerDetailsScreen(
                         value = address,
                         onValueChange = { address = it },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Enter full address or use GPS locator above", color = TextSecondary.copy(alpha = 0.5f)) },
+                        placeholder = { Text(stringResource(R.string.work_location_placeholder), color = TextSecondary.copy(alpha = 0.5f)) },
                         minLines = 3,
                         maxLines = 5,
                         colors = textFieldColors,
@@ -153,7 +150,7 @@ fun OwnerDetailsScreen(
 
                     // Company Name (Optional)
                     Text(
-                        text = "Company or Trade Name (Optional)",
+                        text = stringResource(R.string.business_details),
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
                         color = TextPrimary
@@ -176,7 +173,7 @@ fun OwnerDetailsScreen(
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     PrimaryLargeButton(
-                        text = "Complete Profile / प्रोफ़ाइल पूरी करें",
+                        text = stringResource(R.string.complete_profile_title),
                         onClick = {
                             isLoading = true
                             errorMessage = null
@@ -217,12 +214,12 @@ fun OwnerDetailsScreen(
                             }
                         }
                     ) {
-                        Text("Skip for now / बाद में भरें", color = TextSecondary, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                        Text(stringResource(R.string.action_skip), color = TextSecondary, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                     }
                 }
             }
 
-            LoadingOverlay(isLoading = isLoading, text = "Saving Profile...")
+            LoadingOverlay(isLoading = isLoading, text = stringResource(R.string.action_please_wait))
         }
     }
 }

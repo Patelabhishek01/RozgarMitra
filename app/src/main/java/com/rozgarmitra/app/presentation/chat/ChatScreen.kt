@@ -26,6 +26,8 @@ import com.rozgarmitra.app.data.ChatMessageType
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.presentation.components.OfflineBanner
 import com.rozgarmitra.app.ui.theme.*
+import androidx.compose.ui.res.stringResource
+import com.rozgarmitra.app.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -95,17 +97,17 @@ fun ChatScreen(
             topBar = {
                 TopAppBar(
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkSurface),
-                    title = { Text("Unauthorized Access", fontWeight = FontWeight.Bold, color = TextPrimary) },
+                    title = { Text(stringResource(R.string.unauthorized_access), fontWeight = FontWeight.Bold, color = TextPrimary) },
                     navigationIcon = {
                         IconButton(onClick = onBackClick) {
-                            Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary)
+                            Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back), tint = TextPrimary)
                         }
                     }
                 )
             }
         ) { paddingValues ->
             Box(modifier = Modifier.fillMaxSize().padding(paddingValues).background(DarkBackground), contentAlignment = Alignment.Center) {
-                Text("You do not have permission to view this conversation.", color = WarningRose)
+                Text(stringResource(R.string.no_permission_chat), color = WarningRose)
             }
         }
         return
@@ -120,7 +122,7 @@ fun ChatScreen(
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkSurface),
                     title = {
                         Column {
-                            Text(thread?.getOtherUserName(currentUser?.id ?: "")?.ifBlank { "Chat" } ?: "Chat", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+                            Text(thread?.getOtherUserName(currentUser?.id ?: "")?.ifBlank { stringResource(R.string.chat_title) } ?: stringResource(R.string.chat_title), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
                             if (relatedJob != null) {
                                 Text("${relatedJob.title} • ₹${relatedJob.wage}/${relatedJob.wageType}", fontSize = 11.sp, color = TextSecondary)
                             } else {
@@ -134,7 +136,7 @@ fun ChatScreen(
                     },
                     navigationIcon = {
                         IconButton(onClick = onBackClick) {
-                            Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary, modifier = Modifier.size(24.dp))
+                            Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back), tint = TextPrimary, modifier = Modifier.size(24.dp))
                         }
                     }
                 )
@@ -157,7 +159,7 @@ fun ChatScreen(
             ) {
                 if (messages.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No messages yet.", color = TextSecondary)
+                        Text(stringResource(R.string.no_messages_yet), color = TextSecondary)
                     }
                 } else {
                     LazyColumn(
@@ -217,7 +219,7 @@ fun ChatScreen(
                                                             Icon(Icons.Filled.LocationOn, contentDescription = null, tint = if (isMe) Color.White else AccentCyan)
                                                             Spacer(modifier = Modifier.width(6.dp))
                                                             Column {
-                                                                Text("Shared Location", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = if (isMe) Color.White else TextPrimary)
+                                                                Text(stringResource(R.string.shared_location), fontWeight = FontWeight.Bold, fontSize = 14.sp, color = if (isMe) Color.White else TextPrimary)
                                                                 Text(msg.text, fontSize = 12.sp, color = if (isMe) Color.White.copy(alpha = 0.8f) else TextSecondary)
                                                             }
                                                         }
@@ -226,14 +228,14 @@ fun ChatScreen(
                                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                                             Icon(Icons.Filled.PlayArrow, contentDescription = "Play voice", tint = if (isMe) Color.White else PrimaryIndigo)
                                                             Spacer(modifier = Modifier.width(6.dp))
-                                                            Text("Voice Note (${msg.mediaDuration})", fontSize = 14.sp, color = if (isMe) Color.White else TextPrimary)
+                                                            Text("${stringResource(R.string.voice_note)} (${msg.mediaDuration})", fontSize = 14.sp, color = if (isMe) Color.White else TextPrimary)
                                                         }
                                                     }
                                                     ChatMessageType.IMAGE -> {
                                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                                             Icon(Icons.Filled.Image, contentDescription = null, tint = if (isMe) Color.White else TextSecondary)
                                                             Spacer(modifier = Modifier.width(6.dp))
-                                                            Text("Photo Attached", fontSize = 14.sp, color = if (isMe) Color.White else TextPrimary)
+                                                            Text(stringResource(R.string.photo_attached), fontSize = 14.sp, color = if (isMe) Color.White else TextPrimary)
                                                         }
                                                     }
                                                 }
@@ -381,7 +383,7 @@ fun ChatScreen(
                 OutlinedTextField(
                     value = inputMsgText,
                     onValueChange = { inputMsgText = it },
-                    placeholder = { Text("Type message...", color = TextMuted) },
+                    placeholder = { Text(stringResource(R.string.type_message_hint), color = TextMuted) },
                     modifier = Modifier
                         .weight(1f)
                         .padding(horizontal = 6.dp)

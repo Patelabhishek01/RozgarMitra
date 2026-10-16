@@ -21,6 +21,10 @@ import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.presentation.components.JobFeedCard
 import com.rozgarmitra.app.ui.theme.*
 
+import androidx.compose.ui.res.stringResource
+import com.rozgarmitra.app.R
+import com.rozgarmitra.app.presentation.components.getLocalizedTradeName
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JobResultsScreen(
@@ -43,6 +47,16 @@ fun JobResultsScreen(
         }
     }
 
+    val displayTitle = when (filterType) {
+        "urgent" -> stringResource(R.string.urgent_jobs)
+        "nearby" -> stringResource(R.string.tab_nearby_jobs)
+        "all" -> stringResource(R.string.browse_all_jobs)
+        else -> {
+            val tradeLocalized = getLocalizedTradeName(filterType)
+            if (tradeLocalized != filterType) tradeLocalized else title
+        }
+    }
+
     Scaffold(
         containerColor = DarkBackground,
         topBar = {
@@ -53,15 +67,15 @@ fun JobResultsScreen(
                     navigationIconContentColor = TextPrimary,
                     actionIconContentColor = TextPrimary
                 ),
-                title = { Text(title, fontWeight = FontWeight.Bold) },
+                title = { Text(displayTitle, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary)
+                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back), tint = TextPrimary)
                     }
                 },
                 actions = {
                     IconButton(onClick = { /* TODO: Filter */ }) {
-                        Icon(Icons.Filled.FilterList, contentDescription = "Filter", tint = AccentCyan)
+                        Icon(Icons.Filled.FilterList, contentDescription = stringResource(R.string.filters_title), tint = AccentCyan)
                     }
                 }
             )
@@ -83,7 +97,7 @@ fun JobResultsScreen(
                         tint = TextSecondary.copy(alpha = 0.4f)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("No jobs found", fontWeight = FontWeight.Bold, color = TextSecondary)
+                    Text(stringResource(R.string.no_matching_jobs), fontWeight = FontWeight.Bold, color = TextSecondary)
                 }
             }
         } else {

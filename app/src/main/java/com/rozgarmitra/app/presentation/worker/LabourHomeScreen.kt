@@ -30,6 +30,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rozgarmitra.app.data.*
 import com.rozgarmitra.app.presentation.components.*
+import androidx.compose.ui.res.stringResource
+import com.rozgarmitra.app.R
+import com.rozgarmitra.app.presentation.common.getApplicationStatusDisplayName
+import com.rozgarmitra.app.presentation.common.getTradeDisplayName
 import com.rozgarmitra.app.ui.theme.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -76,7 +80,7 @@ fun LabourHomeScreen(
                                 shape = CircleShape
                             ) {
                                 Text(
-                                    "WORKER / LABOUR", 
+                                    stringResource(R.string.worker_badge), 
                                     fontSize = 9.sp, 
                                     fontWeight = FontWeight.Bold, 
                                     color = SuccessGreen,
@@ -94,7 +98,7 @@ fun LabourHomeScreen(
                                     }
                                 }
                             ) {
-                                Icon(Icons.Filled.Notifications, contentDescription = "Notifications", tint = TextPrimary, modifier = Modifier.size(24.dp))
+                                Icon(Icons.Filled.Notifications, contentDescription = stringResource(R.string.notifications_title), tint = TextPrimary, modifier = Modifier.size(24.dp))
                             }
                         }
                     }
@@ -104,25 +108,25 @@ fun LabourHomeScreen(
         bottomBar = {
             val navItems = listOf(
                 RozgarNavItem(
-                    label = "Home",
+                    label = stringResource(R.string.nav_home),
                     icon = Icons.Filled.Home,
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 }
                 ),
                 RozgarNavItem(
-                    label = "Search",
+                    label = stringResource(R.string.nav_search),
                     icon = Icons.Filled.Search,
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 }
                 ),
                 RozgarNavItem(
-                    label = "Chats",
+                    label = stringResource(R.string.nav_chats),
                     icon = Icons.Filled.Chat,
                     selected = selectedTab == 2,
                     onClick = { selectedTab = 2 }
                 ),
                 RozgarNavItem(
-                    label = "Profile",
+                    label = stringResource(R.string.nav_profile),
                     icon = Icons.Filled.Person,
                     selected = selectedTab == 3,
                     badgeCount = unreadAppNotifs,
@@ -261,7 +265,7 @@ fun LabourHomeFeedTab(onJobClick: (String) -> Unit) {
             Tab(
                 selected = subTabState == 0,
                 onClick = { subTabState = 0 },
-                text = { Text("Nearby Jobs", fontWeight = FontWeight.Bold, color = if (subTabState == 0) PrimaryIndigo else TextSecondary) }
+                text = { Text(stringResource(R.string.tab_nearby_jobs), fontWeight = FontWeight.Bold, color = if (subTabState == 0) PrimaryIndigo else TextSecondary) }
             )
             Tab(
                 selected = subTabState == 1,
@@ -272,7 +276,7 @@ fun LabourHomeFeedTab(onJobClick: (String) -> Unit) {
                             Badge(containerColor = PrimaryIndigo) { Text(unreadAppNotifs.toString(), color = Color.White) }
                         }
                     }) {
-                        Text("My Applications", fontWeight = FontWeight.Bold, color = if (subTabState == 1) PrimaryIndigo else TextSecondary)
+                        Text(stringResource(R.string.tab_my_applications), fontWeight = FontWeight.Bold, color = if (subTabState == 1) PrimaryIndigo else TextSecondary)
                     }
                 }
             )
@@ -300,10 +304,10 @@ fun LabourHomeFeedTab(onJobClick: (String) -> Unit) {
                                 }
                             }
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text("No active jobs found nearby.", color = TextSecondary, fontWeight = FontWeight.Medium)
+                            Text(stringResource(R.string.no_active_jobs_nearby), color = TextSecondary, fontWeight = FontWeight.Medium)
                             Spacer(modifier = Modifier.height(8.dp))
                             TextButton(onClick = { RozgarRepository.observeJobs() }) {
-                                Text("Refresh Feed", color = PrimaryIndigo, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.refresh_feed), color = PrimaryIndigo, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -338,7 +342,7 @@ fun LabourHomeFeedTab(onJobClick: (String) -> Unit) {
                             }
                         }
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("You haven't applied to any jobs yet.", color = TextSecondary, fontWeight = FontWeight.Medium)
+                        Text(stringResource(R.string.no_applications_yet), color = TextSecondary, fontWeight = FontWeight.Medium)
                     }
                 }
             } else {
@@ -397,12 +401,13 @@ fun ApplicationStatusCard(
     hasUnreadNotification: Boolean = false,
     onJobClick: (String) -> Unit
 ) {
-    val (statusText, badgeColor) = when (app.status) {
-        ApplicationStatus.APPLIED -> "Applied (ओटीपी भेजा)" to Color(0xFFF59E0B) // Amber
-        ApplicationStatus.ACCEPTED -> "Hired / Approved (काम मिला)" to SuccessGreen
-        ApplicationStatus.COMPLETED -> "Completed (पूर्ण हुआ)" to AccentCyan
-        ApplicationStatus.REJECTED -> "Rejected (अस्वीकृत)" to WarningRose
-        ApplicationStatus.CANCELLED -> "Cancelled (रद्द किया)" to TextMuted
+    val statusText = getApplicationStatusDisplayName(app.status.name)
+    val badgeColor = when (app.status) {
+        ApplicationStatus.APPLIED -> Color(0xFFF59E0B) // Amber
+        ApplicationStatus.ACCEPTED -> SuccessGreen
+        ApplicationStatus.COMPLETED -> AccentCyan
+        ApplicationStatus.REJECTED -> WarningRose
+        ApplicationStatus.CANCELLED -> TextMuted
     }
 
     Card(
@@ -443,7 +448,7 @@ fun ApplicationStatusCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Filled.Work, contentDescription = null, tint = PrimaryIndigo, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Skills: ${app.labourSkills.joinToString(", ")}", fontSize = 13.sp, color = TextSecondary)
+                Text(stringResource(R.string.skills_required_label).substringBefore("(") + ": ${app.labourSkills.joinToString(", ")}", fontSize = 13.sp, color = TextSecondary)
             }
         }
     }
@@ -482,8 +487,8 @@ fun LabourSearchTab(onJobClick: (String) -> Unit) {
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            placeholder = { Text("Search by trade, area, or keywords...", color = TextMuted) },
-            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search", tint = PrimaryIndigo) },
+            placeholder = { Text(stringResource(R.string.search_placeholder), color = TextMuted) },
+            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.nav_search), tint = PrimaryIndigo) },
             shape = CircleShape,
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
@@ -499,7 +504,7 @@ fun LabourSearchTab(onJobClick: (String) -> Unit) {
         Spacer(modifier = Modifier.height(14.dp))
 
         // Horizontal filter chips
-        Text("Quick Filters", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextMuted)
+        Text(stringResource(R.string.filters_title), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextMuted)
         Spacer(modifier = Modifier.height(8.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -511,7 +516,7 @@ fun LabourSearchTab(onJobClick: (String) -> Unit) {
                 onClick = {
                     selectedCategory = if (selectedCategory == null) "Mason" else null
                 },
-                label = { Text("Mason") },
+                label = { Text(getTradeDisplayName("Mason")) },
                 shape = CircleShape,
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = PrimaryIndigo,
@@ -530,7 +535,7 @@ fun LabourSearchTab(onJobClick: (String) -> Unit) {
                 onClick = {
                     selectedDistance = if (selectedDistance == null) 5.0 else null
                 },
-                label = { Text("Under 5 km") },
+                label = { Text(stringResource(R.string.under_5km)) },
                 shape = CircleShape,
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = PrimaryIndigo,
@@ -549,7 +554,7 @@ fun LabourSearchTab(onJobClick: (String) -> Unit) {
                 onClick = {
                     selectedWage = if (selectedWage == null) 700 else null
                 },
-                label = { Text("₹700+ / Day") },
+                label = { Text(stringResource(R.string.wage_700_plus)) },
                 shape = CircleShape,
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = PrimaryIndigo,
@@ -568,7 +573,7 @@ fun LabourSearchTab(onJobClick: (String) -> Unit) {
 
         if (filteredJobs.isEmpty()) {
             Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Text("No matching jobs found.", color = TextSecondary, fontWeight = FontWeight.Medium)
+                Text(stringResource(R.string.no_matching_jobs), color = TextSecondary, fontWeight = FontWeight.Medium)
             }
         } else {
             LazyColumn(
@@ -607,7 +612,7 @@ fun LabourChatsTab(onChatThreadClick: (String) -> Unit) {
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                Text("No active job chats yet.", color = TextSecondary, fontWeight = FontWeight.Medium)
+                Text(stringResource(R.string.no_active_chats_yet), color = TextSecondary, fontWeight = FontWeight.Medium)
             }
         }
     } else {
@@ -739,7 +744,7 @@ fun LabourProfileTab(
                         modifier = Modifier.padding(top = 10.dp)
                     ) {
                         Text(
-                            "WORKER / LABOUR", 
+                            stringResource(R.string.worker_badge), 
                             color = SuccessGreen, 
                             fontSize = 10.sp, 
                             fontWeight = FontWeight.Bold,
@@ -768,8 +773,8 @@ fun LabourProfileTab(
                         Icon(Icons.Filled.Warning, contentDescription = null, tint = WarningRose)
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Complete Your Profile", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 15.sp)
-                            Text("Add your skills and experience to get hired faster", fontSize = 12.sp, color = TextSecondary)
+                            Text(stringResource(R.string.complete_profile_title), fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 15.sp)
+                            Text(stringResource(R.string.complete_profile_desc), fontSize = 12.sp, color = TextSecondary)
                         }
                         Icon(Icons.Filled.ArrowForward, contentDescription = null, tint = WarningRose)
                     }
@@ -778,17 +783,17 @@ fun LabourProfileTab(
         }
 
         item {
-            ProfileSection(title = "Work & Applications") {
+            ProfileSection(title = stringResource(R.string.section_work_applications)) {
                 ProfileMenuItem(
                     icon = Icons.Filled.Work,
-                    title = "My Professions",
-                    subtitle = "Manage your skills and categories",
+                    title = stringResource(R.string.menu_my_professions),
+                    subtitle = stringResource(R.string.menu_my_professions_subtitle),
                     onClick = onProfessionsClick
                 )
                 ProfileMenuItem(
                     icon = Icons.Filled.ListAlt,
-                    title = "My Applications",
-                    subtitle = "Check status of jobs you applied for",
+                    title = stringResource(R.string.menu_my_applications),
+                    subtitle = stringResource(R.string.menu_my_applications_subtitle),
                     badgeCount = unreadAppNotifs,
                     onClick = onApplicationsClick
                 )
@@ -796,7 +801,7 @@ fun LabourProfileTab(
         }
 
         item {
-            ProfileSection(title = "Availability & Trust") {
+            ProfileSection(title = stringResource(R.string.section_availability_trust)) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -814,8 +819,8 @@ fun LabourProfileTab(
                         }
                         Spacer(modifier = Modifier.width(14.dp))
                         Column {
-                            Text("Available for Work", fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = TextPrimary)
-                            Text("Show your profile to employers", fontSize = 12.sp, color = TextSecondary)
+                            Text(stringResource(R.string.available_for_work), fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = TextPrimary)
+                            Text(stringResource(R.string.available_for_work_subtitle), fontSize = 12.sp, color = TextSecondary)
                         }
                     }
                     Switch(
@@ -835,14 +840,14 @@ fun LabourProfileTab(
                 ProfileMenuItem(
                     icon = Icons.Filled.VerifiedUser,
                     title = when {
-                        isVer -> "Aadhaar Verified"
-                        isPen -> "Verification Pending"
-                        else -> "Verify Aadhaar"
+                        isVer -> stringResource(R.string.aadhaar_verified)
+                        isPen -> stringResource(R.string.verification_pending)
+                        else -> stringResource(R.string.verify_aadhaar)
                     },
                     subtitle = when {
-                        isVer -> "Badge granted"
-                        isPen -> "Under review by admin"
-                        else -> "Submit ID for verification badge"
+                        isVer -> stringResource(R.string.badge_granted)
+                        isPen -> stringResource(R.string.under_review)
+                        else -> stringResource(R.string.submit_id_verification)
                     },
                     titleColor = when {
                         isVer -> SuccessGreen
@@ -859,23 +864,23 @@ fun LabourProfileTab(
         }
 
         item {
-            ProfileSection(title = "Settings & Support") {
+            ProfileSection(title = stringResource(R.string.section_settings_support)) {
                 ProfileMenuItem(
                     icon = Icons.Filled.Settings,
-                    title = "Settings",
-                    subtitle = "Language, Appearance, Notifications",
+                    title = stringResource(R.string.menu_settings),
+                    subtitle = stringResource(R.string.menu_settings_subtitle),
                     onClick = onSettingsClick
                 )
                 ProfileMenuItem(
                     icon = Icons.Filled.Help,
-                    title = "Help & Support",
-                    subtitle = "FAQ and contact support",
+                    title = stringResource(R.string.menu_help_support),
+                    subtitle = stringResource(R.string.menu_help_support_subtitle),
                     onClick = onHelpSupportClick
                 )
                 ProfileMenuItem(
                     icon = Icons.Filled.BugReport,
-                    title = "Offline Mode",
-                    subtitle = if (isOffline) "Offline active (Local cache)" else "Online active",
+                    title = stringResource(R.string.menu_offline_mode),
+                    subtitle = if (isOffline) stringResource(R.string.offline_active) else stringResource(R.string.online_active),
                     titleColor = if (isOffline) WarningRose else TextPrimary,
                     onClick = { RozgarRepository.toggleOffline(!isOffline) }
                 )
@@ -897,7 +902,7 @@ fun LabourProfileTab(
                 ) {
                     Icon(Icons.Filled.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Logout Account", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.action_logout_account), fontWeight = FontWeight.Bold)
                 }
             }
             Spacer(modifier = Modifier.height(40.dp))
@@ -911,15 +916,15 @@ fun LabourProfileTab(
         AlertDialog(
             containerColor = DarkSurfaceElevated,
             onDismissRequest = { if (!isSaving) showEditNameDialog = false },
-            title = { Text("Edit Profile Name", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.edit_profile_name), color = TextPrimary, fontWeight = FontWeight.Bold) },
             text = {
                 Column {
-                    Text("Update your display name visible to employers.", fontSize = 13.sp, color = TextSecondary)
+                    Text(stringResource(R.string.set_display_name), fontSize = 13.sp, color = TextSecondary)
                     Spacer(modifier = Modifier.height(12.dp))
                     OutlinedTextField(
                         value = nameInput,
                         onValueChange = { nameInput = it },
-                        label = { Text("Full Name", color = TextSecondary) },
+                        label = { Text(stringResource(R.string.full_name), color = TextSecondary) },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryBlue,
                             unfocusedBorderColor = BorderStrokeColor,
@@ -945,12 +950,12 @@ fun LabourProfileTab(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
                 ) {
-                    Text(if (isSaving) "Saving..." else "Save", color = TextPrimary)
+                    Text(if (isSaving) stringResource(R.string.action_loading) else stringResource(R.string.action_save), color = TextPrimary)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showEditNameDialog = false }) {
-                    Text("Cancel", color = TextSecondary)
+                    Text(stringResource(R.string.action_cancel), color = TextSecondary)
                 }
             }
         )
@@ -963,10 +968,10 @@ fun LabourProfileTab(
         AlertDialog(
             containerColor = DarkSurfaceElevated,
             onDismissRequest = { if (!isSubmitting) showVerificationDialog = false },
-            title = { Text("Request ID Verification", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.verify_aadhaar), color = TextPrimary, fontWeight = FontWeight.Bold) },
             text = {
                 Column {
-                    Text("Select ID document type to submit for verification review.", fontSize = 13.sp, color = TextSecondary)
+                    Text(stringResource(R.string.submit_id_verification), fontSize = 13.sp, color = TextSecondary)
                     Spacer(modifier = Modifier.height(12.dp))
                     listOf("Aadhaar Card", "Voter ID", "Driving License").forEach { doc ->
                         Row(
@@ -1000,12 +1005,12 @@ fun LabourProfileTab(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
                 ) {
-                    Text(if (isSubmitting) "Submitting..." else "Submit Request", color = TextPrimary)
+                    Text(if (isSubmitting) stringResource(R.string.action_loading) else stringResource(R.string.action_submit), color = TextPrimary)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showVerificationDialog = false }) {
-                    Text("Cancel", color = TextSecondary)
+                    Text(stringResource(R.string.action_cancel), color = TextSecondary)
                 }
             }
         )

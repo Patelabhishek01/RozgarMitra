@@ -29,6 +29,10 @@ import com.rozgarmitra.app.presentation.components.LoadingOverlay
 import com.rozgarmitra.app.ui.theme.*
 import kotlinx.coroutines.launch
 
+import androidx.compose.ui.res.stringResource
+import com.rozgarmitra.app.R
+import com.rozgarmitra.app.presentation.components.getLocalizedApplicationStatus
+
 // --- 1. MY ACTIVE JOBS SCREEN ---
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,10 +56,10 @@ fun OwnerActiveJobsScreen(
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkSurface),
-                title = { Text("My Active Jobs", fontWeight = FontWeight.Bold, color = TextPrimary) },
+                title = { Text(stringResource(R.string.my_active_jobs), fontWeight = FontWeight.Bold, color = TextPrimary) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary)
+                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back), tint = TextPrimary)
                     }
                 }
             )
@@ -83,9 +87,9 @@ fun OwnerActiveJobsScreen(
                             }
                         }
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("No Active Jobs Posted", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
+                        Text(stringResource(R.string.no_active_jobs_posted), fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
                         Spacer(modifier = Modifier.height(6.dp))
-                        Text("You haven't posted any active jobs yet.", fontSize = 13.sp, color = TextSecondary)
+                        Text(stringResource(R.string.no_active_postings), fontSize = 13.sp, color = TextSecondary)
                         Spacer(modifier = Modifier.height(20.dp))
                         Button(
                             onClick = onNavigateToPost,
@@ -94,7 +98,7 @@ fun OwnerActiveJobsScreen(
                         ) {
                             Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("+ Post a New Job", fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.btn_post_new_job_now), fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -193,7 +197,7 @@ fun OwnerActiveJobsScreen(
                                         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 4.dp),
                                         modifier = Modifier.height(36.dp)
                                     ) {
-                                        Text("Manage Applicants", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                        Text(stringResource(R.string.manage_applicants), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
@@ -230,10 +234,10 @@ fun OwnerApplicationsScreen(
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkSurface),
-                title = { Text("Job Applications", fontWeight = FontWeight.Bold, color = TextPrimary) },
+                title = { Text(stringResource(R.string.received_applications, ownerApps.size), fontWeight = FontWeight.Bold, color = TextPrimary) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary)
+                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back), tint = TextPrimary)
                     }
                 }
             )
@@ -251,7 +255,7 @@ fun OwnerApplicationsScreen(
                     .padding(16.dp)
             ) {
                 Text(
-                    text = "Received Applications (${ownerApps.size})",
+                    text = stringResource(R.string.received_applications, ownerApps.size),
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
                     color = TextSecondary,
@@ -280,9 +284,9 @@ fun OwnerApplicationsScreen(
                                 }
                             }
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text("No Applications Received", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
+                            Text(stringResource(R.string.no_applications_received), fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
                             Spacer(modifier = Modifier.height(6.dp))
-                            Text("You haven't received any applications for your jobs yet.", fontSize = 13.sp, color = TextSecondary)
+                            Text(stringResource(R.string.no_applicants_yet), fontSize = 13.sp, color = TextSecondary)
                         }
                     }
                 } else {
@@ -304,7 +308,7 @@ fun OwnerApplicationsScreen(
                 }
             }
 
-            LoadingOverlay(isLoading = isActionLoading, text = "Updating status...")
+            LoadingOverlay(isLoading = isActionLoading, text = stringResource(R.string.action_please_wait))
         }
     }
 }
@@ -337,10 +341,10 @@ fun OwnerHiredWorkersScreen(
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkSurface),
-                title = { Text("Workers Hired", fontWeight = FontWeight.Bold, color = TextPrimary) },
+                title = { Text(stringResource(R.string.workers_hired_title), fontWeight = FontWeight.Bold, color = TextPrimary) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary)
+                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back), tint = TextPrimary)
                     }
                 }
             )
@@ -358,7 +362,7 @@ fun OwnerHiredWorkersScreen(
                     .padding(16.dp)
             ) {
                 Text(
-                    text = "Hired / Accepted Workers (${hiredApps.size})",
+                    text = "${stringResource(R.string.workers_hired_title)} (${hiredApps.size})",
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
                     color = TextSecondary,
@@ -387,7 +391,7 @@ fun OwnerHiredWorkersScreen(
                                 }
                             }
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text("No Workers Hired Yet", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
+                            Text(stringResource(R.string.no_workers_hired_yet), fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
                             Spacer(modifier = Modifier.height(6.dp))
                             Text("Workers accepted for your posted jobs will appear here.", fontSize = 13.sp, color = TextSecondary)
                         }
@@ -444,7 +448,7 @@ fun OwnerHiredWorkersScreen(
                                             shape = CircleShape
                                         ) {
                                             Text(
-                                                text = if (app.status == ApplicationStatus.ACCEPTED) "HIRED" else app.status.name,
+                                                text = if (app.status == ApplicationStatus.ACCEPTED) stringResource(R.string.hired_badge) else getLocalizedApplicationStatus(app.status),
                                                 color = SuccessGreen,
                                                 fontSize = 10.sp,
                                                 fontWeight = FontWeight.Bold,
@@ -508,9 +512,9 @@ fun OwnerHiredWorkersScreen(
                                             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 4.dp),
                                             modifier = Modifier.height(36.dp)
                                         ) {
-                                            Icon(Icons.Filled.Email, contentDescription = "Contact Worker", modifier = Modifier.size(14.dp))
+                                            Icon(Icons.Filled.Email, contentDescription = stringResource(R.string.chat_with_worker), modifier = Modifier.size(14.dp))
                                             Spacer(modifier = Modifier.width(4.dp))
-                                            Text("Contact Worker", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                            Text(stringResource(R.string.chat_with_worker), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                                         }
                                     }
                                 }
@@ -520,7 +524,7 @@ fun OwnerHiredWorkersScreen(
                 }
             }
 
-            LoadingOverlay(isLoading = isActionLoading, text = "Opening chat...")
+            LoadingOverlay(isLoading = isActionLoading, text = stringResource(R.string.action_please_wait))
         }
     }
 }
@@ -586,7 +590,7 @@ fun OwnerApplicationCard(
                         shape = CircleShape
                     ) {
                         Text(
-                            text = app.status.name,
+                            text = getLocalizedApplicationStatus(app.status),
                             color = bColor,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
@@ -600,7 +604,7 @@ fun OwnerApplicationCard(
 
             // Job Title
             Text(
-                text = "Applied for: ${app.jobTitle}",
+                text = "${stringResource(R.string.status_applied)}: ${app.jobTitle}",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = AccentCyan
@@ -641,9 +645,9 @@ fun OwnerApplicationCard(
                         modifier = Modifier.weight(1f).height(40.dp),
                         contentPadding = PaddingValues(horizontal = 4.dp)
                     ) {
-                        Icon(Icons.Filled.Close, contentDescription = "Reject", modifier = Modifier.size(14.dp))
+                        Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.btn_reject_worker), modifier = Modifier.size(14.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Reject", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text(stringResource(R.string.btn_reject_worker), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
 
                     if (app.chatApproved) {
@@ -670,9 +674,9 @@ fun OwnerApplicationCard(
                             modifier = Modifier.weight(1.2f).height(40.dp),
                             contentPadding = PaddingValues(horizontal = 4.dp)
                         ) {
-                            Icon(Icons.Filled.Email, contentDescription = "Chat Approved", modifier = Modifier.size(14.dp))
+                            Icon(Icons.Filled.Email, contentDescription = stringResource(R.string.chat_title), modifier = Modifier.size(14.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Chat Approved ✓", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                            Text("${stringResource(R.string.chat_title)} ✓", fontWeight = FontWeight.Bold, fontSize = 11.sp)
                         }
                     } else {
                         OutlinedButton(
@@ -694,9 +698,9 @@ fun OwnerApplicationCard(
                             modifier = Modifier.weight(1.2f).height(40.dp),
                             contentPadding = PaddingValues(horizontal = 4.dp)
                         ) {
-                            Icon(Icons.Filled.Email, contentDescription = "Approve Chat", modifier = Modifier.size(14.dp))
+                            Icon(Icons.Filled.Email, contentDescription = stringResource(R.string.chat_title), modifier = Modifier.size(14.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Approve Chat", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                            Text(stringResource(R.string.chat_title), fontWeight = FontWeight.Bold, fontSize = 11.sp)
                         }
                     }
 
@@ -718,9 +722,9 @@ fun OwnerApplicationCard(
                         modifier = Modifier.weight(1.1f).height(40.dp),
                         contentPadding = PaddingValues(horizontal = 4.dp)
                     ) {
-                        Icon(Icons.Filled.Check, contentDescription = "Hire", modifier = Modifier.size(14.dp))
+                        Icon(Icons.Filled.Check, contentDescription = stringResource(R.string.btn_accept_worker), modifier = Modifier.size(14.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Hire Worker", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                        Text(stringResource(R.string.btn_accept_worker), fontWeight = FontWeight.Bold, fontSize = 11.sp)
                     }
                 }
             } else if (app.status == ApplicationStatus.ACCEPTED || app.status == ApplicationStatus.COMPLETED) {
@@ -745,9 +749,9 @@ fun OwnerApplicationCard(
                         shape = CircleShape,
                         colors = ButtonDefaults.buttonColors(containerColor = PrimaryIndigo)
                     ) {
-                        Icon(Icons.Filled.Email, contentDescription = "Contact Worker", modifier = Modifier.size(16.dp))
+                        Icon(Icons.Filled.Email, contentDescription = stringResource(R.string.chat_with_worker), modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Contact Worker", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.chat_with_worker), fontWeight = FontWeight.Bold)
                     }
                 }
             }

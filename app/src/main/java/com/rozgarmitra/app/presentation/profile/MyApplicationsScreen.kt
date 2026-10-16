@@ -23,6 +23,9 @@ import com.rozgarmitra.app.data.ApplicationStatus
 import com.rozgarmitra.app.data.NotificationType
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.ui.theme.*
+import androidx.compose.ui.res.stringResource
+import com.rozgarmitra.app.R
+import com.rozgarmitra.app.presentation.components.getLocalizedApplicationStatus
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,10 +50,10 @@ fun MyApplicationsScreen(
                     titleContentColor = TextPrimary,
                     navigationIconContentColor = TextPrimary
                 ),
-                title = { Text("My Applications", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.my_applications_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary)
+                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back), tint = TextPrimary)
                     }
                 }
             )
@@ -67,7 +70,7 @@ fun MyApplicationsScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Filled.Assignment, contentDescription = null, modifier = Modifier.size(64.dp), tint = TextSecondary.copy(alpha = 0.4f))
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("You haven't applied to any jobs yet", color = TextSecondary)
+                    Text(stringResource(R.string.no_applications_yet), color = TextSecondary)
                 }
             }
         } else {
@@ -151,7 +154,7 @@ fun ApplicationCard(
                     }
                 }
                 Spacer(modifier = Modifier.height(4.dp))
-                Text("Tap to view job details", fontSize = 12.sp, color = TextSecondary)
+                Text(stringResource(R.string.tap_to_view_details), fontSize = 12.sp, color = TextSecondary)
             }
             
             Surface(
@@ -160,7 +163,7 @@ fun ApplicationCard(
                 border = BorderStroke(1.dp, statusColor.copy(alpha = 0.3f))
             ) {
                 Text(
-                    text = status.name,
+                    text = getLocalizedApplicationStatus(status),
                     color = statusColor,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Black,

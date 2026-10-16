@@ -48,6 +48,12 @@ object RozgarRepository {
     private val _isLanguageSelected = MutableStateFlow(false)
     val isLanguageSelected: StateFlow<Boolean> = _isLanguageSelected
 
+    private val _currentLanguageCode = MutableStateFlow("en")
+    val currentLanguageCode: StateFlow<String> = _currentLanguageCode
+
+    private val _currentLanguageName = MutableStateFlow("English")
+    val currentLanguageName: StateFlow<String> = _currentLanguageName
+
     private val _themeMode = MutableStateFlow(ThemeMode.SYSTEM)
     val themeMode: StateFlow<ThemeMode> = _themeMode
 
@@ -143,6 +149,10 @@ object RozgarRepository {
     fun initialize(context: Context) {
         preferenceManager = PreferenceManager(context)
         val lang = preferenceManager?.getLanguage()
+        val langCode = preferenceManager?.getLanguageCode() ?: "en"
+        val langName = lang ?: PreferenceManager.mapCodeToLanguageName(langCode)
+        _currentLanguageCode.value = langCode
+        _currentLanguageName.value = langName
         _isLanguageSelected.value = lang != null
 
         val theme = preferenceManager?.getTheme() ?: ThemeMode.SYSTEM
@@ -453,11 +463,15 @@ object RozgarRepository {
             }
     }
 
-    fun setLanguage(language: String) {
-        preferenceManager?.setLanguage(language)
+    fun setLanguage(languageOrCode: String) {
+        val code = if (languageOrCode.length <= 3) languageOrCode.lowercase() else PreferenceManager.mapLanguageNameToCode(languageOrCode)
+        val name = PreferenceManager.mapCodeToLanguageName(code)
+        _currentLanguageCode.value = code
+        _currentLanguageName.value = name
         _isLanguageSelected.value = true
+        preferenceManager?.setLanguage(name, code)
         _currentUser.value?.let { user ->
-            db.collection("users").document(user.id).update("language", language)
+            db.collection("users").document(user.id).update("language", name)
         }
     }
 

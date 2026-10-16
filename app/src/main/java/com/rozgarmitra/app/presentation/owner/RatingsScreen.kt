@@ -16,6 +16,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.rozgarmitra.app.R
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.presentation.components.LoadingOverlay
 import com.rozgarmitra.app.presentation.components.PrimaryLargeButton
@@ -60,10 +62,10 @@ fun RatingsScreen(
                     titleContentColor = TextPrimary,
                     navigationIconContentColor = TextPrimary
                 ),
-                title = { Text("Rate Worker", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.rate_worker), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", modifier = Modifier.size(26.dp), tint = TextPrimary)
+                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back), modifier = Modifier.size(26.dp), tint = TextPrimary)
                     }
                 }
             )
@@ -84,31 +86,31 @@ fun RatingsScreen(
             ) {
                 Column {
                     Text(
-                        text = "Job Completed! 🎉",
+                        text = stringResource(R.string.job_completed),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Black,
                         color = SuccessGreen
                     )
                     Text(
-                        text = "Please rate the worker on the following parameters.",
+                        text = stringResource(R.string.rate_parameters_desc),
                         fontSize = 13.sp,
                         color = TextSecondary,
                         modifier = Modifier.padding(bottom = 24.dp)
                     )
 
                     // Param 1: Skill
-                    Text("Work Skill / कार्य कौशल", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
+                    Text(stringResource(R.string.work_skill), fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
                         RatingBar(rating = skillRating, onRatingChanged = { skillRating = it })
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
                             text = when (skillRating.toInt()) {
-                                1 -> "Poor"
-                                2 -> "Average"
-                                3 -> "Good"
-                                4 -> "Very Good"
-                                else -> "Excellent"
+                                1 -> "★"
+                                2 -> "★★"
+                                3 -> "★★★"
+                                4 -> "★★★★"
+                                else -> "★★★★★"
                             },
                             fontWeight = FontWeight.Bold,
                             color = AccentCyan,
@@ -119,18 +121,18 @@ fun RatingsScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     // Param 2: Punctuality
-                    Text("Punctuality / समय पालन", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
+                    Text(stringResource(R.string.punctuality), fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
                         RatingBar(rating = punctualityRating, onRatingChanged = { punctualityRating = it })
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
                             text = when (punctualityRating.toInt()) {
-                                1 -> "Very Late"
-                                2 -> "Late"
-                                3 -> "On Time"
-                                4 -> "Punctual"
-                                else -> "Highly Reliable"
+                                1 -> "★"
+                                2 -> "★★"
+                                3 -> "★★★"
+                                4 -> "★★★★"
+                                else -> "★★★★★"
                             },
                             fontWeight = FontWeight.Bold,
                             color = AccentCyan,
@@ -141,18 +143,18 @@ fun RatingsScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     // Param 3: Behaviour
-                    Text("Behaviour & Conduct / व्यवहार", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
+                    Text(stringResource(R.string.behaviour_conduct), fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
                         RatingBar(rating = behaviourRating, onRatingChanged = { behaviourRating = it })
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
                             text = when (behaviourRating.toInt()) {
-                                1 -> "Rude"
-                                2 -> "Polite"
-                                3 -> "Helpful"
-                                4 -> "Very Helpful"
-                                else -> "Exceptional"
+                                1 -> "★"
+                                2 -> "★★"
+                                3 -> "★★★"
+                                4 -> "★★★★"
+                                else -> "★★★★★"
                             },
                             fontWeight = FontWeight.Bold,
                             color = AccentCyan,
@@ -163,13 +165,13 @@ fun RatingsScreen(
                     Spacer(modifier = Modifier.height(28.dp))
 
                     // Comment box
-                    Text("Write a short review (Optional)", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
+                    Text(stringResource(R.string.short_review_optional), fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = commentText,
                         onValueChange = { commentText = it },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("e.g. Completed work quickly, did a great job", color = TextSecondary.copy(alpha = 0.5f)) },
+                        placeholder = { Text("...", color = TextSecondary.copy(alpha = 0.5f)) },
                         minLines = 3,
                         maxLines = 5,
                         colors = textFieldColors,
@@ -180,7 +182,7 @@ fun RatingsScreen(
                 Spacer(modifier = Modifier.height(40.dp))
 
                 PrimaryLargeButton(
-                    text = "Submit Rating",
+                    text = stringResource(R.string.submit_rating),
                     onClick = {
                         isLoading = true
                         errorMessage = null
@@ -205,7 +207,7 @@ fun RatingsScreen(
                 )
             }
 
-            LoadingOverlay(isLoading = isLoading, text = "Submitting Review...")
+            LoadingOverlay(isLoading = isLoading, text = stringResource(R.string.action_please_wait))
         }
     }
 }

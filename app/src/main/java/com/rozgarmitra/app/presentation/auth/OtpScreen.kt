@@ -17,6 +17,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.rozgarmitra.app.R
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.presentation.components.LoadingOverlay
 import com.rozgarmitra.app.presentation.components.PrimaryLargeButton
@@ -65,12 +67,12 @@ fun OtpScreen(
                     titleContentColor = TextPrimary,
                     navigationIconContentColor = TextPrimary
                 ),
-                title = { Text("Verify Mobile", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.verify_mobile), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.action_back),
                             modifier = Modifier.size(28.dp),
                             tint = TextPrimary
                         )
@@ -107,17 +109,10 @@ fun OtpScreen(
                     Spacer(modifier = Modifier.height(24.dp))
                     
                     Text(
-                        text = "We sent an OTP code to",
+                        text = stringResource(R.string.otp_sent_to, "+91 $phone"),
                         style = MaterialTheme.typography.bodyLarge,
-                        color = TextSecondary
-                    )
-                    
-                    Text(
-                        text = "+91 $phone",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary,
-                        modifier = Modifier.padding(top = 4.dp)
+                        color = TextSecondary,
+                        textAlign = TextAlign.Center
                     )
                     
                     Spacer(modifier = Modifier.height(32.dp))
@@ -164,11 +159,6 @@ fun OtpScreen(
                     )
                     
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Enter '123456' to proceed (Demo OTP)",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary
-                    )
 
                     Spacer(modifier = Modifier.height(32.dp))
 
@@ -179,7 +169,7 @@ fun OtpScreen(
                     ) {
                         if (timerSeconds > 0) {
                             Text(
-                                text = "Resend OTP in ${timerSeconds}s",
+                                text = stringResource(R.string.resend_otp_timer, timerSeconds),
                                 color = TextSecondary,
                                 style = MaterialTheme.typography.bodyMedium
                             )
@@ -191,7 +181,7 @@ fun OtpScreen(
                                 }
                             ) {
                                 Text(
-                                    "Resend Code",
+                                    stringResource(R.string.resend_code),
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = AccentCyan
@@ -202,7 +192,7 @@ fun OtpScreen(
                 }
 
                 PrimaryLargeButton(
-                    text = "Verify & Continue",
+                    text = stringResource(R.string.verify_and_continue),
                     onClick = {
                         isLoading = true
                         errorMessage = null
@@ -232,7 +222,7 @@ fun OtpScreen(
                 )
             }
 
-            LoadingOverlay(isLoading = isLoading, text = "Verifying Code...")
+            LoadingOverlay(isLoading = isLoading, text = stringResource(R.string.action_please_wait))
         }
     }
 }

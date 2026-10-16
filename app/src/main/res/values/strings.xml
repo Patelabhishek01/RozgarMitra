@@ -1,3 +1,373 @@
 <resources>
+    <!-- App & General -->
     <string name="app_name">RozgarMitra</string>
+    <string name="connecting_hands">Connecting Hands with Opportunities.</string>
+    <string name="namaste">Namaste</string>
+    <string name="greeting_namaste_user">Namaste, %1$s! 👋</string>
+    <string name="greeting_namaste">Namaste! 👋</string>
+    <string name="worker_badge">WORKER / LABOUR</string>
+    <string name="employer_badge">EMPLOYER / OWNER</string>
+    <string name="offline_banner_text">You are currently offline. Using cached data.</string>
+    <string name="verified_badge">Verified</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_search">Search</string>
+    <string name="nav_post_job">Post Job</string>
+    <string name="nav_chats">Chats</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Common Actions -->
+    <string name="action_back">Back</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_save">Save</string>
+    <string name="action_confirm">Confirm</string>
+    <string name="action_apply">Apply</string>
+    <string name="action_apply_now">Apply Now</string>
+    <string name="action_submit">Submit</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_close">Close</string>
+    <string name="action_clear">Clear</string>
+    <string name="action_done">Done</string>
+    <string name="action_see_all">See All →</string>
+    <string name="action_retry">Retry</string>
+    <string name="action_loading">Loading…</string>
+    <string name="action_please_wait">Please wait…</string>
+    <string name="action_save_changes">Save Changes</string>
+    <string name="action_skip">Skip</string>
+    <string name="action_login">Login</string>
+    <string name="action_register">Register</string>
+    <string name="action_logout">Logout</string>
+    <string name="action_logout_account">Logout Account</string>
+
+    <!-- Language Selection -->
+    <string name="select_language_title">Select Language</string>
+    <string name="select_language_subtitle">Select your language</string>
+    <string name="confirm_continue">Confirm / Continue</string>
+
+    <!-- Auth (Login & Register) -->
+    <string name="welcome_back">Welcome!</string>
+    <string name="login_subtitle">Enter your mobile number or email to login or register.</string>
+    <string name="enter_details_start">Enter details to start your journey.</string>
+    <string name="create_account_title">Create your account</string>
+    <string name="email_address">Email Address</string>
+    <string name="password">Password</string>
+    <string name="mobile_number">Mobile Number</string>
+    <string name="mobile_number_hint">Mobile Number (10 digits)</string>
+    <string name="password_hint">Password (6+ characters)</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="reset_password_title">Reset Password</string>
+    <string name="reset_password_desc">Enter your registered email address to receive password reset link.</string>
+    <string name="send_reset_link">Send Reset Link</string>
+    <string name="reset_link_sent">Password reset email sent! Check your inbox.</string>
+    <string name="or_continue_with">Or continue with</string>
+    <string name="continue_with_google">Continue with Google</string>
+    <string name="dont_have_account">Don\'t have an account? Register</string>
+    <string name="already_have_account">Already have an account? Login</string>
+    <string name="create_profile_title">Create Profile</string>
+    <string name="register_title">Register with RozgarMitra</string>
+    <string name="register_subtitle">Enter details to create your secure account</string>
+    <string name="full_name">Full Name</string>
+    <string name="enter_full_name">Enter your full name</string>
+    <string name="choose_account_type">Choose Account Type</string>
+    <string name="role_labour">Labour / Worker</string>
+    <string name="role_labour_desc">Find daily wage work</string>
+    <string name="role_owner">Employer / Owner</string>
+    <string name="role_owner_desc">Hire skilled daily workers</string>
+    <string name="app_language">App Language</string>
+    <string name="city_district">City / District</string>
+    <string name="create_account_btn">Create Account</string>
+
+    <!-- Worker Home & Feed -->
+    <string name="find_daily_work_near_you">Find daily work near you</string>
+    <string name="tab_nearby_jobs">Nearby Jobs</string>
+    <string name="tab_my_applications">My Applications</string>
+    <string name="browse_by_profession">Browse by Profession</string>
+    <string name="urgent_jobs">⚡ Urgent Jobs</string>
+    <string name="active_jobs_near_you">Active Jobs Near You</string>
+    <string name="no_matching_jobs">No matching jobs found</string>
+    <string name="try_adjusting_filters">Try adjusting your profession filter or location</string>
+    <string name="browse_all_jobs">Browse All Jobs</string>
+    <string name="no_active_jobs_nearby">No active jobs found nearby.</string>
+    <string name="refresh_feed">Refresh Feed</string>
+    <string name="filter_all_jobs">All Jobs</string>
+    <string name="location_available">Location Available</string>
+    <string name="select_location">Select Location</string>
+    <string name="within_km">• Within %1$d km</string>
+    <string name="km_away">%1$s km away</string>
+    <string name="workers_needed_count">%1$d workers needed (%2$d hired)</string>
+    <string name="per_day">per day</string>
+    <string name="per_hour">per hour</string>
+    <string name="wage_fixed">fixed</string>
+    <string name="tag_urgent">⚡ URGENT</string>
+    <string name="tag_filled">FILLED</string>
+    <string name="btn_respond_to_job">Respond to Job</string>
+    <string name="btn_applied">Applied ✓</string>
+    <string name="btn_accepted">Accepted 🎉</string>
+    <string name="btn_not_selected">Not Selected</string>
+    <string name="btn_job_filled">Job Filled</string>
+    <string name="complete_profile_title">Complete Your Profile</string>
+    <string name="complete_profile_desc">Add your skills and experience to get hired faster</string>
+    <string name="complete_profile_3x">Complete your profile to get 3x more jobs!</string>
+    <string name="under_5km">Under 5 km</string>
+    <string name="wage_700_plus">₹700+ / Day</string>
+
+    <!-- Application Statuses -->
+    <string name="status_applied">Applied</string>
+    <string name="status_accepted">Hired / Approved</string>
+    <string name="status_rejected">Not Selected</string>
+    <string name="status_completed">Completed</string>
+    <string name="status_cancelled">Cancelled</string>
+    <string name="tap_to_view_details">Tap to view job details</string>
+    <string name="no_applications_yet">You haven\'t applied to any jobs yet.</string>
+    <string name="my_applications_title">My Applications</string>
+
+    <!-- Search Tab -->
+    <string name="search_jobs_title">Search Jobs</string>
+    <string name="search_placeholder">Search by profession, skills, or area…</string>
+    <string name="popular_professions">Popular Professions</string>
+    <string name="recent_searches">Recent Searches</string>
+    <string name="no_results_for">No results for \"%1$s\"</string>
+
+    <!-- Worker Profile & Settings -->
+    <string name="profile_title">Worker Profile</string>
+    <string name="section_work_applications">Work &amp; Applications</string>
+    <string name="menu_my_professions">My Professions</string>
+    <string name="menu_my_professions_subtitle">Manage your skills and categories</string>
+    <string name="menu_my_applications">My Applications</string>
+    <string name="menu_my_applications_subtitle">Check status of jobs you applied for</string>
+    <string name="section_availability_trust">Availability &amp; Trust</string>
+    <string name="available_for_work">Available for Work</string>
+    <string name="available_for_work_subtitle">Show your profile to employers</string>
+    <string name="aadhaar_verified">Aadhaar Verified</string>
+    <string name="verification_pending">Verification Pending</string>
+    <string name="verify_aadhaar">Verify Aadhaar</string>
+    <string name="badge_granted">Badge granted</string>
+    <string name="under_review">Under review by admin</string>
+    <string name="submit_id_verification">Submit ID for verification badge</string>
+    <string name="section_settings_support">Settings &amp; Support</string>
+    <string name="menu_settings">Settings</string>
+    <string name="menu_settings_subtitle">Language, Appearance, Notifications</string>
+    <string name="menu_help_support">Help &amp; Support</string>
+    <string name="menu_help_support_subtitle">FAQ and contact support</string>
+    <string name="menu_offline_mode">Offline Mode</string>
+    <string name="offline_active">Offline active (Local cache)</string>
+    <string name="online_active">Online active</string>
+    <string name="logout_confirmation_title">Logout Confirmation</string>
+    <string name="logout_confirmation_message">Are you sure you want to logout?</string>
+
+    <!-- Owner Dashboard -->
+    <string name="owner_dashboard_title">Employer Dashboard</string>
+    <string name="owner_dashboard_subtitle">Manage your job postings and applicants</string>
+    <string name="metric_active_jobs">Active Jobs</string>
+    <string name="metric_applications">Applications</string>
+    <string name="metric_workers_hired">Workers Hired</string>
+    <string name="btn_post_new_job_now">+ Post a New Job Now</string>
+    <string name="recent_worker_responses">Recent Worker Responses</string>
+    <string name="no_active_postings">No active job postings yet</string>
+    <string name="post_first_job_prompt">Post your first job to find skilled daily workers near you</string>
+
+    <!-- Post Job Steps -->
+    <string name="post_job_title">Post a Daily Job</string>
+    <string name="step_indicator">Step %1$d of 5</string>
+    <string name="step_1_title">1. Basic Information</string>
+    <string name="step_2_title">2. Work Details</string>
+    <string name="step_3_title">3. Payment &amp; Perks</string>
+    <string name="step_4_title">4. Skills &amp; Requirements</string>
+    <string name="step_5_title">5. Review &amp; Publish Job</string>
+    <string name="job_title_label">Job Title</string>
+    <string name="job_title_placeholder">e.g. Need 3 construction helpers</string>
+    <string name="job_desc_label">Job Description</string>
+    <string name="job_desc_placeholder">Describe the work responsibilities…</string>
+    <string name="work_location_label">Work Location</string>
+    <string name="work_location_placeholder">e.g. HSR Layout, Bengaluru or shop address</string>
+    <string name="use_gps_location">Use GPS Location</string>
+    <string name="detecting_location">Detecting…</string>
+    <string name="start_date_label">Start Date</string>
+    <string name="start_time_label">Start Time</string>
+    <string name="today">Today</string>
+    <string name="workers_needed_label">Workers Needed</string>
+    <string name="duration_days_label">Duration (Days)</string>
+    <string name="wage_amount_label">Wage Amount (₹)</string>
+    <string name="wage_type_label">Wage Type</string>
+    <string name="included_perks_label">Included Perks (Optional)</string>
+    <string name="perk_food">Food</string>
+    <string name="perk_shelter">Shelter</string>
+    <string name="perk_transport">Transport</string>
+    <string name="skills_required_label">Skills Required (Comma separated)</string>
+    <string name="skills_required_placeholder">e.g. bricklaying, cement mixing, loading</string>
+    <string name="difficulty_level_label">Difficulty Level</string>
+    <string name="difficulty_easy">Easy</string>
+    <string name="difficulty_medium">Medium</string>
+    <string name="difficulty_hard">Hard</string>
+    <string name="mark_urgent_hiring">Mark as Urgent Hiring</string>
+    <string name="urgent_hiring_desc">Urgent jobs are highlighted to workers</string>
+    <string name="btn_next">Next Step →</string>
+    <string name="btn_previous">← Back</string>
+    <string name="btn_publish_job">Publish Job Now 🚀</string>
+    <string name="publishing_job">Publishing job…</string>
+    <string name="urgent_hiring_active">⚡ URGENT HIRING ACTIVE</string>
+    <string name="preview_location">Location</string>
+    <string name="preview_date_time">Date &amp; Time</string>
+    <string name="preview_wage">Wage</string>
+    <string name="preview_perks">Perks</string>
+
+    <!-- Job Details Screen -->
+    <string name="job_details_title">Job Details</string>
+    <string name="apply_for_job">Apply for this Job</string>
+    <string name="already_applied">Response Sent ✓</string>
+    <string name="chat_with_employer">Chat with Employer</string>
+    <string name="call_employer">Call Employer</string>
+    <string name="manage_applicants">Manage Applicants</string>
+    <string name="chat_unavailable_applied">Apply to this job first to start chatting with the employer.</string>
+    <string name="chat_unavailable_pending">Chat will be available after your application is accepted or chat is approved.</string>
+    <string name="confirm_application_title">Confirm Application</string>
+    <string name="confirm_application_message">Are you sure you want to apply for this job?</string>
+    <string name="application_submitted_success">Application submitted successfully!</string>
+
+    <!-- Applicants Screen -->
+    <string name="review_applicants">Review Applicants (%1$d)</string>
+    <string name="no_applicants_yet">No applicants yet for this job.</string>
+    <string name="btn_accept_worker">Accept Worker</string>
+    <string name="btn_reject_worker">Reject</string>
+    <string name="worker_accepted">Worker Accepted</string>
+    <string name="worker_rejected">Worker Rejected</string>
+    <string name="applicants_title">Applicants</string>
+
+    <!-- Trades / Professions -->
+    <string name="trade_mason">Mason</string>
+    <string name="trade_painter">Painter</string>
+    <string name="trade_electrician">Electrician</string>
+    <string name="trade_plumber">Plumber</string>
+    <string name="trade_welder">Welder</string>
+    <string name="trade_driver">Driver</string>
+    <string name="trade_cleaner">Cleaner</string>
+    <string name="trade_gardener">Gardener</string>
+    <string name="trade_farm_worker">Farm Worker</string>
+    <string name="trade_construction_labour">Construction Labour</string>
+    <string name="trade_helper">Helper</string>
+    <string name="trade_cook">Cook</string>
+    <string name="trade_security_guard">Security Guard</string>
+    <string name="trade_mechanic">Mechanic</string>
+    <string name="trade_carpenter">Carpenter</string>
+    <string name="trade_other">Other</string>
+
+    <!-- Chat -->
+    <string name="chat_title">Chat</string>
+    <string name="type_message_hint">Type a message…</string>
+    <string name="no_messages_yet">No messages yet. Say hello!</string>
+    <string name="no_active_chats_yet">No active job chats yet.</string>
+    <string name="call_action">Call</string>
+
+    <!-- Notifications -->
+    <string name="notifications_title">Notifications</string>
+    <string name="mark_all_read">Mark all as read</string>
+    <string name="no_notifications_yet">No notifications yet</string>
+    <string name="caught_up">You\'re all caught up!</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="section_account">Account</string>
+    <string name="edit_profile_name">Edit Profile Name</string>
+    <string name="set_display_name">Set your display name</string>
+    <string name="account_details">Account Details</string>
+    <string name="section_preferences">Preferences</string>
+    <string name="preference_language">Language</string>
+    <string name="current_language">Current: %1$s</string>
+    <string name="preference_theme">Appearance</string>
+    <string name="theme_dark">Dark Theme</string>
+    <string name="theme_light">Light Theme</string>
+    <string name="theme_system">System Default</string>
+    <string name="preference_notifications">Push Notifications</string>
+    <string name="section_support_legal">Support &amp; Legal</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="terms_of_service">Terms of Service</string>
+    <string name="app_version">App Version</string>
+
+    <!-- Help & Support -->
+    <string name="help_support_title">Help &amp; Support</string>
+    <string name="how_can_we_help">How can we help you?</string>
+    <string name="faq_title">Frequently Asked Questions</string>
+    <string name="contact_support_title">Contact Support</string>
+    <string name="call_support">Call Support Helpline</string>
+    <string name="call_support_desc">Available 8:00 AM - 8:00 PM</string>
+    <string name="email_support">Email Support</string>
+    <string name="email_support_desc">Get reply within 24 hours</string>
+    <string name="whatsapp_support">WhatsApp Support</string>
+    <string name="whatsapp_support_desc">Chat with our support team</string>
+
+    <!-- Filters & Location Dialog -->
+    <string name="filters_title">Filters</string>
+    <string name="sort_by">Sort By</string>
+    <string name="sort_relevant">Relevant</string>
+    <string name="sort_nearest">Nearest</string>
+    <string name="sort_highest_pay">Highest Pay</string>
+    <string name="max_distance">Maximum Distance</string>
+    <string name="minimum_daily_wage">Minimum Daily Wage</string>
+    <string name="reset_filters">Reset Filters</string>
+    <string name="apply_filters">Apply Filters</string>
+    <string name="location_dialog_title">Select Location</string>
+    <string name="use_current_gps">Use Current GPS Location</string>
+    <string name="or_enter_manually">Or Enter City/Area Manually</string>
+    <string name="search_radius">Search Radius</string>
+    <string name="save_location">Save Location</string>
+
+    <!-- Details forms -->
+    <string name="labour_profile_details">Labour Profile Details</string>
+    <string name="owner_profile_details">Owner Profile Details</string>
+    <string name="work_details">Work Details</string>
+    <string name="select_skills_hint">Select your skills so owners can find you easily.</string>
+    <string name="select_skills">Select Skills</string>
+    <string name="business_details">Business Details</string>
+    <string name="expected_daily_wage">Expected Daily Wage (₹)</string>
+    <string name="years_of_experience">Years of Experience</string>
+
+    <!-- Additional UI Strings -->
+    <string name="verify_mobile">Verify Mobile</string>
+    <string name="otp_sent_to">We sent an OTP code to %1$s</string>
+    <string name="resend_code">Resend Code</string>
+    <string name="resend_otp_timer">Resend OTP in %1$ds</string>
+    <string name="verify_and_continue">Verify &amp; Continue</string>
+    <string name="use_phone_login">Use Phone Number</string>
+    <string name="use_email_login">Use Email</string>
+    <string name="send_otp">Send OTP</string>
+    <string name="continue_btn">Continue</string>
+    <string name="rate_worker">Rate Worker</string>
+    <string name="job_completed">Job Completed!</string>
+    <string name="rate_parameters_desc">Please rate the worker on the following parameters.</string>
+    <string name="work_skill">Work Skill</string>
+    <string name="punctuality">Punctuality</string>
+    <string name="behaviour_conduct">Behaviour &amp; Conduct</string>
+    <string name="short_review_optional">Write a short review (Optional)</string>
+    <string name="submit_rating">Submit Rating</string>
+    <string name="my_active_jobs">My Active Jobs</string>
+    <string name="received_applications">Received Applications (%1$d)</string>
+    <string name="no_applications_received">No Applications Received</string>
+    <string name="no_active_jobs_posted">No Active Jobs Posted</string>
+    <string name="workers_hired_title">Workers Hired</string>
+    <string name="no_workers_hired_yet">No Workers Hired Yet</string>
+    <string name="worker_profile">Worker Profile</string>
+    <string name="call_worker">Call Worker</string>
+    <string name="chat_with_worker">Chat with Worker</string>
+    <string name="hired_badge">HIRED</string>
+    <string name="suggest_new_skill">Suggest New Skill</string>
+    <string name="cant_find_skill_desc">Can\'t find your skill? Tell us what you do.</string>
+    <string name="skill_name_hint">Skill Name (e.g. Driver)</string>
+    <string name="what_work_desc">What work do you do in this?</string>
+    <string name="saving_profile">Saving Profile…</string>
+    <string name="exp_under_1_yr">&lt; 1 Year</string>
+    <string name="exp_1_2_yr">1 - 2 Years</string>
+    <string name="exp_3_5_yr">3 - 5 Years</string>
+    <string name="exp_5_plus_yr">5+ Years</string>
+    <string name="manage_professions_subtitle">Manage your work categories &amp; wage</string>
+    <string name="in_app_notifications">In-App Notifications</string>
+    <string name="in_app_notifications_desc">Receive application updates &amp; chat alerts</string>
+    <string name="select_appearance">Select Appearance</string>
+    <string name="shared_location">Shared Location</string>
+    <string name="voice_note">Voice Note</string>
+    <string name="photo_attached">Photo Attached</string>
+    <string name="unauthorized_access">Unauthorized Access</string>
+    <string name="no_permission_chat">You do not have permission to view this conversation.</string>
+    <string name="date_today">Today</string>
 </resources>

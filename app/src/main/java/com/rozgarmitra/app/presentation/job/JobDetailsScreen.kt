@@ -24,6 +24,10 @@ import com.rozgarmitra.app.presentation.components.LoadingOverlay
 import com.rozgarmitra.app.presentation.components.PrimaryLargeButton
 import com.rozgarmitra.app.presentation.components.VerifiedBadge
 import com.rozgarmitra.app.ui.theme.*
+import androidx.compose.ui.res.stringResource
+import com.rozgarmitra.app.R
+import com.rozgarmitra.app.presentation.components.getLocalizedTradeName
+import com.rozgarmitra.app.presentation.components.getLocalizedWageType
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -44,7 +48,7 @@ fun JobDetailsScreen(
     
     if (job == null) {
         Box(modifier = Modifier.fillMaxSize().background(DarkBackground), contentAlignment = Alignment.Center) {
-            Text("Job details not found.", color = TextSecondary)
+            Text(stringResource(R.string.no_matching_jobs), color = TextSecondary)
         }
         return
     }
@@ -63,10 +67,10 @@ fun JobDetailsScreen(
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkSurface),
-                title = { Text("Job Details", fontWeight = FontWeight.Bold, color = TextPrimary) },
+                title = { Text(stringResource(R.string.job_details_title), fontWeight = FontWeight.Bold, color = TextPrimary) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary)
+                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back), tint = TextPrimary)
                     }
                 },
                 actions = {
@@ -130,17 +134,17 @@ fun JobDetailsScreen(
                             shape = CircleShape,
                             border = BorderStroke(1.dp, BorderStrokeColor)
                         ) {
-                            Icon(Icons.Filled.Chat, contentDescription = "Chat Owner", tint = PrimaryIndigo)
+                            Icon(Icons.Filled.Chat, contentDescription = stringResource(R.string.chat_title), tint = PrimaryIndigo)
                         }
                     }
 
                     val buttonText = when {
-                        isOwner -> "Manage Applicants"
-                        userApp?.status == ApplicationStatus.ACCEPTED -> "Accepted 🎉"
-                        userApp?.status == ApplicationStatus.REJECTED -> "Application Rejected"
-                        userApp != null -> "Response Sent ✓"
-                        isFilled -> "Job Filled"
-                        else -> "Respond to Job"
+                        isOwner -> stringResource(R.string.manage_applicants)
+                        userApp?.status == ApplicationStatus.ACCEPTED -> stringResource(R.string.btn_accepted)
+                        userApp?.status == ApplicationStatus.REJECTED -> stringResource(R.string.btn_not_selected)
+                        userApp != null -> stringResource(R.string.btn_applied)
+                        isFilled -> stringResource(R.string.btn_job_filled)
+                        else -> stringResource(R.string.btn_respond_to_job)
                     }
 
                     val buttonColor = when {
@@ -204,7 +208,7 @@ fun JobDetailsScreen(
                     modifier = Modifier.padding(bottom = 10.dp)
                 ) {
                     Text(
-                        job.category.uppercase(),
+                        getLocalizedTradeName(job.category).uppercase(),
                         color = PrimaryIndigo,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
@@ -227,7 +231,7 @@ fun JobDetailsScreen(
                     if (job.isUrgent) {
                         Surface(color = WarningRose.copy(alpha = 0.15f), border = BorderStroke(1.dp, WarningRose.copy(alpha = 0.3f)), shape = CircleShape) {
                             Text(
-                                "⚡ URGENT",
+                                stringResource(R.string.tag_urgent),
                                 color = WarningRose,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
@@ -237,7 +241,7 @@ fun JobDetailsScreen(
                     } else if (isFilled) {
                         Surface(color = TextMuted.copy(alpha = 0.15f), border = BorderStroke(1.dp, TextMuted.copy(alpha = 0.3f)), shape = CircleShape) {
                             Text(
-                                "FILLED",
+                                stringResource(R.string.tag_filled),
                                 color = TextSecondary,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
@@ -251,9 +255,9 @@ fun JobDetailsScreen(
 
                 // Key Info Row
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    InfoItem(icon = Icons.Filled.LocationOn, label = "Distance", value = "${String.format("%.1f", job.distanceKm)} km")
-                    InfoItem(icon = Icons.Filled.Event, label = "Date & Time", value = "${job.date.ifBlank { "Today" }} • ${job.startTime.ifBlank { "8 AM" }}")
-                    InfoItem(icon = Icons.Filled.Group, label = "Workers", value = "${job.acceptedWorkersCount}/${job.numberOfWorkersRequired} Hired")
+                    InfoItem(icon = Icons.Filled.LocationOn, label = stringResource(R.string.preview_location), value = "${String.format(java.util.Locale.US, "%.1f", job.distanceKm)} km")
+                    InfoItem(icon = Icons.Filled.Event, label = stringResource(R.string.preview_date_time), value = "${job.date.ifBlank { stringResource(R.string.today) }} • ${job.startTime.ifBlank { "8 AM" }}")
+                    InfoItem(icon = Icons.Filled.Group, label = stringResource(R.string.workers_needed_label), value = "${job.acceptedWorkersCount}/${job.numberOfWorkersRequired}")
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -270,9 +274,9 @@ fun JobDetailsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Offered Wage", fontSize = 13.sp, color = TextSecondary)
+                            Text(stringResource(R.string.preview_wage), fontSize = 13.sp, color = TextSecondary)
                             Spacer(modifier = Modifier.height(2.dp))
-                            Text("₹${job.wage} / ${job.wageType}", fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, color = SuccessGreen)
+                            Text("₹${job.wage} / ${getLocalizedWageType(job.wageType)}", fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, color = SuccessGreen)
                         }
                         Surface(
                             shape = CircleShape,
@@ -288,10 +292,10 @@ fun JobDetailsScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Text("Job Description", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
+                Text(stringResource(R.string.job_desc_label), fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    "Looking for experienced ${job.category} for work at ${job.location}. Work includes standard tasks related to ${job.category.lowercase()} trade. Materials will be provided at site.",
+                    if (job.description.isNotBlank()) job.description else "Looking for experienced ${job.category} for work at ${job.location}.",
                     color = TextSecondary,
                     fontSize = 15.sp,
                     lineHeight = 22.sp
@@ -300,7 +304,7 @@ fun JobDetailsScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 if (job.skillsRequired.isNotEmpty()) {
-                    Text("Required Skills", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+                    Text(stringResource(R.string.skills_required_label), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
                     Spacer(modifier = Modifier.height(8.dp))
                     FlowRow(
                         modifier = Modifier.fillMaxWidth(),
@@ -322,7 +326,7 @@ fun JobDetailsScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Employer Profile
-                Text("About the Employer", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+                Text(stringResource(R.string.owner_profile_details), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
                     colors = CardDefaults.cardColors(containerColor = DarkSurface),
@@ -351,7 +355,7 @@ fun JobDetailsScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Filled.Star, contentDescription = null, tint = Color(0xFFF59E0B), modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("${job.ownerRating} • Highly Rated", fontSize = 13.sp, color = TextSecondary)
+                                Text("${job.ownerRating} ★", fontSize = 13.sp, color = TextSecondary)
                             }
                         }
                     }
@@ -360,7 +364,7 @@ fun JobDetailsScreen(
                 Spacer(modifier = Modifier.height(24.dp))
                 
                 // Location Details
-                Text("Work Location", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+                Text(stringResource(R.string.work_location_label), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Filled.LocationOn, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(18.dp))
@@ -372,17 +376,16 @@ fun JobDetailsScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.Navigation, contentDescription = null, tint = SuccessGreen, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("${String.format(java.util.Locale.US, "%.1f", job.distanceKm)} km away from your location", color = SuccessGreen, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.km_away, String.format(java.util.Locale.US, "%.1f", job.distanceKm)), color = SuccessGreen, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                     }
                 }
-
 
                 Spacer(modifier = Modifier.height(40.dp))
             }
         }
     }
 
-    LoadingOverlay(isLoading = isActionLoading, text = "Submitting Application...")
+    LoadingOverlay(isLoading = isActionLoading, text = stringResource(R.string.action_please_wait))
 }
 
 @Composable

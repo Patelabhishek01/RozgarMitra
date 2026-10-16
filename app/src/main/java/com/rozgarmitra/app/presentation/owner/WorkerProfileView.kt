@@ -30,6 +30,10 @@ import com.rozgarmitra.app.presentation.components.VerifiedBadge
 import com.rozgarmitra.app.ui.theme.*
 import kotlinx.coroutines.launch
 
+import androidx.compose.ui.res.stringResource
+import com.rozgarmitra.app.R
+import com.rozgarmitra.app.presentation.components.getLocalizedTradeName
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun WorkerProfileView(
@@ -70,10 +74,10 @@ fun WorkerProfileView(
                     titleContentColor = TextPrimary,
                     navigationIconContentColor = TextPrimary
                 ),
-                title = { Text("Worker Profile", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.worker_profile), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", modifier = Modifier.size(26.dp), tint = TextPrimary)
+                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back), modifier = Modifier.size(26.dp), tint = TextPrimary)
                     }
                 }
             )
@@ -116,7 +120,7 @@ fun WorkerProfileView(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Filled.Star, contentDescription = null, tint = Color(0xFFFFC107), modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("$rating rating", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextSecondary)
+                                Text("$rating ★", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextSecondary)
                             }
                         }
                     }
@@ -126,7 +130,7 @@ fun WorkerProfileView(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     // Privacy lock phone warning
-                    Text("Contact Details / संपर्क विवरण", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
+                    Text(stringResource(R.string.account_details), fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
                     Spacer(modifier = Modifier.height(8.dp))
 
                     if (isMatched) {
@@ -142,7 +146,7 @@ fun WorkerProfileView(
                                 Icon(Icons.Filled.Phone, contentDescription = null, tint = SuccessGreen)
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
-                                    Text("Mobile Number", fontSize = 12.sp, color = TextSecondary)
+                                    Text(stringResource(R.string.mobile_number), fontSize = 12.sp, color = TextSecondary)
                                     Text(phone.ifBlank { "+91 9876543210" }, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
                                 }
                             }
@@ -160,9 +164,8 @@ fun WorkerProfileView(
                                 Icon(Icons.Filled.Lock, contentDescription = null, tint = TextSecondary)
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
-                                    Text("Mobile Number (Hidden)", fontSize = 12.sp, color = TextSecondary)
+                                    Text(stringResource(R.string.mobile_number), fontSize = 12.sp, color = TextSecondary)
                                     Text("+91 XXXXX XXXXX", fontWeight = FontWeight.Medium, fontSize = 14.sp, color = TextPrimary)
-                                    Text("Shared after worker is hired.", fontSize = 11.sp, color = TextSecondary)
                                 }
                             }
                         }
@@ -171,7 +174,7 @@ fun WorkerProfileView(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     // Trades/Skills
-                    Text("Skills & Trades / कौशल", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
+                    Text(stringResource(R.string.select_skills), fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
                     Spacer(modifier = Modifier.height(8.dp))
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -180,7 +183,7 @@ fun WorkerProfileView(
                         skills.forEach { skill ->
                             SuggestionChip(
                                 onClick = {}, 
-                                label = { Text(skill, color = TextPrimary) },
+                                label = { Text(getLocalizedTradeName(skill), color = TextPrimary) },
                                 colors = SuggestionChipDefaults.suggestionChipColors(containerColor = DarkSurface),
                                 border = SuggestionChipDefaults.suggestionChipBorder(borderColor = BorderStrokeColor)
                             )
@@ -200,7 +203,7 @@ fun WorkerProfileView(
                             border = BorderStroke(1.dp, BorderStrokeColor)
                         ) {
                             Column(modifier = Modifier.padding(14.dp)) {
-                                Text("Experience", fontSize = 11.sp, color = TextSecondary)
+                                Text(stringResource(R.string.years_of_experience), fontSize = 11.sp, color = TextSecondary)
                                 Text(experience, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
                             }
                         }
@@ -214,7 +217,7 @@ fun WorkerProfileView(
                         ) {
                             Column(modifier = Modifier.padding(14.dp)) {
                                 Text("Status", fontSize = 11.sp, color = TextSecondary)
-                                Text(if (isMatched) "Hired" else "Applied", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = if (isMatched) SuccessGreen else TextPrimary)
+                                Text(if (isMatched) stringResource(R.string.status_accepted) else stringResource(R.string.status_applied), fontWeight = FontWeight.Bold, fontSize = 15.sp, color = if (isMatched) SuccessGreen else TextPrimary)
                             }
                         }
                     }
@@ -223,7 +226,7 @@ fun WorkerProfileView(
                 Spacer(modifier = Modifier.height(40.dp))
 
                 PrimaryLargeButton(
-                    text = "Message Worker / संदेश भेजें",
+                    text = stringResource(R.string.chat_with_worker),
                     onClick = {
                         val app = appMatch
                         val canChat = app != null && (app.chatApproved || app.status == ApplicationStatus.ACCEPTED || app.status == ApplicationStatus.COMPLETED)
@@ -259,7 +262,7 @@ fun WorkerProfileView(
                 )
             }
 
-            LoadingOverlay(isLoading = isLoading, text = "Opening Chat...")
+            LoadingOverlay(isLoading = isLoading, text = stringResource(R.string.action_please_wait))
         }
     }
 }

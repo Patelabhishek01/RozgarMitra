@@ -13,31 +13,33 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.rozgarmitra.app.R
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.presentation.components.PrimaryLargeButton
 import com.rozgarmitra.app.ui.theme.*
 
 data class LanguageItem(
+    val code: String,
     val englishName: String,
     val nativeName: String,
 )
 
 val languagesList = listOf(
-    LanguageItem("English", "English"),
-    LanguageItem("Hindi", "हिन्दी"),
-    LanguageItem("Tamil", "தமிழ்"),
-    LanguageItem("Telugu", "తెలుగు"),
-    LanguageItem("Kannada", "ಕನ್ನಡ"),
-    LanguageItem("Malayalam", "മലയാളം"),
-    LanguageItem("Marathi", "मराठी"),
-    LanguageItem("Gujarati", "ગુજરાતી"),
-    LanguageItem("Bengali", "বাংলা"),
-    LanguageItem("Punjabi", "ਪੰਜਾਬੀ"),
-    LanguageItem("Odia", "ଓଡ଼ିଆ")
+    LanguageItem("en", "English", "English"),
+    LanguageItem("hi", "Hindi", "हिन्दी"),
+    LanguageItem("ta", "Tamil", "தமிழ்"),
+    LanguageItem("te", "Telugu", "తెలుగు"),
+    LanguageItem("kn", "Kannada", "ಕನ್ನಡ"),
+    LanguageItem("ml", "Malayalam", "മലയാളം"),
+    LanguageItem("mr", "Marathi", "मराठी"),
+    LanguageItem("gu", "Gujarati", "ગુજરાતી"),
+    LanguageItem("bn", "Bengali", "বাংলা"),
+    LanguageItem("pa", "Punjabi", "ਪੰਜਾਬੀ"),
+    LanguageItem("or", "Odia", "ଓଡ଼ିଆ")
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,7 +47,8 @@ val languagesList = listOf(
 fun LanguageSelectScreen(
     onLanguageSelected: () -> Unit
 ) {
-    var selectedLanguage by remember { mutableStateOf("English") }
+    val currentLangCode by RozgarRepository.currentLanguageCode.collectAsState()
+    var selectedCode by remember(currentLangCode) { mutableStateOf(currentLangCode) }
 
     Scaffold(
         containerColor = DarkBackground,
@@ -56,7 +59,12 @@ fun LanguageSelectScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.Translate, contentDescription = null, tint = PrimaryBlue)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Select Language", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = TextPrimary)
+                        Text(
+                            text = stringResource(R.string.select_language_title),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            color = TextPrimary
+                        )
                     }
                 }
             )
@@ -72,7 +80,7 @@ fun LanguageSelectScreen(
         ) {
             Column {
                 Text(
-                    text = "चुनें अपनी भाषा / Select your language",
+                    text = stringResource(R.string.select_language_subtitle),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = TextSecondary,
@@ -86,9 +94,9 @@ fun LanguageSelectScreen(
                     modifier = Modifier.weight(1f, fill = false)
                 ) {
                     items(languagesList) { lang ->
-                        val isSelected = lang.englishName == selectedLanguage
+                        val isSelected = lang.code == selectedCode
                         Card(
-                            onClick = { selectedLanguage = lang.englishName },
+                            onClick = { selectedCode = lang.code },
                             shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(
                                 containerColor = if (isSelected) PrimaryBlue.copy(alpha = 0.25f) else DarkSurface
@@ -128,9 +136,9 @@ fun LanguageSelectScreen(
             Column(modifier = Modifier.fillMaxWidth()) {
                 Spacer(modifier = Modifier.height(20.dp))
                 PrimaryLargeButton(
-                    text = "Confirm / आगे बढ़ें",
+                    text = stringResource(R.string.confirm_continue),
                     onClick = { 
-                        RozgarRepository.setLanguage(selectedLanguage)
+                        RozgarRepository.setLanguage(selectedCode)
                         onLanguageSelected()
                     }
                 )
@@ -138,4 +146,3 @@ fun LanguageSelectScreen(
         }
     }
 }
-

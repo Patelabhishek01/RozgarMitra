@@ -27,6 +27,10 @@ import com.rozgarmitra.app.ui.theme.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+import androidx.compose.ui.res.stringResource
+import com.rozgarmitra.app.R
+import com.rozgarmitra.app.presentation.components.getLocalizedTradeName
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyProfessionsScreen(
@@ -56,10 +60,10 @@ fun MyProfessionsScreen(
                     titleContentColor = TextPrimary,
                     navigationIconContentColor = TextPrimary
                 ),
-                title = { Text("My Professions", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.menu_my_professions), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary)
+                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back), tint = TextPrimary)
                     }
                 }
             )
@@ -71,7 +75,7 @@ fun MyProfessionsScreen(
                     .padding(16.dp)
             ) {
                 PrimaryLargeButton(
-                    text = "Save Changes",
+                    text = stringResource(R.string.action_save_changes),
                     onClick = {
                         isSaving = true
                         val wageInt = expectedWageText.toIntOrNull() ?: 0
@@ -103,7 +107,7 @@ fun MyProfessionsScreen(
             ) {
                 item {
                     Text(
-                        "Work Experience & Expected Daily Wage",
+                        stringResource(R.string.work_details),
                         fontWeight = FontWeight.Bold,
                         color = AccentCyan,
                         fontSize = 14.sp
@@ -114,7 +118,7 @@ fun MyProfessionsScreen(
                     OutlinedTextField(
                         value = experienceText,
                         onValueChange = { experienceText = it },
-                        label = { Text("Experience (e.g. 3 years)", color = TextSecondary) },
+                        label = { Text(stringResource(R.string.years_of_experience), color = TextSecondary) },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryBlue,
                             unfocusedBorderColor = BorderStrokeColor,
@@ -129,7 +133,7 @@ fun MyProfessionsScreen(
                     OutlinedTextField(
                         value = expectedWageText,
                         onValueChange = { expectedWageText = it },
-                        label = { Text("Expected Wage (₹ / day)", color = TextSecondary) },
+                        label = { Text(stringResource(R.string.expected_daily_wage), color = TextSecondary) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryBlue,
@@ -144,13 +148,13 @@ fun MyProfessionsScreen(
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "Select Skilled Professions",
+                        stringResource(R.string.select_skills),
                         fontWeight = FontWeight.Bold,
                         color = AccentCyan,
                         fontSize = 14.sp
                     )
                     Text(
-                        "Select categories you are skilled in to get relevant job alerts.",
+                        stringResource(R.string.select_skills_hint),
                         fontSize = 12.sp,
                         color = TextSecondary,
                         modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
@@ -160,7 +164,7 @@ fun MyProfessionsScreen(
                 items(allProfessions) { prof ->
                     val isSelected = selectedProfessions.contains(prof)
                     ProfessionItem(
-                        label = prof,
+                        label = getLocalizedTradeName(prof),
                         isSelected = isSelected,
                         onToggle = {
                             selectedProfessions = if (isSelected) selectedProfessions - prof else selectedProfessions + prof
@@ -169,7 +173,7 @@ fun MyProfessionsScreen(
                 }
             }
 
-            LoadingOverlay(isLoading = isSaving, text = "Saving Professions...")
+            LoadingOverlay(isLoading = isSaving, text = stringResource(R.string.action_please_wait))
         }
     }
 }

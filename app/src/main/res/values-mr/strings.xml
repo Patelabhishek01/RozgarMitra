@@ -1,0 +1,373 @@
+<resources>
+    <!-- App & General -->
+    <string name="app_name">रोजगारमित्र</string>
+    <string name="connecting_hands">हातांना रोजगाराच्या संधींशी जोडणारे माध्यम.</string>
+    <string name="namaste">नमस्कार</string>
+    <string name="greeting_namaste_user">नमस्कार, %1$s! 👋</string>
+    <string name="greeting_namaste">नमस्कार! 👋</string>
+    <string name="worker_badge">कामगार / कारागीर</string>
+    <string name="employer_badge">मालक / कंत्रಾಟदार</string>
+    <string name="offline_banner_text">तुम्ही सध्या ऑफलाइन आहात. सेव्ह केलेल्या डेटाचा वापर केला जात आहे.</string>
+    <string name="verified_badge">सत्यापित</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">होम</string>
+    <string name="nav_search">शोधा</string>
+    <string name="nav_post_job">काम पोस्ट करा</string>
+    <string name="nav_chats">गप्पा / चॅट</string>
+    <string name="nav_profile">प्रोफाइल</string>
+
+    <!-- Common Actions -->
+    <string name="action_back">मागे</string>
+    <string name="action_cancel">रद्द करा</string>
+    <string name="action_save">जतन करा</string>
+    <string name="action_confirm">नक्की करा</string>
+    <string name="action_apply">अर्ज करा</string>
+    <string name="action_apply_now">आता अर्ज करा</string>
+    <string name="action_submit">सादर करा</string>
+    <string name="action_delete">हटवा</string>
+    <string name="action_edit">संपादित करा</string>
+    <string name="action_close">बंद करा</string>
+    <string name="action_clear">साफ करा</string>
+    <string name="action_done">पूर्ण</string>
+    <string name="action_see_all">सर्व पहा →</string>
+    <string name="action_retry">पुन्हा प्रयत्न करा</string>
+    <string name="action_loading">लोड होत आहे…</string>
+    <string name="action_please_wait">कृपया प्रतीक्षा करा…</string>
+    <string name="action_save_changes">बदल जतन करा</string>
+    <string name="action_skip">वगळा</string>
+    <string name="action_login">लॉगिन करा</string>
+    <string name="action_register">नोंदणी करा</string>
+    <string name="action_logout">लॉग आउट</string>
+    <string name="action_logout_account">खाते लॉग आउट करा</string>
+
+    <!-- Language Selection -->
+    <string name="select_language_title">भाषा निवडा</string>
+    <string name="select_language_subtitle">तुमची भाषा निवडा</string>
+    <string name="confirm_continue">नक्की करा / पुढे जा</string>
+
+    <!-- Auth (Login & Register) -->
+    <string name="welcome_back">स्वागत आहे!</string>
+    <string name="login_subtitle">लॉगिन किंवा नोंदणी करण्यासाठी तुमचा मोबाईल क्रमांक किंवा ईमेल टाका.</string>
+    <string name="enter_details_start">सुरू करण्यासाठी तुमचे तपशील प्रविष्ट करा.</string>
+    <string name="create_account_title">तुमचे खाते तयार करा</string>
+    <string name="email_address">ईमेल पत्ता</string>
+    <string name="password">पासवर्ड</string>
+    <string name="mobile_number">मोबाईल नंबर</string>
+    <string name="mobile_number_hint">मोबाईल नंबर (१० अंक)</string>
+    <string name="password_hint">पासवर्ड (६+ अक्षरे)</string>
+    <string name="forgot_password">पासवर्ड विसरलात?</string>
+    <string name="reset_password_title">पासवर्ड रीसेट करा</string>
+    <string name="reset_password_desc">पासवर्ड रीसेट लिंक मिळवण्यासाठी नोंदणीकृत ईमेल प्रविष्ट करा.</string>
+    <string name="send_reset_link">रीसेट लिंक पाठवा</string>
+    <string name="reset_link_sent">पासवर्ड रीसेट ईमेल पाठवला आहे! इनबॉक्स तपासा.</string>
+    <string name="or_continue_with">किंवा यासह पुढे जा</string>
+    <string name="continue_with_google">Google सह सुरू ठेवा</string>
+    <string name="dont_have_account">खाते नाही? नोंदणी करा</string>
+    <string name="already_have_account">आधीच खाते आहे? लॉगिन करा</string>
+    <string name="create_profile_title">प्रोफाइल तयार करा</string>
+    <string name="register_title">रोजगारमित्र मध्ये नोंदणी करा</string>
+    <string name="register_subtitle">सुरक्षित खाते तयार करण्यासाठी तपशील भरा</string>
+    <string name="full_name">पूर्ण नाव</string>
+    <string name="enter_full_name">तुमचे पूर्ण नाव टाका</string>
+    <string name="choose_account_type">खात्याचा प्रकार निवडा</string>
+    <string name="role_labour">कामगार / मजूर</string>
+    <string name="role_labour_desc">दैनंदिन मजुरीचे काम शोधा</string>
+    <string name="role_owner">मालक / कंत्राटदार</string>
+    <string name="role_owner_desc">कुशल कामगार कामावर ठेवा</string>
+    <string name="app_language">अ‍ॅपची भाषा</string>
+    <string name="city_district">शहर / जिल्हा</string>
+    <string name="create_account_btn">खाते तयार करा</string>
+
+    <!-- Worker Home & Feed -->
+    <string name="find_daily_work_near_you">तुमच्या जवळचे रोजचे काम शोधा</string>
+    <string name="tab_nearby_jobs">जवळची कामे</string>
+    <string name="tab_my_applications">माझे अर्ज</string>
+    <string name="browse_by_profession">व्यवसायानुसार शोधा</string>
+    <string name="urgent_jobs">⚡ तातडीची कामे</string>
+    <string name="active_jobs_near_you">तुमच्या जवळ उपलब्ध कामे</string>
+    <string name="no_matching_jobs">कोणतेही काम आढळले नाही</string>
+    <string name="try_adjusting_filters">व्यवसाय फिल्टर किंवा स्थान बदलून पहा</string>
+    <string name="browse_all_jobs">सर्व कामे पहा</string>
+    <string name="no_active_jobs_nearby">जवळपास कोणतीही चालू कामे नाहीत.</string>
+    <string name="refresh_feed">ताजेतवाने करा</string>
+    <string name="filter_all_jobs">सर्व कामे</string>
+    <string name="location_available">स्थान उपलब्ध</string>
+    <string name="select_location">स्थान निवडा</string>
+    <string name="within_km">• %1$d किमीच्या आत</string>
+    <string name="km_away">%1$s किमी दूर</string>
+    <string name="workers_needed_count">%1$d कामगार हवे आहेत (%2$d नियुक्त केले)</string>
+    <string name="per_day">दररोज</string>
+    <string name="per_hour">तासाला</string>
+    <string name="wage_fixed">ठरावीक</string>
+    <string name="tag_urgent">⚡ तातडीचे</string>
+    <string name="tag_filled">जागा भरली</string>
+    <string name="btn_respond_to_job">कामासाठी अर्ज करा</string>
+    <string name="btn_applied">अर्ज केला ✓</string>
+    <string name="btn_accepted">निवड झाली 🎉</string>
+    <string name="btn_not_selected">निवड झाली नाही</string>
+    <string name="btn_job_filled">काम भरले आहे</string>
+    <string name="complete_profile_title">तुमची प्रोफाइल पूर्ण करा</string>
+    <string name="complete_profile_desc">लवकर काम मिळवण्यासाठी कौशल्ये आणि अनुभव जोडा</string>
+    <string name="complete_profile_3x">३ पट अधिक काम मिळवण्यासाठी प्रोफाइल पूर्ण करा!</string>
+    <string name="under_5km">५ किमीच्या आत</string>
+    <string name="wage_700_plus">₹७००+ / दिवस</string>
+
+    <!-- Application Statuses -->
+    <string name="status_applied">अर्ज केला</string>
+    <string name="status_accepted">निवड झाली / मंजूर</string>
+    <string name="status_rejected">निवड झाली नाही</string>
+    <string name="status_completed">पूर्ण झाले</string>
+    <string name="status_cancelled">रद्द केले</string>
+    <string name="tap_to_view_details">तपशील पाहण्यासाठी टॅप करा</string>
+    <string name="no_applications_yet">तुम्ही अद्याप कोणत्याही कामासाठी अर्ज केलेला नाही.</string>
+    <string name="my_applications_title">माझे अर्ज</string>
+
+    <!-- Search Tab -->
+    <string name="search_jobs_title">कामे शोधा</string>
+    <string name="search_placeholder">व्यवसाय, कौशल्य किंवा क्षेत्रानुसार शोधा…</string>
+    <string name="popular_professions">लोकप्रिय व्यवसाय</string>
+    <string name="recent_searches">अलीकडील शोध</string>
+    <string name="no_results_for">\"%1$s\" साठी कोणतेही परिणाम नाहीत</string>
+
+    <!-- Worker Profile & Settings -->
+    <string name="profile_title">कामगार प्रोफाइल</string>
+    <string name="section_work_applications">काम आणि अर्ज</string>
+    <string name="menu_my_professions">माझे व्यवसाय</string>
+    <string name="menu_my_professions_subtitle">तुमची कौशल्ये आणि श्रेणी व्यवस्थापित करा</string>
+    <string name="menu_my_applications">माझे अर्ज</string>
+    <string name="menu_my_applications_subtitle">अर्ज केलेल्या कामांची स्थिती तपासा</string>
+    <string name="section_availability_trust">उपलब्धता आणि पडताळणी</string>
+    <string name="available_for_work">कामासाठी उपलब्ध</string>
+    <string name="available_for_work_subtitle">मालकांना तुमची प्रोफाइल दाखवा</string>
+    <string name="aadhaar_verified">आधार सत्यापित</string>
+    <string name="verification_pending">पडताळणी प्रलंबित</string>
+    <string name="verify_aadhaar">आधार पडताळणी करा</string>
+    <string name="badge_granted">बॅज मिळाला</string>
+    <string name="under_review">तपासणी सुरू आहे</string>
+    <string name="submit_id_verification">सत्यापन बॅजसाठी ओळखपत्र सादर करा</string>
+    <string name="section_settings_support">सेटिंग्ज आणि मदत</string>
+    <string name="menu_settings">सेटिंग्ज</string>
+    <string name="menu_settings_subtitle">भाषा, स्वरूप, सूचना</string>
+    <string name="menu_help_support">मदत आणि सहकार्य</string>
+    <string name="menu_help_support_subtitle">वारंवार विचारले जाणारे प्रश्न आणि संपर्क</string>
+    <string name="menu_offline_mode">ऑफलाइन मोड</string>
+    <string name="offline_active">ऑफलाइन सक्रिय (स्थानिक संचय)</string>
+    <string name="online_active">ऑनलाइन सक्रिय</string>
+    <string name="logout_confirmation_title">लॉग आउट खात्री</string>
+    <string name="logout_confirmation_message">तुम्हाला नक्की लॉग आउट करायचे आहे का?</string>
+
+    <!-- Owner Dashboard -->
+    <string name="owner_dashboard_title">मालक डॅशबोर्ड</string>
+    <string name="owner_dashboard_subtitle">तुमची पोस्ट केलेली कामे आणि अर्जदारांचे व्यवस्थापन करा</string>
+    <string name="metric_active_jobs">सक्रिय कामे</string>
+    <string name="metric_applications">एकूण अर्ज</string>
+    <string name="metric_workers_hired">कामावर घेतलेले कामगार</string>
+    <string name="btn_post_new_job_now">+ नवीन काम पोस्ट करा</string>
+    <string name="recent_worker_responses">कामगारांचे अलीकडील प्रतिसाद</string>
+    <string name="no_active_postings">अद्याप कोणतीही सक्रिय कामे नाहीत</string>
+    <string name="post_first_job_prompt">कुशल कामगार मिळवण्यासाठी तुमचे पहिले काम पोस्ट करा</string>
+
+    <!-- Post Job Steps -->
+    <string name="post_job_title">रोजंदारीचे काम पोस्ट करा</string>
+    <string name="step_indicator">टप्पा %1$d / ५</string>
+    <string name="step_1_title">१. प्राथमिक माहिती</string>
+    <string name="step_2_title">२. कामाचा तपशील</string>
+    <string name="step_3_title">३. मजुरी आणि सुविधा</string>
+    <string name="step_4_title">४. कौशल्ये आणि आवश्यकता</string>
+    <string name="step_5_title">५. पुनरावलोकन आणि प्रसिद्ध करा</string>
+    <string name="job_title_label">कामाचे शीर्षक</string>
+    <string name="job_title_placeholder">उदा. बांधकामासाठी ३ मदतनीस हवे आहेत</string>
+    <string name="job_desc_label">कामाचे वर्णन</string>
+    <string name="job_desc_placeholder">कामाची जबाबदारी स्पष्ट करा…</string>
+    <string name="work_location_label">कामाचे ठिकाण</string>
+    <string name="work_location_placeholder">उदा. एचएसआर लेआउट, बंगळुरू किंवा दुकानाचा पत्ता</string>
+    <string name="use_gps_location">GPS स्थानाचा वापर करा</string>
+    <string name="detecting_location">स्थान शोधत आहे…</string>
+    <string name="start_date_label">सुरू होण्याची तारीख</string>
+    <string name="start_time_label">सुरू होण्याची वेळ</string>
+    <string name="today">आज</string>
+    <string name="workers_needed_label">आवश्यक कामगार</string>
+    <string name="duration_days_label">कालावधी (दिवस)</string>
+    <string name="wage_amount_label">मजुरी रक्कम (₹)</string>
+    <string name="wage_type_label">मजुरीचा प्रकार</string>
+    <string name="included_perks_label">दिलेल्या सुविधा (पर्यायी)</string>
+    <string name="perk_food">जेवण</string>
+    <string name="perk_shelter">राहण्याची सोय</string>
+    <string name="perk_transport">प्रवास सोय</string>
+    <string name="skills_required_label">आवश्यक कौशल्ये (स्वल्पविरामाने वेगळे करा)</string>
+    <string name="skills_required_placeholder">उदा. गवंडी काम, सिमेंट मिक्सिंग, माल वाहणे</string>
+    <string name="difficulty_level_label">काठिण्य पातळी</string>
+    <string name="difficulty_easy">सोपे</string>
+    <string name="difficulty_medium">मध्यम</string>
+    <string name="difficulty_hard">कठीण</string>
+    <string name="mark_urgent_hiring">तातडीची भरती म्हणून चिन्हांकित करा</string>
+    <string name="urgent_hiring_desc">तातडीची कामे कामगारांना ठळकपणे दाखवली जातात</string>
+    <string name="btn_next">पुढचा टप्पा →</string>
+    <string name="btn_previous">← मागे</string>
+    <string name="btn_publish_job">आता काम प्रसिद्ध करा 🚀</string>
+    <string name="publishing_job">काम पोस्ट होत आहे…</string>
+    <string name="urgent_hiring_active">⚡ तातडीची भरती सक्रिय</string>
+    <string name="preview_location">स्थान</string>
+    <string name="preview_date_time">तारीख आणि वेळ</string>
+    <string name="preview_wage">मजुरी</string>
+    <string name="preview_perks">सुविधा</string>
+
+    <!-- Job Details Screen -->
+    <string name="job_details_title">कामाचा तपशील</string>
+    <string name="apply_for_job">या कामासाठी अर्ज करा</string>
+    <string name="already_applied">अर्ज पाठवला आहे ✓</string>
+    <string name="chat_with_employer">मालकाशी बोला</string>
+    <string name="call_employer">मालकाला कॉल करा</string>
+    <string name="manage_applicants">अर्जदारांचे व्यवस्थापन</string>
+    <string name="chat_unavailable_applied">मालकाशी चॅट सुरू करण्यासाठी आधी या कामासाठी अर्ज करा.</string>
+    <string name="chat_unavailable_pending">अर्ज मंजूर झाल्यानंतर चॅट उपलब्ध होईल.</string>
+    <string name="confirm_application_title">अर्जाची पुष्टी</string>
+    <string name="confirm_application_message">तुम्हाला नक्की या कामासाठी अर्ज करायचा आहे का?</string>
+    <string name="application_submitted_success">अर्ज यशस्वीरीत्या सादर केला गेला!</string>
+
+    <!-- Applicants Screen -->
+    <string name="review_applicants">अर्जदार पुनरावलोकन (%1$d)</string>
+    <string name="no_applicants_yet">या कामासाठी अद्याप कोणीही अर्ज केलेला नाही.</string>
+    <string name="btn_accept_worker">कामगारास स्वीकारा</string>
+    <string name="btn_reject_worker">नाकारा</string>
+    <string name="worker_accepted">कामगार निवडला गेला</string>
+    <string name="worker_rejected">कामगार नाकारला गेला</string>
+    <string name="applicants_title">अर्जदार</string>
+
+    <!-- Trades / Professions -->
+    <string name="trade_mason">गवंडी</string>
+    <string name="trade_painter">रंगारी / पेंटर</string>
+    <string name="trade_electrician">इलेक्ट्रिशियन</string>
+    <string name="trade_plumber">प्लंबर</string>
+    <string name="trade_welder">वेल्डर</string>
+    <string name="trade_driver">चालक / ड्रायव्हर</string>
+    <string name="trade_cleaner">सफाई कामगार</string>
+    <string name="trade_gardener">माळी</string>
+    <string name="trade_farm_worker">शेतमजूर</string>
+    <string name="trade_construction_labour">बांधकाम मजूर</string>
+    <string name="trade_helper">मदतनीस / हेल्पर</string>
+    <string name="trade_cook">आचारी</string>
+    <string name="trade_security_guard">सुरक्षा रक्षक</string>
+    <string name="trade_mechanic">मेकॅनिक</string>
+    <string name="trade_carpenter">सुतार</string>
+    <string name="trade_other">इतर</string>
+
+    <!-- Chat -->
+    <string name="chat_title">चॅट</string>
+    <string name="type_message_hint">संदेश टाइप करा…</string>
+    <string name="no_messages_yet">अद्याप कोणतेही संदेश नाहीत. नमस्कार पाठवा!</string>
+    <string name="no_active_chats_yet">कोणतीही चालू चर्चा नाही.</string>
+    <string name="call_action">कॉल करा</string>
+
+    <!-- Notifications -->
+    <string name="notifications_title">सूचना</string>
+    <string name="mark_all_read">सर्व वाचलेले म्हणून चिन्हांकित करा</string>
+    <string name="no_notifications_yet">कोणत्याही सूचना नाहीत</string>
+    <string name="caught_up">तुम्ही पूर्णपणे अपडेट आहात!</string>
+
+    <!-- Settings -->
+    <string name="settings_title">सेटिंग्ज</string>
+    <string name="section_account">खाते</string>
+    <string name="edit_profile_name">नाव संपादित करा</string>
+    <string name="set_display_name">तुमचे नाव प्रविष्ट करा</string>
+    <string name="account_details">खाते तपशील</string>
+    <string name="section_preferences">प्राधान्ये</string>
+    <string name="preference_language">भाषा</string>
+    <string name="current_language">सध्याची भाषा: %1$s</string>
+    <string name="preference_theme">स्वरूप</string>
+    <string name="theme_dark">डार्क थीम</string>
+    <string name="theme_light">लाईट थीम</string>
+    <string name="theme_system">सिस्टम डीफॉल्ट</string>
+    <string name="preference_notifications">सूचना</string>
+    <string name="section_support_legal">मदत आणि कायदेशीर</string>
+    <string name="privacy_policy">गोपनीयता धोरण</string>
+    <string name="terms_of_service">सेवा अटी</string>
+    <string name="app_version">अ‍ॅप आवृत्ती</string>
+
+    <!-- Help & Support -->
+    <string name="help_support_title">मदत आणि सहकार्य</string>
+    <string name="how_can_we_help">आम्ही तुम्हाला कशी मदत करू शकतो?</string>
+    <string name="faq_title">वारंवार विचारले जाणारे प्रश्न (FAQ)</string>
+    <string name="contact_support_title">मदत केंद्राशी संपर्क साधा</string>
+    <string name="call_support">हेल्पलाइनवर कॉल करा</string>
+    <string name="call_support_desc">सकाळी ८:०० ते रात्री ८:०० उपलब्ध</string>
+    <string name="email_support">ईमेल मदत</string>
+    <string name="email_support_desc">२४ तासांच्या आत उत्तर मिळवा</string>
+    <string name="whatsapp_support">WhatsApp मदत</string>
+    <string name="whatsapp_support_desc">मदत पथकाशी चॅट करा</string>
+
+    <!-- Filters & Location Dialog -->
+    <string name="filters_title">फिल्टर्स</string>
+    <string name="sort_by">क्रमवारी लावा</string>
+    <string name="sort_relevant">योग्य</string>
+    <string name="sort_nearest">सर्वात जवळ</string>
+    <string name="sort_highest_pay">जास्त मजुरी</string>
+    <string name="max_distance">कमाल अंतर</string>
+    <string name="minimum_daily_wage">किमान दैनिक मजुरी</string>
+    <string name="reset_filters">फिल्टर्स रीसेट करा</string>
+    <string name="apply_filters">फिल्टर्स लागू करा</string>
+    <string name="location_dialog_title">स्थान निवडा</string>
+    <string name="use_current_gps">सध्याचे GPS स्थान वापरा</string>
+    <string name="or_enter_manually">किंवा शहर/परिसर टाका</string>
+    <string name="search_radius">शोधाचा परीघ</string>
+    <string name="save_location">स्थान जतन करा</string>
+
+    <!-- Details forms -->
+    <string name="labour_profile_details">कामगार तपशील</string>
+    <string name="owner_profile_details">मालक तपशील</string>
+    <string name="work_details">कामाचे तपशील</string>
+    <string name="select_skills_hint">मालकांना तुम्हाला शोधणे सोपे व्हावे म्हणून कौशल्ये निवडा.</string>
+    <string name="select_skills">कौशल्ये निवडा</string>
+    <string name="business_details">व्यवसाय तपशील</string>
+    <string name="expected_daily_wage">अपेक्षित दैनिक मजुरी (₹)</string>
+    <string name="years_of_experience">अनुभवाची वर्षे</string>
+
+    <!-- Additional UI Strings -->
+    <string name="verify_mobile">मोबाइल सत्यापित करा</string>
+    <string name="otp_sent_to">आम्ही %1$s वर OTP पाठवला आहे</string>
+    <string name="resend_code">कोड पुन्हा पाठवा</string>
+    <string name="resend_otp_timer">%1$d सेकंदात OTP पुन्हा पाठवा</string>
+    <string name="verify_and_continue">सत्यापित करा आणि पुढे जा</string>
+    <string name="use_phone_login">फोन नंबर वापरा</string>
+    <string name="use_email_login">ईमेल वापरा</string>
+    <string name="send_otp">OTP पाठवा</string>
+    <string name="continue_btn">पुढे जा</string>
+    <string name="rate_worker">कामगाराचे मूल्यांकन करा</string>
+    <string name="job_completed">काम पूर्ण झाले!</string>
+    <string name="rate_parameters_desc">कृपया कामगाराचे खालील निकषांवर मूल्यांकन करा.</string>
+    <string name="work_skill">कामाचे कौशल्य</string>
+    <string name="punctuality">वेळेचे पालन</string>
+    <string name="behaviour_conduct">वागणूक व आचरण</string>
+    <string name="short_review_optional">संक्षिप्त पुनरावलोकन लिहा (पर्यायी)</string>
+    <string name="submit_rating">रेटिंग सबमिट करा</string>
+    <string name="my_active_jobs">माझी सक्रिय कामे</string>
+    <string name="received_applications">आलेले अर्ज (%1$d)</string>
+    <string name="no_applications_received">कोणतेही अर्ज आले नाहीत</string>
+    <string name="no_active_jobs_posted">कोणतीही सक्रिय कामे पोस्ट केलेली नाहीत</string>
+    <string name="workers_hired_title">नियुक्त केलेले कामगार</string>
+    <string name="no_workers_hired_yet">अद्याप कोणालाही नियुक्त केलेले नाही</string>
+    <string name="worker_profile">कामगार प्रोफाइल</string>
+    <string name="call_worker">कामगाराला कॉल करा</string>
+    <string name="chat_with_worker">कामगाराशी चॅट करा</string>
+    <string name="hired_badge">निवडले</string>
+    <string name="suggest_new_skill">नवीन कौशल्य सुचवा</string>
+    <string name="cant_find_skill_desc">तुमचे कौशल्य सापडले नाही? तुम्ही काय काम करता ते आम्हाला सांगा.</string>
+    <string name="skill_name_hint">कौशल्याचे नाव (उदा. चालक)</string>
+    <string name="what_work_desc">यामध्ये तुम्ही काय काम करता?</string>
+    <string name="saving_profile">प्रोफाइल सेव्ह होत आहे…</string>
+    <string name="exp_under_1_yr">&lt; 1 वर्ष</string>
+    <string name="exp_1_2_yr">1 - 2 वर्षे</string>
+    <string name="exp_3_5_yr">3 - 5 वर्षे</string>
+    <string name="exp_5_plus_yr">5+ वर्षे</string>
+    <string name="manage_professions_subtitle">तुमच्या कामाच्या श्रेणी आणि मजुरी व्यवस्थापित करा</string>
+    <string name="in_app_notifications">अॅपमधील सूचना</string>
+    <string name="in_app_notifications_desc">अर्ज अद्यतने आणि चॅट सूचना मिळवा</string>
+    <string name="select_appearance">देखावा निवडा</string>
+    <string name="shared_location">शेअर केलेले स्थान</string>
+    <string name="voice_note">व्हॉइस टीप</string>
+    <string name="photo_attached">फोटो जोडला</string>
+    <string name="unauthorized_access">अनधिकृत प्रवेश</string>
+    <string name="no_permission_chat">तुम्हाला हे संभाषण पाहण्याची परवानगी नाही.</string>
+    <string name="date_today">आज</string>
+</resources>

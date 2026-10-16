@@ -17,6 +17,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rozgarmitra.app.ui.theme.*
+import androidx.compose.ui.res.stringResource
+import com.rozgarmitra.app.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,18 +42,23 @@ fun FilterBottomSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Filters", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                Text(stringResource(R.string.filters_title), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
                 IconButton(onClick = onDismiss) {
-                    Icon(Icons.Filled.Close, contentDescription = "Close", tint = TextSecondary)
+                    Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close), tint = TextSecondary)
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
             // Sort By
-            Text("Sort By", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+            Text(stringResource(R.string.sort_by), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+            val sortOptions = listOf(
+                stringResource(R.string.sort_relevant),
+                stringResource(R.string.sort_nearest),
+                stringResource(R.string.sort_highest_pay)
+            )
             Row(modifier = Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("Relevant", "Nearest", "Highest Pay").forEachIndexed { idx, sort ->
+                sortOptions.forEachIndexed { idx, sort ->
                     FilterChip(
                         selected = idx == 0,
                         onClick = { },
@@ -76,7 +83,7 @@ fun FilterBottomSheet(
 
             // Distance
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Max Distance", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+                Text(stringResource(R.string.max_distance), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
                 Text("15 km", color = PrimaryIndigo, fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -93,7 +100,7 @@ fun FilterBottomSheet(
             Spacer(modifier = Modifier.height(28.dp))
 
             // Wage Range
-            Text("Daily Wage Range", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+            Text(stringResource(R.string.minimum_daily_wage), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
             Row(modifier = Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 OutlinedTextField(
                     value = "₹500",
@@ -138,7 +145,7 @@ fun FilterBottomSheet(
                     shape = CircleShape,
                     border = BorderStroke(1.dp, BorderStrokeColor)
                 ) {
-                    Text("Clear All", fontWeight = FontWeight.Bold, color = TextSecondary)
+                    Text(stringResource(R.string.reset_filters), fontWeight = FontWeight.Bold, color = TextSecondary)
                 }
                 Button(
                     onClick = onApply,
@@ -146,7 +153,7 @@ fun FilterBottomSheet(
                     shape = CircleShape,
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryIndigo)
                 ) {
-                    Text("Apply Filters", fontWeight = FontWeight.Bold, color = Color.White)
+                    Text(stringResource(R.string.apply_filters), fontWeight = FontWeight.Bold, color = Color.White)
                 }
             }
             

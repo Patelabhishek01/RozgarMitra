@@ -20,6 +20,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rozgarmitra.app.data.Job
 import com.rozgarmitra.app.data.RozgarRepository
+import androidx.compose.ui.res.stringResource
+import com.rozgarmitra.app.R
+import com.rozgarmitra.app.presentation.common.getTradeDisplayName
+import com.rozgarmitra.app.presentation.common.getWageTypeDisplayName
 import com.rozgarmitra.app.ui.theme.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -96,7 +100,7 @@ fun JobFeedCard(
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = job.category,
+                            text = getTradeDisplayName(job.category),
                             fontSize = 13.sp,
                             color = PrimaryIndigo,
                             fontWeight = FontWeight.SemiBold
@@ -111,7 +115,7 @@ fun JobFeedCard(
                         shape = CircleShape
                     ) {
                         Text(
-                            text = "⚡ URGENT",
+                            text = stringResource(R.string.tag_urgent),
                             color = Color(0xFFFB7185),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
@@ -125,7 +129,7 @@ fun JobFeedCard(
                         shape = CircleShape
                     ) {
                         Text(
-                            text = "FILLED",
+                            text = stringResource(R.string.tag_filled),
                             color = TextSecondary,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
@@ -143,7 +147,7 @@ fun JobFeedCard(
                     Icon(Icons.Filled.LocationOn, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "${job.location} • ${String.format("%.1f", job.distanceKm)} km away",
+                        text = "${job.location} • " + stringResource(R.string.km_away, String.format(java.util.Locale.US, "%.1f", job.distanceKm)),
                         fontSize = 13.sp,
                         color = TextSecondary
                     )
@@ -153,8 +157,9 @@ fun JobFeedCard(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.Event, contentDescription = null, tint = TextMuted, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
+                        val displayDate = if (job.date.isBlank()) stringResource(R.string.date_today) else job.date
                         Text(
-                            text = "${job.date.ifBlank { "Today" }} • ${job.startTime.ifBlank { "8:00 AM" }}",
+                            text = "$displayDate • ${job.startTime.ifBlank { "8:00 AM" }}",
                             fontSize = 12.sp,
                             color = TextMuted
                         )
@@ -165,7 +170,7 @@ fun JobFeedCard(
                     Icon(Icons.Filled.Group, contentDescription = null, tint = PrimaryIndigo, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "${job.numberOfWorkersRequired} workers needed (${job.acceptedWorkersCount} hired)",
+                        text = stringResource(R.string.workers_needed_count, job.numberOfWorkersRequired, job.acceptedWorkersCount),
                         fontSize = 12.sp,
                         color = TextSecondary,
                         fontWeight = FontWeight.Medium
@@ -192,7 +197,7 @@ fun JobFeedCard(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "/ ${job.wageType}",
+                            text = "/ " + getWageTypeDisplayName(job.wageType),
                             fontSize = 12.sp,
                             color = TextMuted,
                             fontWeight = FontWeight.Medium,
@@ -202,11 +207,11 @@ fun JobFeedCard(
                 }
 
                 val buttonText = when {
-                    userApp?.status == com.rozgarmitra.app.data.ApplicationStatus.ACCEPTED -> "Accepted 🎉"
-                    userApp?.status == com.rozgarmitra.app.data.ApplicationStatus.REJECTED -> "Not Selected"
-                    userApp != null -> "Applied ✓"
-                    isFilled -> "Job Filled"
-                    else -> "Respond to Job"
+                    userApp?.status == com.rozgarmitra.app.data.ApplicationStatus.ACCEPTED -> stringResource(R.string.btn_accepted)
+                    userApp?.status == com.rozgarmitra.app.data.ApplicationStatus.REJECTED -> stringResource(R.string.btn_not_selected)
+                    userApp != null -> stringResource(R.string.btn_applied)
+                    isFilled -> stringResource(R.string.btn_job_filled)
+                    else -> stringResource(R.string.btn_respond_to_job)
                 }
 
                 val buttonColor = when {
@@ -263,5 +268,15 @@ fun JobFeedCard(
         }
     }
 }
+
+@Composable
+fun getLocalizedTradeName(trade: String): String = com.rozgarmitra.app.presentation.common.RozgarLocalization.getTradeDisplayName(trade)
+
+@Composable
+fun getLocalizedApplicationStatus(status: com.rozgarmitra.app.data.ApplicationStatus): String = com.rozgarmitra.app.presentation.common.RozgarLocalization.getApplicationStatusDisplayName(status)
+
+@Composable
+fun getLocalizedWageType(wageType: String): String = com.rozgarmitra.app.presentation.common.RozgarLocalization.getWageTypeDisplayName(wageType)
+
 
 

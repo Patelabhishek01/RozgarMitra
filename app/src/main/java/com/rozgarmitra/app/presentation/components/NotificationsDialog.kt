@@ -23,6 +23,8 @@ import androidx.compose.ui.window.DialogProperties
 import com.rozgarmitra.app.data.Notification
 import com.rozgarmitra.app.data.NotificationType
 import com.rozgarmitra.app.ui.theme.*
+import androidx.compose.ui.res.stringResource
+import com.rozgarmitra.app.R
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -57,7 +59,7 @@ fun NotificationsDialog(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Notifications",
+                        text = stringResource(R.string.notifications_title),
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
                         color = TextPrimary
@@ -84,7 +86,7 @@ fun NotificationsDialog(
                 ) {
                     Icon(
                         Icons.Filled.Close,
-                        contentDescription = "Close",
+                        contentDescription = stringResource(R.string.action_close),
                         tint = TextSecondary,
                         modifier = Modifier.size(20.dp)
                     )
@@ -121,14 +123,14 @@ fun NotificationsDialog(
                             }
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                text = "No new notifications",
+                                text = stringResource(R.string.no_notifications_yet),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp,
                                 color = TextPrimary
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "You're all caught up! New updates will appear here.",
+                                text = stringResource(R.string.caught_up),
                                 fontSize = 12.sp,
                                 color = TextSecondary
                             )

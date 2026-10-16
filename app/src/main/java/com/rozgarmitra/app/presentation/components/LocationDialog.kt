@@ -30,6 +30,8 @@ import com.rozgarmitra.app.data.LocationData
 import com.rozgarmitra.app.data.LocationHelper
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.ui.theme.*
+import androidx.compose.ui.res.stringResource
+import com.rozgarmitra.app.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -101,6 +103,8 @@ fun LocationSelectionDialog(
         }
     }
 
+    val allJobsLabel = stringResource(R.string.filter_all_jobs)
+
     AlertDialog(
         containerColor = DarkSurfaceElevated,
         onDismissRequest = onDismiss,
@@ -108,13 +112,13 @@ fun LocationSelectionDialog(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Filled.LocationOn, contentDescription = null, tint = AccentCyan)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Select Location & Distance", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 18.sp)
+                Text(stringResource(R.string.location_dialog_title), fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 18.sp)
             }
         },
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    "Set location and radius to filter nearby job opportunities.",
+                    stringResource(R.string.location_available),
                     fontSize = 13.sp,
                     color = TextSecondary,
                     modifier = Modifier.padding(bottom = 16.dp)
@@ -132,11 +136,11 @@ fun LocationSelectionDialog(
                     if (isLocating) {
                         CircularProgressIndicator(modifier = Modifier.size(20.dp), color = PrimaryBlue, strokeWidth = 2.dp)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Detecting GPS Location...", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.detecting_location), fontWeight = FontWeight.Bold)
                     } else {
                         Icon(Icons.Filled.MyLocation, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Use Current GPS Location", fontWeight = FontWeight.Bold, color = TextPrimary)
+                        Text(stringResource(R.string.use_current_gps), fontWeight = FontWeight.Bold, color = TextPrimary)
                     }
                 }
 
@@ -169,7 +173,7 @@ fun LocationSelectionDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Manual Location Fallback
-                Text("Or enter locality / city manually", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                Text(stringResource(R.string.or_enter_manually), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
                 Spacer(modifier = Modifier.height(6.dp))
                 OutlinedTextField(
                     value = manualLocationText,
@@ -190,11 +194,11 @@ fun LocationSelectionDialog(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 // Radius Filter Options
-                Text("Search Radius", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                Text(stringResource(R.string.search_radius), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
                 Spacer(modifier = Modifier.height(8.dp))
 
                 val radiusOptions = listOf(
-                    0.0 to "All Jobs",
+                    0.0 to allJobsLabel,
                     5.0 to "5 km",
                     10.0 to "10 km",
                     25.0 to "25 km",
@@ -252,12 +256,12 @@ fun LocationSelectionDialog(
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue, contentColor = Color.White),
                 shape = RoundedCornerShape(10.dp)
             ) {
-                Text("Apply Filter", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.apply_filters), fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = TextSecondary)
+                Text(stringResource(R.string.action_cancel), color = TextSecondary)
             }
         }
     )

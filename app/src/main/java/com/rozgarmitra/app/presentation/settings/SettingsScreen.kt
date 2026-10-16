@@ -19,6 +19,8 @@ import com.rozgarmitra.app.data.Role
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.data.ThemeMode
 import com.rozgarmitra.app.ui.theme.*
+import androidx.compose.ui.res.stringResource
+import com.rozgarmitra.app.R
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -48,10 +50,10 @@ fun SettingsScreen(
                     titleContentColor = TextPrimary,
                     navigationIconContentColor = TextPrimary
                 ),
-                title = { Text("Settings", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.settings_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary)
+                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back), tint = TextPrimary)
                     }
                 }
             )
@@ -63,12 +65,12 @@ fun SettingsScreen(
                 .background(DarkBackground)
                 .padding(paddingValues)
         ) {
-            item { SettingsSectionHeader("Account") }
+            item { SettingsSectionHeader(stringResource(R.string.section_account)) }
             item {
                 SettingsItem(
                     icon = Icons.Filled.Edit,
-                    title = "Edit Profile Name",
-                    subtitle = currentUser?.name?.ifBlank { "Set your display name" } ?: "Set your display name",
+                    title = stringResource(R.string.edit_profile_name),
+                    subtitle = currentUser?.name?.ifBlank { stringResource(R.string.set_display_name) } ?: stringResource(R.string.set_display_name),
                     onClick = { showEditNameDialog = true }
                 )
             }
@@ -76,8 +78,8 @@ fun SettingsScreen(
                 item {
                     SettingsItem(
                         icon = Icons.Filled.Person,
-                        title = "My Professions",
-                        subtitle = "Manage your work categories & wage",
+                        title = stringResource(R.string.menu_my_professions),
+                        subtitle = stringResource(R.string.manage_professions_subtitle),
                         onClick = onNavigateToProfessions
                     )
                 }
@@ -85,61 +87,61 @@ fun SettingsScreen(
             item {
                 SettingsItem(
                     icon = Icons.Filled.Lock,
-                    title = "Account Details",
-                    subtitle = "Role: ${currentUser?.role?.name ?: "Guest"} • ${currentUser?.phone?.ifBlank { currentUser?.id } ?: "Logged in"}",
+                    title = stringResource(R.string.account_details),
+                    subtitle = "${currentUser?.role?.name ?: "Guest"} • ${currentUser?.phone?.ifBlank { currentUser?.id } ?: "Logged in"}",
                     onClick = { showEditNameDialog = true }
                 )
             }
 
-            item { SettingsSectionHeader("Preferences") }
+            item { SettingsSectionHeader(stringResource(R.string.section_preferences)) }
             item {
                 SettingsItem(
                     icon = Icons.Filled.Translate,
-                    title = "Language",
-                    subtitle = "Current: ${currentUser?.language ?: "English"}",
+                    title = stringResource(R.string.preference_language),
+                    subtitle = currentUser?.language ?: "English",
                     onClick = onNavigateToLanguage
                 )
             }
             item {
                 SettingsItem(
                     icon = Icons.Filled.Palette,
-                    title = "Appearance",
-                    subtitle = "Mode: ${themeMode.name}",
+                    title = stringResource(R.string.preference_theme),
+                    subtitle = themeMode.name,
                     onClick = { showThemeDialog = true }
                 )
             }
             item {
                 SettingsItem(
                     icon = Icons.Filled.Notifications,
-                    title = "Notifications",
+                    title = stringResource(R.string.preference_notifications),
                     subtitle = if (currentUser?.notificationsEnabled == false) "Disabled" else "Enabled",
                     onClick = { showNotificationDialog = true }
                 )
             }
 
-            item { SettingsSectionHeader("Support & Info") }
+            item { SettingsSectionHeader(stringResource(R.string.section_support_legal)) }
             item {
                 SettingsItem(
                     icon = Icons.Filled.Help,
-                    title = "Help & FAQ",
-                    subtitle = "Guides and common questions",
+                    title = stringResource(R.string.help_support_title),
+                    subtitle = stringResource(R.string.faq_title),
                     onClick = onNavigateToHelpSupport
                 )
             }
             item {
                 SettingsItem(
                     icon = Icons.Filled.Email,
-                    title = "Contact Support",
-                    subtitle = "Email helpline and phone support",
+                    title = stringResource(R.string.contact_support_title),
+                    subtitle = stringResource(R.string.email_support),
                     onClick = onNavigateToHelpSupport
                 )
             }
 
-            item { SettingsSectionHeader("About") }
+            item { SettingsSectionHeader(stringResource(R.string.app_name)) }
             item {
                 SettingsItem(
                     icon = Icons.Filled.Info,
-                    title = "About RozgarMitra",
+                    title = stringResource(R.string.app_name),
                     subtitle = "Version 1.0",
                     onClick = { showAboutDialog = true }
                 )
@@ -154,15 +156,15 @@ fun SettingsScreen(
         AlertDialog(
             containerColor = DarkSurfaceElevated,
             onDismissRequest = { if (!isSaving) showEditNameDialog = false },
-            title = { Text("Edit Profile Name", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.edit_profile_name), color = TextPrimary, fontWeight = FontWeight.Bold) },
             text = {
                 Column {
-                    Text("Enter your display name. This will be visible to other users.", fontSize = 13.sp, color = TextSecondary)
+                    Text(stringResource(R.string.set_display_name), fontSize = 13.sp, color = TextSecondary)
                     Spacer(modifier = Modifier.height(12.dp))
                     OutlinedTextField(
                         value = nameInput,
                         onValueChange = { nameInput = it },
-                        label = { Text("Full Name", color = TextSecondary) },
+                        label = { Text(stringResource(R.string.full_name), color = TextSecondary) },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryBlue,
                             unfocusedBorderColor = BorderStrokeColor,
@@ -188,12 +190,12 @@ fun SettingsScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
                 ) {
-                    Text(if (isSaving) "Saving..." else "Save", color = TextPrimary)
+                    Text(if (isSaving) stringResource(R.string.action_please_wait) else stringResource(R.string.action_save), color = TextPrimary)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showEditNameDialog = false }) {
-                    Text("Cancel", color = TextSecondary)
+                    Text(stringResource(R.string.action_cancel), color = TextSecondary)
                 }
             }
         )
@@ -205,7 +207,7 @@ fun SettingsScreen(
         AlertDialog(
             containerColor = DarkSurfaceElevated,
             onDismissRequest = { showNotificationDialog = false },
-            title = { Text("In-App Notification Settings", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.in_app_notifications), color = TextPrimary, fontWeight = FontWeight.Bold) },
             text = {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
@@ -213,8 +215,8 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("In-App Notifications", fontWeight = FontWeight.Bold, color = TextPrimary)
-                        Text("Receive application updates & chat alerts", fontSize = 12.sp, color = TextSecondary)
+                        Text(stringResource(R.string.in_app_notifications), fontWeight = FontWeight.Bold, color = TextPrimary)
+                        Text(stringResource(R.string.in_app_notifications_desc), fontSize = 12.sp, color = TextSecondary)
                     }
                     Switch(
                         checked = enabledState,
@@ -229,7 +231,7 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showNotificationDialog = false }) {
-                    Text("Done", color = AccentCyan)
+                    Text(stringResource(R.string.action_done), color = AccentCyan)
                 }
             }
         )
@@ -250,13 +252,13 @@ fun SettingsScreen(
         AlertDialog(
             containerColor = DarkSurfaceElevated,
             onDismissRequest = { showAboutDialog = false },
-            title = { Text("RozgarMitra", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.app_name), color = TextPrimary, fontWeight = FontWeight.Bold) },
             text = {
                 Column {
                     Text("Version 1.0 (Direct Release)", color = AccentCyan, fontSize = 13.sp)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "Connecting local daily wage workers with project owners efficiently.",
+                        stringResource(R.string.connecting_hands),
                         color = TextSecondary,
                         fontSize = 13.sp
                     )
@@ -264,7 +266,7 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showAboutDialog = false }) {
-                    Text("OK", color = PrimaryBlue)
+                    Text(stringResource(R.string.action_close), color = PrimaryBlue)
                 }
             }
         )
@@ -320,16 +322,16 @@ fun ThemeSelectionDialog(
     AlertDialog(
         containerColor = DarkSurfaceElevated,
         onDismissRequest = onDismiss,
-        title = { Text("Select Appearance", color = TextPrimary) },
+        title = { Text(stringResource(R.string.select_appearance), color = TextPrimary) },
         text = {
             Column {
-                ThemeOption("Light", ThemeMode.LIGHT, currentMode == ThemeMode.LIGHT, onSelect)
-                ThemeOption("Dark", ThemeMode.DARK, currentMode == ThemeMode.DARK, onSelect)
-                ThemeOption("System Default", ThemeMode.SYSTEM, currentMode == ThemeMode.SYSTEM, onSelect)
+                ThemeOption(stringResource(R.string.theme_light), ThemeMode.LIGHT, currentMode == ThemeMode.LIGHT, onSelect)
+                ThemeOption(stringResource(R.string.theme_dark), ThemeMode.DARK, currentMode == ThemeMode.DARK, onSelect)
+                ThemeOption(stringResource(R.string.theme_system), ThemeMode.SYSTEM, currentMode == ThemeMode.SYSTEM, onSelect)
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = AccentCyan) }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel), color = AccentCyan) }
         }
     )
 }

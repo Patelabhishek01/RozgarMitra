@@ -19,9 +19,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.rozgarmitra.app.R
 import com.rozgarmitra.app.data.Role
 import com.rozgarmitra.app.data.RozgarRepository
+import com.rozgarmitra.app.presentation.common.getTradeDisplayName
 import com.rozgarmitra.app.ui.theme.*
 
 val professions = listOf("All Jobs", "Mason", "Painter", "Electrician", "Plumber", "Carpenter", "Construction", "Driver", "Cleaner", "Helper")
@@ -45,7 +48,9 @@ fun HomeFeedTab(
     var showFilterSheet by remember { mutableStateOf(false) }
     var showLocationDialog by remember { mutableStateOf(false) }
 
-    val displayLocation = userLocationData?.addressName?.ifBlank { "Location Available" } ?: "Select Location"
+    val locAvailableText = stringResource(R.string.location_available)
+    val selLocationText = stringResource(R.string.select_location)
+    val displayLocation = userLocationData?.addressName?.ifBlank { locAvailableText } ?: selLocationText
 
     val filteredJobs = jobs.filter { job ->
         val matchesCategory = selectedProfessions.contains("All Jobs") || job.category in selectedProfessions
@@ -92,9 +97,13 @@ fun HomeFeedTab(
         // 4. Urgent Jobs Section
         if (urgentJobs.isNotEmpty()) {
             item {
+                val urgentTitle = if (selectedProfessions.size == 1 && !selectedProfessions.contains("All Jobs")) {
+                    "⚡ " + getTradeDisplayName(selectedProfessions.first()) + " - " + stringResource(R.string.urgent_jobs)
+                } else {
+                    stringResource(R.string.urgent_jobs)
+                }
                 SectionHeader(
-                    title = if (selectedProfessions.size == 1 && !selectedProfessions.contains("All Jobs")) 
-                        "Urgent ${selectedProfessions.first()} Jobs" else "⚡ Urgent Jobs",
+                    title = urgentTitle,
                     onSeeAllClick = onSeeAllUrgent
                 )
             }
@@ -116,9 +125,13 @@ fun HomeFeedTab(
         // 5. All Active Jobs (Public feed)
         if (filteredJobs.isNotEmpty()) {
             item {
+                val activeTitle = if (selectedProfessions.size == 1 && !selectedProfessions.contains("All Jobs")) {
+                    getTradeDisplayName(selectedProfessions.first()) + " - " + stringResource(R.string.active_jobs_near_you)
+                } else {
+                    stringResource(R.string.active_jobs_near_you)
+                }
                 SectionHeader(
-                    title = if (selectedProfessions.size == 1 && !selectedProfessions.contains("All Jobs")) 
-                        "${selectedProfessions.first()} Jobs" else "Active Jobs Near You",
+                    title = activeTitle,
                     onSeeAllClick = onSeeAllNearby
                 )
             }
@@ -150,14 +163,14 @@ fun HomeFeedTab(
                             }
                         }
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("No matching jobs found", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
-                        Text("Try adjusting your profession filter or location", fontSize = 13.sp, color = TextMuted)
+                        Text(stringResource(R.string.no_matching_jobs), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+                        Text(stringResource(R.string.try_adjusting_filters), fontSize = 13.sp, color = TextMuted)
                         Spacer(modifier = Modifier.height(12.dp))
                         TextButton(onClick = { 
                             selectedProfessions = setOf("All Jobs")
                             RozgarRepository.observeJobs()
                         }) {
-                            Text("Browse All Jobs", color = PrimaryIndigo, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.browse_all_jobs), color = PrimaryIndigo, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -197,7 +210,7 @@ fun HomeHeader(
     ) {
         Column {
             Text(
-                text = if (userName != null) "Namaste, ${userName.split(" ").first()}! 👋" else "Namaste! 👋",
+                text = if (userName != null) stringResource(R.string.greeting_namaste_user, userName.split(" ").first()) else stringResource(R.string.greeting_namaste),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary
@@ -210,7 +223,7 @@ fun HomeHeader(
                     shape = CircleShape
                 ) {
                     Text(
-                        text = if (role == Role.OWNER) "EMPLOYER / OWNER" else "WORKER / LABOUR",
+                        text = if (role == Role.OWNER) stringResource(R.string.employer_badge) else stringResource(R.string.worker_badge),
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
@@ -218,7 +231,7 @@ fun HomeHeader(
                     )
                 }
             } else {
-                Text("Find daily work near you", fontSize = 13.sp, color = TextSecondary)
+                Text(stringResource(R.string.find_daily_work_near_you), fontSize = 13.sp, color = TextSecondary)
             }
         }
 
@@ -237,7 +250,7 @@ fun HomeHeader(
                             }
                         }
                     ) {
-                        Icon(Icons.Filled.NotificationsNone, contentDescription = "Notifications", tint = TextPrimary, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Filled.NotificationsNone, contentDescription = stringResource(R.string.notifications_title), tint = TextPrimary, modifier = Modifier.size(20.dp))
                     }
                 }
             }
@@ -249,7 +262,7 @@ fun HomeHeader(
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
                     modifier = Modifier.height(38.dp)
                 ) {
-                    Text("Login", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color.White)
+                    Text(stringResource(R.string.action_login), fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color.White)
                 }
             }
         }
@@ -258,7 +271,7 @@ fun HomeHeader(
 
 @Composable
 fun LocationIndicator(location: String, radiusKm: Double = 0.0, onClick: () -> Unit) {
-    val radiusLabel = if (radiusKm > 0.0) " • Within ${radiusKm.toInt()} km" else ""
+    val radiusLabel = if (radiusKm > 0.0) " " + stringResource(R.string.within_km, radiusKm.toInt()) else ""
     Surface(
         onClick = onClick,
         color = DarkSurface,
@@ -293,7 +306,7 @@ fun ProfessionFilterRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "Browse by Profession",
+                stringResource(R.string.browse_by_profession),
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
                 color = TextPrimary
@@ -305,7 +318,7 @@ fun ProfessionFilterRow(
                 modifier = Modifier.size(32.dp).clickable(onClick = onFilterClick)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Filled.FilterList, contentDescription = "Filter", tint = PrimaryIndigo, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Filled.FilterList, contentDescription = stringResource(R.string.filters_title), tint = PrimaryIndigo, modifier = Modifier.size(16.dp))
                 }
             }
         }
@@ -315,6 +328,7 @@ fun ProfessionFilterRow(
         ) {
             items(professions) { profession ->
                 val isSelected = selected.contains(profession)
+                val chipLabel = if (profession == "All Jobs") stringResource(R.string.filter_all_jobs) else getTradeDisplayName(profession)
                 FilterChip(
                     selected = isSelected,
                     onClick = {
@@ -330,7 +344,7 @@ fun ProfessionFilterRow(
                         }
                         onSelectionChanged(newSelection)
                     },
-                    label = { Text(profession, fontWeight = FontWeight.Medium) },
+                    label = { Text(chipLabel, fontWeight = FontWeight.Medium) },
                     shape = CircleShape,
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = PrimaryIndigo,
@@ -360,7 +374,7 @@ fun SectionHeader(title: String, onSeeAllClick: () -> Unit) {
     ) {
         Text(title, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = TextPrimary)
         TextButton(onClick = onSeeAllClick, contentPadding = PaddingValues(0.dp)) {
-            Text("See All →", fontWeight = FontWeight.Bold, color = PrimaryIndigo, fontSize = 13.sp)
+            Text(stringResource(R.string.action_see_all), fontWeight = FontWeight.Bold, color = PrimaryIndigo, fontSize = 13.sp)
         }
     }
 }
@@ -383,7 +397,7 @@ fun SearchTab(
 
     Column(modifier = Modifier.fillMaxSize()) {
         Text(
-            "Search Jobs",
+            stringResource(R.string.search_jobs_title),
             fontWeight = FontWeight.Bold,
             fontSize = 24.sp,
             color = TextPrimary,
@@ -394,12 +408,12 @@ fun SearchTab(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                placeholder = { Text("Search by profession, skills, or area...", color = TextMuted) },
-                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search", tint = PrimaryIndigo) },
+                placeholder = { Text(stringResource(R.string.search_placeholder), color = TextMuted) },
+                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.nav_search), tint = PrimaryIndigo) },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { searchQuery = "" }) {
-                            Icon(Icons.Filled.Close, contentDescription = "Clear", tint = TextSecondary)
+                            Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_clear), tint = TextSecondary)
                         }
                     }
                 },
@@ -418,7 +432,7 @@ fun SearchTab(
 
         if (searchQuery.isEmpty()) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("Popular Professions", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
+                Text(stringResource(R.string.popular_professions), fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
                 Spacer(modifier = Modifier.height(12.dp))
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
@@ -428,7 +442,7 @@ fun SearchTab(
                     popularProfessions.forEach { prof ->
                         SuggestionChip(
                             onClick = { searchQuery = prof },
-                            label = { Text(prof, color = TextPrimary) },
+                            label = { Text(getTradeDisplayName(prof), color = TextPrimary) },
                             shape = CircleShape,
                             colors = SuggestionChipDefaults.suggestionChipColors(containerColor = DarkSurface),
                             border = SuggestionChipDefaults.suggestionChipBorder(borderColor = BorderStrokeColor)
@@ -437,7 +451,7 @@ fun SearchTab(
                 }
 
                 Spacer(modifier = Modifier.height(28.dp))
-                Text("Recent Searches", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
+                Text(stringResource(R.string.recent_searches), fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
                 Spacer(modifier = Modifier.height(8.dp))
                 listOf("Mason in HSR", "Painter jobs").forEach { recent ->
                     Row(
@@ -459,7 +473,7 @@ fun SearchTab(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Filled.SearchOff, contentDescription = null, modifier = Modifier.size(56.dp), tint = TextMuted)
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("No results for \"$searchQuery\"", color = TextSecondary, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.no_results_for, searchQuery), color = TextSecondary, fontWeight = FontWeight.Bold)
                     }
                 }
             } else {

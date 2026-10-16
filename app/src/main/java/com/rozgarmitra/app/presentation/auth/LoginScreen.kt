@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.app.Activity
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.rozgarmitra.app.R
 import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.presentation.components.LoadingOverlay
 import com.rozgarmitra.app.presentation.components.PrimaryLargeButton
@@ -137,7 +139,7 @@ fun LoginScreen(
                     Spacer(modifier = Modifier.height(40.dp))
                     
                     Text(
-                        text = "RozgarMitra",
+                        text = stringResource(R.string.app_name),
                         style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.Bold,
                         color = PrimaryBlue,
@@ -145,21 +147,21 @@ fun LoginScreen(
                     )
 
                     Text(
-                        text = "Connecting Hands with Opportunities.",
+                        text = stringResource(R.string.connecting_hands),
                         style = MaterialTheme.typography.bodyLarge,
                         color = TextSecondary,
                         modifier = Modifier.padding(top = 4.dp, bottom = 48.dp)
                     )
 
                     Text(
-                        text = if (isRegistering) "Create your account" else "Welcome / स्वागत है!",
+                        text = if (isRegistering) stringResource(R.string.create_account_title) else stringResource(R.string.welcome_back),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary
                     )
 
                     Text(
-                        text = if (isRegistering) "Enter details to start your journey." else "Enter your ${if (isEmailLogin) "email" else "mobile number"} to login or register.",
+                        text = if (isRegistering) stringResource(R.string.enter_details_start) else stringResource(R.string.login_subtitle),
                         style = MaterialTheme.typography.bodyMedium,
                         color = TextSecondary,
                         modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
@@ -173,7 +175,7 @@ fun LoginScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(60.dp),
-                            label = { Text("Email Address") },
+                            label = { Text(stringResource(R.string.email_address)) },
                             leadingIcon = {
                                 Icon(Icons.Filled.Email, contentDescription = null, tint = PrimaryBlue)
                             },
@@ -189,7 +191,7 @@ fun LoginScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(60.dp),
-                            label = { Text("Password") },
+                            label = { Text(stringResource(R.string.password)) },
                             leadingIcon = {
                                 Icon(Icons.Filled.Lock, contentDescription = null, tint = PrimaryBlue)
                             },
@@ -213,7 +215,7 @@ fun LoginScreen(
                                     }
                                 ) {
                                     Text(
-                                        text = "Forgot Password? / पासवर्ड भूल गए?",
+                                        text = stringResource(R.string.forgot_password),
                                         color = AccentCyan,
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.Bold
@@ -233,8 +235,8 @@ fun LoginScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(60.dp),
-                            label = { Text("Mobile Number / मोबाइल नंबर") },
-                            placeholder = { Text("Enter 10-digit number", color = TextSecondary.copy(alpha = 0.5f)) },
+                            label = { Text(stringResource(R.string.mobile_number)) },
+                            placeholder = { Text(stringResource(R.string.mobile_number_hint), color = TextSecondary.copy(alpha = 0.5f)) },
                             prefix = {
                                 Text(
                                     text = "+91 ",
@@ -260,20 +262,15 @@ fun LoginScreen(
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Use '9876543210' for Worker, '8888888888' for Owner demo accounts.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary
-                    )
                 }
 
                 // Footer Content (Buttons)
                 Column(modifier = Modifier.fillMaxWidth()) {
                     PrimaryLargeButton(
                         text = when {
-                            isRegistering -> "Continue / आगे बढ़ें"
-                            isEmailLogin -> "Login / Login"
-                            else -> "Send OTP / ओटीपी भेजें"
+                            isRegistering -> stringResource(R.string.continue_btn)
+                            isEmailLogin -> stringResource(R.string.action_login)
+                            else -> stringResource(R.string.send_otp)
                         },
                         onClick = {
                             if (isRegistering) {
@@ -353,7 +350,7 @@ fun LoginScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Filled.AccountCircle, contentDescription = null, tint = AccentCyan)
                                 Spacer(modifier = Modifier.width(12.dp))
-                                Text("Sign in with Google", color = TextPrimary, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.continue_with_google), color = TextPrimary, fontWeight = FontWeight.Bold)
                             }
                         }
 
@@ -366,8 +363,8 @@ fun LoginScreen(
                     ) {
                         TextButton(onClick = { isRegistering = !isRegistering }) {
                             Text(
-                                if (isRegistering) "Already have an account? Login" 
-                                else "Don't have an account? Register",
+                                if (isRegistering) stringResource(R.string.already_have_account) 
+                                else stringResource(R.string.dont_have_account),
                                 color = AccentCyan,
                                 fontWeight = FontWeight.Bold
                             )
@@ -380,8 +377,8 @@ fun LoginScreen(
                     ) {
                         TextButton(onClick = { isEmailLogin = !isEmailLogin }) {
                             Text(
-                                if (isEmailLogin) "Use Phone Number / मोबाइल का उपयोग करें" 
-                                else "Use Email / ईमेल का उपयोग करें",
+                                if (isEmailLogin) stringResource(R.string.use_phone_login) 
+                                else stringResource(R.string.use_email_login),
                                 color = TextSecondary,
                                 fontWeight = FontWeight.Bold
                             )
@@ -393,7 +390,7 @@ fun LoginScreen(
                         horizontalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "Change Language / भाषा बदलें",
+                            text = stringResource(R.string.select_language_title),
                             modifier = Modifier
                                 .clickable { onLanguageSelectClick() }
                                 .padding(8.dp),
@@ -408,7 +405,7 @@ fun LoginScreen(
 
             LoadingOverlay(
                 isLoading = isLoading, 
-                text = if (isEmailLogin) "Authenticating..." else "Sending OTP..."
+                text = stringResource(R.string.action_please_wait)
             )
 
             if (showResetDialog) {
@@ -419,7 +416,7 @@ fun LoginScreen(
                     containerColor = DarkSurface,
                     title = {
                         Text(
-                            text = "Reset Password / पासवर्ड रीसेट",
+                            text = stringResource(R.string.reset_password_title),
                             fontWeight = FontWeight.Bold,
                             color = TextPrimary
                         )
@@ -427,7 +424,7 @@ fun LoginScreen(
                     text = {
                         Column {
                             Text(
-                                text = "Enter your registered email address. We will send you a password reset link.",
+                                text = stringResource(R.string.reset_password_desc),
                                 fontSize = 13.sp,
                                 color = TextSecondary
                             )
@@ -436,7 +433,7 @@ fun LoginScreen(
                                 value = resetEmail,
                                 onValueChange = { resetEmail = it },
                                 modifier = Modifier.fillMaxWidth(),
-                                label = { Text("Registered Email") },
+                                label = { Text(stringResource(R.string.email_address)) },
                                 singleLine = true,
                                 colors = textFieldColors
                             )
@@ -490,7 +487,7 @@ fun LoginScreen(
                                     strokeWidth = 2.dp
                                 )
                             } else {
-                                Text("Send Reset Link", fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.send_reset_link), fontWeight = FontWeight.Bold)
                             }
                         }
                     },
@@ -499,7 +496,7 @@ fun LoginScreen(
                             onClick = { showResetDialog = false },
                             enabled = !isResetLoading
                         ) {
-                            Text("Cancel", color = TextSecondary)
+                            Text(stringResource(R.string.action_cancel), color = TextSecondary)
                         }
                     }
                 )

@@ -22,29 +22,33 @@ import com.rozgarmitra.app.data.RozgarRepository
 import com.rozgarmitra.app.presentation.components.LoadingOverlay
 import com.rozgarmitra.app.presentation.components.PrimaryLargeButton
 import com.rozgarmitra.app.ui.theme.*
+import androidx.compose.ui.res.stringResource
+import com.rozgarmitra.app.R
+import com.rozgarmitra.app.presentation.components.getLocalizedTradeName
+import com.rozgarmitra.app.presentation.common.RozgarLocalization
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 val tradesList = listOf(
-    "Mason (राजमिस्त्री)",
-    "Painter (चित्रकार)",
-    "Electrician (बिजली मिस्त्री)",
-    "Plumber (नलसाज)",
-    "Welder (वेल्डर)",
-    "Driver (चालक)",
-    "Cleaner (सफाई कर्मचारी)",
-    "Gardener (माली)",
-    "Farm Worker (किसान)",
-    "Construction Labour (मजदूर)",
-    "Helper (सहायक)",
-    "Cook (रसोइया)",
-    "Security Guard (सुरक्षा गार्ड)",
-    "Mechanic (मैकेनिक)"
+    "Mason",
+    "Painter",
+    "Electrician",
+    "Plumber",
+    "Welder",
+    "Driver",
+    "Cleaner",
+    "Gardener",
+    "Farm Worker",
+    "Construction Labour",
+    "Helper",
+    "Cook",
+    "Security Guard",
+    "Mechanic"
 )
 
 val experienceTiers = listOf(
-    "No Experience (कोई अनुभव नहीं)",
+    "< 1 Year",
     "1 - 2 Years",
     "3 - 5 Years",
     "5+ Years"
@@ -94,7 +98,7 @@ fun LabourDetailsScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = DarkBackground),
-                title = { Text("Labour Profile Details", fontWeight = FontWeight.Bold, color = TextPrimary) },
+                title = { Text(stringResource(R.string.labour_profile_details), fontWeight = FontWeight.Bold, color = TextPrimary) },
                 actions = {
                     TextButton(
                         onClick = {
@@ -107,7 +111,7 @@ fun LabourDetailsScreen(
                             }
                         }
                     ) {
-                        Text("Skip / छोड़ें", color = AccentCyan, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(stringResource(R.string.action_skip), color = AccentCyan, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     }
                 }
             )
@@ -128,13 +132,13 @@ fun LabourDetailsScreen(
             ) {
                 Column {
                     Text(
-                        text = "Work Details / काम का विवरण",
+                        text = stringResource(R.string.work_details),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = PrimaryBlue
                     )
                     Text(
-                        text = "Select your skills so owners can find you easily.",
+                        text = stringResource(R.string.select_skills_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary,
                         modifier = Modifier.padding(bottom = 20.dp)
@@ -142,7 +146,7 @@ fun LabourDetailsScreen(
 
                     // Skills Grid (Chips)
                     Text(
-                        text = "Select Skills / कौशल चुनें",
+                        text = stringResource(R.string.select_skills),
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
                         color = TextPrimary
@@ -154,14 +158,14 @@ fun LabourDetailsScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        val tradesWithOther = tradesList + "Other (अन्य)"
+                        val tradesWithOther = tradesList + "Other"
                         
                         tradesWithOther.forEach { skill ->
                             val isSelected = selectedSkills.contains(skill)
                             FilterChip(
                                 selected = isSelected,
                                 onClick = {
-                                    if (skill == "Other (अन्य)") {
+                                    if (skill == "Other") {
                                         isSuggestingOther = true
                                     } else {
                                         selectedSkills = if (isSelected) {
@@ -171,12 +175,12 @@ fun LabourDetailsScreen(
                                         }
                                     }
                                 },
-                                label = { Text(skill, fontSize = 13.sp, modifier = Modifier.padding(vertical = 4.dp)) },
+                                label = { Text(getLocalizedTradeName(skill), fontSize = 13.sp, modifier = Modifier.padding(vertical = 4.dp)) },
                                 shape = RoundedCornerShape(20.dp),
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = PrimaryBlue.copy(alpha = 0.25f),
                                     selectedLabelColor = TextPrimary,
-                                    containerColor = if (skill == "Other (अन्य)") PrimaryBlue.copy(alpha = 0.15f) else DarkSurface,
+                                    containerColor = if (skill == "Other") PrimaryBlue.copy(alpha = 0.15f) else DarkSurface,
                                     labelColor = TextSecondary
                                 ),
                                 border = FilterChipDefaults.filterChipBorder(
@@ -184,9 +188,6 @@ fun LabourDetailsScreen(
                                     selectedBorderColor = PrimaryBlue
                                 )
                             )
-
-
-
                         }
                     }
 
@@ -194,7 +195,7 @@ fun LabourDetailsScreen(
 
                     // Experience Tier
                     Text(
-                        text = "Your Experience / आपका अनुभव",
+                        text = stringResource(R.string.years_of_experience),
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
                         color = TextPrimary
@@ -225,7 +226,7 @@ fun LabourDetailsScreen(
                                     contentAlignment = Alignment.CenterStart
                                 ) {
                                     Text(
-                                        text = tier,
+                                        text = RozgarLocalization.getLocalizedExperience(tier),
                                         fontSize = 14.sp,
                                         color = TextPrimary,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
@@ -239,7 +240,7 @@ fun LabourDetailsScreen(
 
                     // Expected Daily Wage
                     Text(
-                        text = "Expected Daily Wage / अपेक्षित दैनिक मजदूरी (₹)",
+                        text = stringResource(R.string.expected_daily_wage),
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
                         color = TextPrimary
@@ -291,7 +292,7 @@ fun LabourDetailsScreen(
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     PrimaryLargeButton(
-                        text = "Complete Profile / प्रोफ़ाइल पूरी करें",
+                        text = stringResource(R.string.complete_profile_title),
                         onClick = {
                             isLoading = true
                             errorMessage = null
@@ -333,12 +334,12 @@ fun LabourDetailsScreen(
                             }
                         }
                     ) {
-                        Text("Skip for now / बाद में भरें", color = TextSecondary, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                        Text(stringResource(R.string.action_skip), color = TextSecondary, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                     }
                 }
             }
 
-            LoadingOverlay(isLoading = isLoading, text = "Saving Profile...")
+            LoadingOverlay(isLoading = isLoading, text = stringResource(R.string.saving_profile))
         }
     }
 
@@ -346,15 +347,15 @@ fun LabourDetailsScreen(
         AlertDialog(
             containerColor = DarkSurfaceElevated,
             onDismissRequest = { isSuggestingOther = false },
-            title = { Text("Suggest New Skill", fontWeight = FontWeight.Bold, color = TextPrimary) },
+            title = { Text(stringResource(R.string.suggest_new_skill), fontWeight = FontWeight.Bold, color = TextPrimary) },
             text = {
                 Column {
-                    Text("Can't find your skill? Tell us what you do.", fontSize = 13.sp, color = TextSecondary)
+                    Text(stringResource(R.string.cant_find_skill_desc), fontSize = 13.sp, color = TextSecondary)
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
                         value = suggestedCategoryName,
                         onValueChange = { suggestedCategoryName = it },
-                        label = { Text("Skill Name (e.g. Driver)") },
+                        label = { Text(stringResource(R.string.skill_name_hint)) },
                         modifier = Modifier.fillMaxWidth(),
                         colors = textFieldColors,
                         shape = RoundedCornerShape(8.dp)
@@ -363,7 +364,7 @@ fun LabourDetailsScreen(
                     OutlinedTextField(
                         value = suggestedCategoryDesc,
                         onValueChange = { suggestedCategoryDesc = it },
-                        label = { Text("What work do you do in this?") },
+                        label = { Text(stringResource(R.string.what_work_desc)) },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3,
                         colors = textFieldColors,
@@ -389,11 +390,11 @@ fun LabourDetailsScreen(
                     enabled = suggestedCategoryName.isNotBlank() && suggestedCategoryDesc.isNotBlank() && !suggestionLoading
                 ) {
                     if (suggestionLoading) CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
-                    else Text("Submit")
+                    else Text(stringResource(R.string.action_submit))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { isSuggestingOther = false }) { Text("Cancel", color = TextSecondary) }
+                TextButton(onClick = { isSuggestingOther = false }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) }
             }
         )
     }

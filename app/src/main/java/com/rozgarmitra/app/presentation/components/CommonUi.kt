@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.res.stringResource
+import com.rozgarmitra.app.R
 import com.rozgarmitra.app.ui.theme.*
 
 @Composable
@@ -64,7 +66,7 @@ fun OfflineBanner(isOffline: Boolean) {
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "You are currently offline. Using cached data.",
+                text = stringResource(R.string.offline_banner_text),
                 color = Color.White,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold
@@ -76,9 +78,10 @@ fun OfflineBanner(isOffline: Boolean) {
 @Composable
 fun LoadingOverlay(
     isLoading: Boolean,
-    text: String = "Please wait..."
+    text: String? = null
 ) {
     if (isLoading) {
+        val displayText = text ?: stringResource(R.string.action_please_wait)
         Dialog(
             onDismissRequest = {},
             properties = DialogProperties(
@@ -107,7 +110,7 @@ fun LoadingOverlay(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = text,
+                            text = displayText,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             color = TextPrimary
